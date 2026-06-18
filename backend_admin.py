@@ -337,6 +337,10 @@ def sync_catalog():
 def health_check():
     return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()}), 200
 
+@app.route('/api/health', methods=['GET'])
+def api_health_check():
+    return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()}), 200
+
 # ═════════════════════════════════════════════════════════════════════
 # MAIN
 # ═════════════════════════════════════════════════════════════════════
