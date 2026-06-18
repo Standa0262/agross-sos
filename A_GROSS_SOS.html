@@ -15,6 +15,7 @@
 <title>A-GROSS SOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <style>
 :root{
   /* A-GROSS brand */
@@ -1101,6 +1102,7 @@ let editStoreId   = null;
 let scannedProd   = null;
 let cameraStream  = null;
 let scanInterval  = null;
+let zxingReader   = null;
 let delivMode     = 'ihned';
 let exchangeSourceKod = null;
 
@@ -1556,7 +1558,7 @@ function doShare(method){
   const text = _shareText;
   const subj = _shareSubject;
   if(method==='whatsapp'){
-    window.open('https://wa.me/?text='+encodeURIComponent(text));
+    window.open('https://wa.me/420608889487?text='+encodeURIComponent(text));
   } else if(method==='sms'){
     window.open('sms:?body='+encodeURIComponent(text));
   } else if(method==='email'){
@@ -1730,10 +1732,17 @@ async function startCamera(){
           try{const bs=await det.detect(v);if(bs.length){document.getElementById('manualEan').value=bs[0].rawValue;lookupEan();}}catch(e){}
         }
       },500);
+    } else if(window.ZXing){
+      // Fallback pro prohlížeče bez Shape Detection API (Safari/iOS, Firefox, starší Chrome)
+      zxingReader=new ZXing.BrowserMultiFormatReader();
+      zxingReader.decodeFromVideoElementContinuously(v,(result,err)=>{
+        if(result){document.getElementById('manualEan').value=result.getText();lookupEan();}
+      });
     } else showToast('Ruční zadání EAN – auto-sken není podporován');
   }catch(e){showToast('Kamera nedostupná');}
 }
 function stopCamera(){
+  if(zxingReader){zxingReader.reset();zxingReader=null;}
   if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
   if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
   const v=document.getElementById('cameraFeed');v.style.display='none';
