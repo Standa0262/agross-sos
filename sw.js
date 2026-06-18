@@ -4,8 +4,11 @@
 const CACHE_VERSION = 'agross-v1';
 const CACHE_FILES = [
   '/',
+  '/A_GROSS_SOS.html',
   '/A_GROSS_SOS_VI.html',
   '/index.html',
+  '/manifest.json',
+  '/icon.svg',
   'https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap',
 ];
 

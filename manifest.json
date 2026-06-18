@@ -1,0 +1,15 @@
+{
+  "name": "A-GROSS SOS",
+  "short_name": "A-GROSS SOS",
+  "description": "Objednávkový systém A-GROSS SOS pro prodejny",
+  "start_url": "A_GROSS_SOS.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F5F0E8",
+  "theme_color": "#1A1A1A",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
