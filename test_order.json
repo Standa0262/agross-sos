@@ -1,0 +1,13 @@
+{
+  "id": "order-test-001",
+  "storeId": "store-1",
+  "storeName": "Vietnamský Obchod",
+  "items": [
+    {"kod": "KIM-001", "nazev": "Kim A", "qty": 2, "nc": 5.5, "moc": 8.2}
+  ],
+  "nc": 11,
+  "marze": 5.4,
+  "moc": 16.4,
+  "date": "2026-06-18T10:00:00",
+  "status": "sent"
+}

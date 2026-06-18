@@ -1,0 +1,10 @@
+[
+  {
+    "id": "notif-1781769647333",
+    "sent_at": "2026-06-18T10:00:47.333975",
+    "target": "all",
+    "title": "Test Notifikace",
+    "body": "Testovací zpráva - OK?",
+    "delivered": 0
+  }
+]

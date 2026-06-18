@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>A-GROSS SOS - Ứng dụng đặt hàng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F5F0E8;
+  --cream-dark:#EDE6D6;
+  --dark:#1A1A1A;
+  --dark2:#2C2C2C;
+  --sos:#E8533A;
+  --sos-light:#FDECEA;
+  --sos-dark:#C03020;
+  --ok:#2A7A4A;
+  --ok-light:#E8F5EE;
+  --ok-dark:#1A5A34;
+  --surface:#FFFFFF;
+  --bg:#F5F0E8;
+  --border:#DDD8CC;
+  --text:#1A1A14;
+  --muted:#7A7468;
+  --shadow:0 2px 12px rgba(0,0,0,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;-webkit-tap-highlight-color:transparent}
+
+header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.4)}
+.logo{display:flex;align-items:baseline;gap:0;line-height:1}
+.logo-agross{font-family:'Inter',sans-serif;font-weight:700;font-size:19px;color:var(--cream);letter-spacing:1px}
+.logo-sep{color:rgba(255,255,255,0.25);font-size:18px;margin:0 3px}
+.logo-sos{font-family:'Inter',sans-serif;font-weight:800;font-size:21px;color:var(--sos);letter-spacing:2px}
+.header-btns{display:flex;gap:8px}
+.icon-btn{background:rgba(255,255,255,0.1);border:none;color:#fff;width:38px;height:38px;border-radius:8px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.icon-btn:hover{background:rgba(255,255,255,0.2)}
+.badge{position:absolute;top:-4px;right:-4px;background:var(--sos);color:#fff;border-radius:10px;font-size:9px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-weight:700;display:none}
+
+.sync-banner{background:var(--dark);color:var(--cream);font-size:12px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #333}
+.sync-banner.ok{background:#1a3a28}
+.sync-banner.warn{background:#3a2010}
+.sync-banner.error{background:#3a1010}
+.sync-info{display:flex;align-items:center;gap:7px;flex:1}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse 1s infinite}
+.sync-dot.ok{background:var(--ok);animation:none}
+.sync-dot.warn{background:#FFB040;animation:none}
+.sync-dot.error{background:var(--sos);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.order-bar{position:sticky;top:60px;z-index:90;background:var(--dark2);color:#fff;padding:7px 14px;display:flex;align-items:center;justify-content:space-between;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.bar-left{opacity:.7;font-size:11px}
+.bar-right{display:flex;gap:14px;align-items:center}
+
+.tabs{display:flex;background:var(--dark);padding:0 12px;border-bottom:2px solid #333;overflow-x:auto}
+.tab{padding:9px 14px;color:rgba(255,255,255,0.5);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap;transition:color .2s}
+.tab.active{color:var(--sos);border-color:var(--sos)}
+
+.page{display:none;padding:14px}
+.page.active{display:block}
+
+.store-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.store-bar select{flex:1;border:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text);outline:none;cursor:pointer}
+
+.search-row{display:flex;gap:8px;margin-bottom:10px}
+.search-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;outline:none}
+.search-input:focus{border-color:var(--sos)}
+.scan-btn{background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit;font-size:11px;font-weight:600}
+
+.product-list{display:flex;flex-direction:column;gap:7px}
+.product-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.product-card.sos-item{border-left:3px solid var(--sos)}
+.product-card.ok-item{border-left:3px solid var(--ok)}
+.status-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;cursor:pointer;transition:transform .15s}
+.status-dot.sos{background:var(--sos)}
+.status-dot.ok{background:var(--ok)}
+.status-dot.neutral{background:#CCC}
+
+.product-info{flex:1;min-width:0}
+.product-name{font-size:12px;font-weight:500;line-height:1.3;margin-bottom:3px}
+.product-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.p-code{background:#F0EDE6;padding:1px 5px;border-radius:4px;font-size:10px;font-family:'DM Mono',monospace}
+.p-moc{color:var(--dark);font-weight:600;font-size:12px}
+.p-nc{color:var(--muted);font-size:10px}
+.p-min{background:#FFF3E0;color:#C05000;font-size:10px;padding:1px 5px;border-radius:4px}
+
+.qty-control{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+.qty-row{display:flex;align-items:center;gap:3px}
+.qty-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--dark);font-weight:700;transition:background .15s}
+.qty-btn:hover{background:var(--dark);color:#fff}
+.qty-input{width:40px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:4px 2px;font-family:'DM Mono',monospace;font-size:13px;background:var(--surface);outline:none}
+.qty-input.has-qty{border-color:var(--ok);background:#E8F5EE;font-weight:700}
+
+.cart-header-box{background:var(--dark);color:#fff;border-radius:12px;padding:14px;margin-bottom:12px}
+.cart-header-box h3{font-size:15px;font-weight:700;margin-bottom:10px;color:var(--cream)}
+.totals-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.total-cell{background:rgba(255,255,255,0.07);border-radius:8px;padding:8px 10px}
+.total-label{font-size:10px;opacity:.6;margin-bottom:2px}
+.total-value{font-size:15px;font-weight:700}
+
+.btn-p{background:var(--dark);color:var(--cream);border:none;border-radius:10px;padding:14px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.btn-p:hover{background:#333}
+.btn-p:disabled{background:#BBB;color:#888;cursor:not-allowed}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--muted)}
+.empty-icon{font-size:38px;margin-bottom:10px}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:flex-end}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:14px;color:var(--dark)}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:var(--cream);padding:10px 18px;border-radius:20px;font-size:12px;font-weight:500;opacity:0;transition:opacity .3s,transform .3s;z-index:300;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.offline-badge{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:var(--sos);color:#fff;padding:8px 14px;border-radius:20px;font-size:11px;font-weight:600;display:none;z-index:299}
+.offline-badge.show{display:block}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-agross">A-GROSS</span>
+    <span class="logo-sep">·</span>
+    <span class="logo-sos">SOS</span>
+  </div>
+  <div class="header-btns">
+    <button class="icon-btn" onclick="location.href='A_GROSS_SOS.html'" title="Přepnout do češtiny">🇨🇿</button>
+    <button class="icon-btn" onclick="openScanner()" title="Quét mã">📷</button>
+    <button class="icon-btn" onclick="switchTab('cart')" title="Giỏ hàng">
+      🛒<span class="badge" id="cartBadge">0</span>
+    </button>
+  </div>
+</header>
+
+<div class="sync-banner" id="syncBanner">
+  <div class="sync-info">
+    <div class="sync-dot" id="syncDot"></div>
+    <div id="syncText">Danh mục: dữ liệu cục bộ</div>
+  </div>
+  <button class="icon-btn" style="background:rgba(255,255,255,0.1)" onclick="syncNow()">↻</button>
+</div>
+
+<div class="order-bar" id="orderBar">
+  <div class="bar-left" id="barItems">Giỏ trống</div>
+  <div class="bar-right">
+    <span id="barNc">Giá: 0 VND</span>
+    <span id="barMarze">Lợi: 0 VND</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('products')" id="tab-products">Sản phẩm</div>
+  <div class="tab" onclick="switchTab('cart')" id="tab-cart">Giỏ hàng</div>
+  <div class="tab" onclick="switchTab('stores')" id="tab-stores">Cửa hàng</div>
+  <div class="tab" onclick="switchTab('orders')" id="tab-orders">Lịch sử</div>
+  <div class="tab" onclick="switchTab('settings')" id="tab-settings">⚙ Cài đặt</div>
+</div>
+
+<!-- PRODUCTS PAGE -->
+<div class="page active" id="page-products">
+  <div class="store-bar">
+    <select id="storeSelect" onchange="onStoreChange()">
+      <option value="">— Chọn cửa hàng —</option>
+    </select>
+  </div>
+  <div class="search-row">
+    <input class="search-input" type="text" placeholder="Tìm kiếm sản phẩm, mã..." id="searchInput" oninput="filterProducts()">
+    <button class="scan-btn" onclick="openScanner()">📷 Quét</button>
+  </div>
+  <div class="product-list" id="productList"></div>
+</div>
+
+<!-- CART PAGE -->
+<div class="page" id="page-cart"><div id="cartContent"></div></div>
+
+<!-- STORES PAGE -->
+<div class="page" id="page-stores">
+  <div id="storeList"></div>
+  <button style="width:100%;border:2px dashed var(--border);background:transparent;border-radius:12px;padding:15px;font-family:inherit;font-size:13px;color:var(--muted);cursor:pointer;margin-top:10px" onclick="openAddStore()">+ Thêm cửa hàng</button>
+</div>
+
+<!-- ORDERS PAGE -->
+<div class="page" id="page-orders">
+  <div id="orderList"></div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-settings">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+    <h3 style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:12px">🔄 Đồng bộ hóa</h3>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px">URL danh mục</label>
+      <input style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);background:var(--bg);outline:none" 
+             id="settingsCatalogUrl" placeholder="https://..." oninput="saveSyncSettings()">
+    </div>
+    <button style="width:100%;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:11px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px" onclick="syncNow()">↻ Đồng bộ ngay</button>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);max-height:120px;overflow-y:auto;line-height:1.6" id="syncLog">— chưa đồng bộ —</div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+    <h3 style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:12px">📱 Thiết bị</h3>
+    <div style="font-size:12px;color:var(--muted)">
+      <p>Chế độ ngoại tuyến: <strong id="offlineStatus">Bật</strong></p>
+      <p style="margin-top:6px;font-size:11px">Ứng dụng này hoạt động mà không cần internet. Dữ liệu được lưu trữ cục bộ trên thiết bị của bạn.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SCANNER MODAL -->
+<div class="modal-overlay" id="scannerModal">
+  <div class="modal-sheet">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
+    <div class="modal-title">📷 Quét mã vạch</div>
+    <div style="background:var(--dark);border-radius:12px;overflow:hidden;margin-bottom:12px;position:relative;min-height:160px;display:flex;align-items:center;justify-content:center">
+      <video id="cameraFeed" autoplay playsinline style="width:100%;display:none"></video>
+      <canvas id="scanCanvas" style="display:none"></canvas>
+      <div id="camPlaceholder" style="text-align:center;color:rgba(255,255,255,0.5);padding:20px;font-size:12px">
+        <div style="font-size:44px;margin-bottom:8px">📱</div>
+        <div>Nhấn để khởi động camera</div>
+      </div>
+    </div>
+    <button class="btn-p" id="startCamBtn" onclick="startCamera()" style="margin-bottom:10px;width:100%">▶ Khởi động camera</button>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Hoặc nhập mã thủ công:</div>
+    <div class="search-row">
+      <input type="text" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace" id="manualEan" placeholder="8590...">
+      <button class="scan-btn" onclick="lookupEan()">Tìm</button>
+    </div>
+    <div class="modal-btns" style="margin-top:12px">
+      <button style="flex:1;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" onclick="closeScanner()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STORE MODAL -->
+<div class="modal-overlay" id="storeModal">
+  <div class="modal-sheet">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
+    <div class="modal-title" id="storeModalTitle">Thêm cửa hàng</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px">Tên *</label>
+        <input style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px" id="f-name" placeholder="Cửa hàng ABC">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px">Chuỗi</label>
+        <select style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px" id="f-chain">
+          <option value="">—</option>
+          <option>Coopmark</option><option>Saigon Coop</option><option>Co.opmart</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px">Quản lý</label>
+      <input style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;margin-bottom:8px" id="f-manager" placeholder="Tên quản lý">
+    </div>
+    <div>
+      <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px">Số điện thoại</label>
+      <input style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;margin-bottom:8px" id="f-phone" placeholder="+84 9 xxxx xxxx">
+    </div>
+    <div>
+      <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px">Địa chỉ</label>
+      <input style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;margin-bottom:8px" id="f-address" placeholder="Địa chỉ giao hàng">
+    </div>
+    <div class="modal-btns">
+      <button style="flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:inherit;font-size:13px;cursor:pointer" onclick="closeStoreModal()">Hủy</button>
+      <button style="flex:1;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" onclick="saveStore()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER CONFIRM MODAL -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-sheet">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
+    <div class="modal-title">Xác nhận đơn hàng</div>
+    <div id="orderConfirmContent"></div>
+    <div class="modal-btns">
+      <button style="flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:inherit;font-size:13px;cursor:pointer" onclick="closeOrderModal()">Quay lại</button>
+      <button style="flex:1;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" onclick="confirmOrder()">✓ Gửi đơn</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="offline-badge" id="offlineBadge">🌐 Chế độ ngoại tuyến</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// OFFLINE MODE & INDEXEDDB
+// ═══════════════════════════════════════════════════════════════════
+
+let db = null;
+const MIN_QTY = 5;
+const ORDER_EMAIL = 'objednavky@a-gross.cz';
+
+// Initialize IndexedDB
+async function initDB(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open('AGrossSOS', 1);
+    req.onerror = ()=>reject(req.error);
+    req.onsuccess = ()=>{
+      db = req.result;
+      resolve();
+    };
+    req.onupgradeneeded = (e)=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains('products')) db.createObjectStore('products', {keyPath:'kod'});
+      if(!db.objectStoreNames.contains('orders')) db.createObjectStore('orders', {keyPath:'id'});
+      if(!db.objectStoreNames.contains('stores')) db.createObjectStore('stores', {keyPath:'id'});
+      if(!db.objectStoreNames.contains('sync')) db.createObjectStore('sync');
+    };
+  });
+}
+
+async function saveProduct(product){
+  const tx = db.transaction('products', 'readwrite');
+  const store = tx.objectStore('products');
+  return new Promise((resolve, reject)=>{
+    store.put(product).onsuccess = resolve;
+    store.onerror = ()=>reject(store.error);
+  });
+}
+
+async function getProduct(kod){
+  const tx = db.transaction('products', 'readonly');
+  const store = tx.objectStore('products');
+  return new Promise((resolve, reject)=>{
+    const req = store.get(kod);
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+
+async function getAllProducts(){
+  const tx = db.transaction('products', 'readonly');
+  const store = tx.objectStore('products');
+  return new Promise((resolve, reject)=>{
+    const req = store.getAll();
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+
+async function saveOrder(order){
+  const tx = db.transaction('orders', 'readwrite');
+  const store = tx.objectStore('orders');
+  return new Promise((resolve, reject)=>{
+    store.add(order).onsuccess = resolve;
+    store.onerror = ()=>reject(store.error);
+  });
+}
+
+async function getAllOrders(){
+  const tx = db.transaction('orders', 'readonly');
+  const store = tx.objectStore('orders');
+  return new Promise((resolve, reject)=>{
+    const req = store.getAll();
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+
+// Service Worker registration
+async function registerServiceWorker(){
+  if('serviceWorker' in navigator){
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+      console.log('Service Worker registered');
+    } catch(e){
+      console.log('Service Worker registration failed:', e);
+    }
+  }
+}
+
+// Check online/offline status
+function updateOnlineStatus(){
+  const badge = document.getElementById('offlineBadge');
+  if(navigator.onLine){
+    badge.classList.remove('show');
+    setSyncStatus('ok', 'Danh mục: đã cập nhật');
+    syncNow();
+  } else {
+    badge.classList.add('show');
+    setSyncStatus('warn', 'Danh mục: chế độ ngoại tuyến');
+  }
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// ═══════════════════════════════════════════════════════════════════
+// BUILT-IN CATALOG (Vietnamese descriptions)
+// ═══════════════════════════════════════════════════════════════════
+
+const DEFAULT_PRODUCTS = [
+  {kod:"276921",nazev:"Kim Organ Universal 10 cái",nc:39.44,moc:95.90,ean:"8590580899993"},
+  {kod:"276922",nazev:"Kim Organ Jean 5 cái",nc:31.03,moc:74.90,ean:"8590580899986"},
+  {kod:"80415",nazev:"Kim Organ Super Stretch 5 cái",nc:35.78,moc:86.90,ean:"8590580899979"},
+  {kod:"80398",nazev:"Kim Bàn Để Kim Gốc",nc:21.49,moc:51.90,ean:"8590580899962"},
+  {kod:"660085",nazev:"Mũi Kim Đầu Thủy Tinh 10g",nc:28.49,moc:69.00,ean:"8590580899955"},
+  {kod:"80412",nazev:"Mũi Kim Đầu Nhựa Trắng 80 cái",nc:23.32,moc:56.90,ean:"8590580899948"},
+  {kod:"235",nazev:"Mũi Kim Khóa Mix 1-3 Niken+Sơn",nc:21.63,moc:52.90,ean:"8590580899931"},
+  {kod:"199",nazev:"Velcro 2cm Cắt 20cm Đen+Trắng",nc:10.40,moc:25.90,ean:"8590580899924"},
+  {kod:"830040",nazev:"Nút Bấm Giường 14 cái",nc:27.48,moc:59.00,ean:"8590580899887"},
+  {kod:"830462",nazev:"Nút Dạng Bông Kẹp 18mm 20 cái",nc:32.50,moc:78.90,ean:"8590580899870"},
+  {kod:"830095",nazev:"Nút Dạng Bông Kẹp 15mm 20 cái",nc:32.50,moc:78.90,ean:"8590580899863"},
+  {kod:"700808",nazev:"Thước May 150cm",nc:14.40,moc:34.90,ean:"8590580899856"},
+  {kod:"224004_1",nazev:"Chỉ Unipoly 100m Trắng+Đen+Xanh",nc:18.76,moc:45.90,ean:"8590580899849"},
+  {kod:"224004_2",nazev:"Chỉ Unipoly 100m Trắng",nc:18.76,moc:45.40,ean:"8590580899832"},
+  {kod:"224004_3",nazev:"Chỉ Unipoly 100m Đen",nc:18.76,moc:45.40,ean:"8590580899825"},
+  {kod:"314",nazev:"Chỉ Linen Nút 50m Mix",nc:28.18,moc:68.20,ean:"8590580899818"},
+  {kod:"661620",nazev:"Khóa Jean 20cm Đen+Xanh Đậm",nc:31.06,moc:74.90,ean:"8590580899801"},
+  {kod:"76",nazev:"Khóa Xoắn 3mm 20cm Đen+Trắng",nc:13.86,moc:33.90,ean:"8590580899795"},
+  {kod:"100",nazev:"Khóa Xoắn 3mm 40cm Đen+Trắng",nc:18.34,moc:44.90,ean:"8590580899788"},
+  {kod:"1020",nazev:"Khóa Xoắn Không Tách 5mm 2×20cm",nc:10.40,moc:25.17,ean:"8590580899771"},
+  {kod:"1075",nazev:"Khóa Xoắn Tách 5mm 75cm",nc:18.96,moc:45.90,ean:"8590580899764"},
+  {kod:"5080",nazev:"Khóa Xương Tách 5mm 80cm",nc:19.80,moc:47.90,ean:"8590580899757"},
+  {kod:"342_1",nazev:"Dây Thun Thẻ 8mm Trắng",nc:12.90,moc:31.22,ean:"8590580989977"},
+  {kod:"342_2",nazev:"Dây Thun Thẻ 8mm Đen",nc:12.90,moc:31.22,ean:"8590580989984"},
+  {kod:"311_1",nazev:"Dây Thun Thẻ 10mm Trắng",nc:13.90,moc:33.64,ean:"8590580899511"},
+  {kod:"311_2",nazev:"Dây Thun Thẻ 10mm Đen",nc:13.90,moc:33.64,ean:"8590580989472"},
+  {kod:"668_1",nazev:"Dây Thun Thẻ 12mm Trắng",nc:14.90,moc:36.06,ean:"8590580989946"},
+  {kod:"668_2",nazev:"Dây Thun Thẻ 12mm Đen",nc:14.90,moc:36.06,ean:"8590580898939"},
+  {kod:"559",nazev:"Dây Bố Thẻ 6mm Trắng",nc:7.05,moc:17.06,ean:"8590580899917"},
+  {kod:"344_1",nazev:"Miếng Vá Dán 43×20cm Đen",nc:19.60,moc:47.90,ean:"8590580989809"},
+  {kod:"344_2",nazev:"Miếng Vá Dán 43×20cm Xanh",nc:19.60,moc:47.90,ean:"8590580989793"},
+  {kod:"344_3",nazev:"Miếng Vá Dán 43×20cm Trắng",nc:19.60,moc:47.90,ean:"8590580989786"},
+];
+
+let CATALOG = null;
+let stores = [];
+let cart = {};
+let orders = [];
+let storeId = '';
+let lastOrdered = {};
+
+// Load from localStorage
+async function loadAppData(){
+  await initDB();
+  CATALOG = JSON.parse(localStorage.getItem('ag_catalog_vi') || 'null') || DEFAULT_PRODUCTS;
+  stores = JSON.parse(localStorage.getItem('ag_stores_vi') || '[]');
+  cart = JSON.parse(localStorage.getItem('ag_cart_vi') || '{}');
+  orders = JSON.parse(localStorage.getItem('ag_orders_vi') || '[]');
+  storeId = localStorage.getItem('ag_store_vi') || '';
+  lastOrdered = JSON.parse(localStorage.getItem('ag_lastord_vi') || '{}');
+  
+  // Pre-populate IndexedDB with catalog
+  for(const p of CATALOG){
+    await saveProduct(p);
+  }
+  
+  updateOnlineStatus();
+  populateStoreSelect();
+  filterProducts();
+  updateOrderBar();
+}
+
+function save(){
+  localStorage.setItem('ag_catalog_vi', JSON.stringify(CATALOG));
+  localStorage.setItem('ag_stores_vi', JSON.stringify(stores));
+  localStorage.setItem('ag_cart_vi', JSON.stringify(cart));
+  localStorage.setItem('ag_orders_vi', JSON.stringify(orders));
+  localStorage.setItem('ag_store_vi', storeId);
+  localStorage.setItem('ag_lastord_vi', JSON.stringify(lastOrdered));
+}
+
+function fmt(n){
+  return new Intl.NumberFormat('vi-VN',{minimumFractionDigits:0,maximumFractionDigits:0}).format(n)+' VND';
+}
+
+function setSyncStatus(state, text){
+  const banner = document.getElementById('syncBanner');
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  if(!banner) return;
+  banner.className = 'sync-banner ' + state;
+  dot.className = 'sync-dot ' + state;
+  txt.textContent = text;
+}
+
+function syncLog(msg){
+  const el = document.getElementById('syncLog');
+  if(!el) return;
+  const ts = new Date().toLocaleTimeString('vi-VN');
+  el.textContent = '['+ts+'] '+msg+'\n'+(el.textContent==='— chưa đồng bộ —'?'':el.textContent);
+}
+
+async function syncNow(){
+  if(!navigator.onLine){
+    setSyncStatus('warn','Danh mục: chế độ ngoại tuyến');
+    return;
+  }
+  
+  const url = document.getElementById('settingsCatalogUrl')?.value.trim();
+  if(!url){
+    setSyncStatus('warn','Danh mục: chưa có URL (xem Cài đặt)');
+    return;
+  }
+  
+  setSyncStatus('spin','Danh mục: đang tải…');
+  syncLog('Bắt đầu đồng bộ từ: '+url);
+  
+  try {
+    const resp = await fetch(url, {cache:'no-cache'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    
+    let data = await resp.json();
+    if(!Array.isArray(data)||data.length===0) throw new Error('Dữ liệu trống');
+    
+    CATALOG = data;
+    localStorage.setItem('ag_catalog_vi', JSON.stringify(data));
+    
+    // Save to IndexedDB
+    for(const p of data){
+      await saveProduct(p);
+    }
+    
+    setSyncStatus('ok','Danh mục: '+data.length+' sản phẩm');
+    syncLog('OK: '+data.length+' sản phẩm tải');
+    
+    filterProducts();
+    showToast('✓ Cập nhật thành công ('+data.length+' SP)');
+  } catch(e){
+    setSyncStatus('error','Danh mục: lỗi đồng bộ');
+    syncLog('Lỗi: '+e.message);
+    showToast('Lỗi: '+e.message);
+  }
+}
+
+function saveSyncSettings(){
+  const url = document.getElementById('settingsCatalogUrl')?.value.trim()||'';
+  localStorage.setItem('ag_catalog_url_vi', url);
+}
+
+function loadSyncSettings(){
+  const url = localStorage.getItem('ag_catalog_url_vi')||'';
+  const el = document.getElementById('settingsCatalogUrl');
+  if(el) el.value = url;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// UI FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('page-'+tab).classList.add('active');
+  if(tab==='cart') renderCart();
+  if(tab==='stores') renderStores();
+  if(tab==='orders') renderOrders();
+  if(tab==='settings') loadSyncSettings();
+}
+
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+function populateStoreSelect(){
+  const sel = document.getElementById('storeSelect');
+  sel.innerHTML = '<option value="">— Chọn cửa hàng —</option>';
+  stores.forEach(s=>{
+    const o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = (s.chain?s.chain+' – ':'')+s.name;
+    if(s.id===storeId) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function onStoreChange(){
+  storeId = document.getElementById('storeSelect').value;
+  save();
+  filterProducts();
+}
+
+function cartTotals(){
+  let nc=0, marze=0, moc=0, count=0, items=0;
+  CATALOG.filter(p=>cart[p.kod]).forEach(p=>{
+    const q = cart[p.kod];
+    nc += p.nc*q;
+    moc += p.moc*q;
+    marze += (p.moc-p.nc)*q;
+    count += q;
+    items++;
+  });
+  return{nc,marze,moc,count,items};
+}
+
+function updateOrderBar(){
+  const{nc,marze,moc,count,items} = cartTotals();
+  document.getElementById('barItems').textContent = items?items+' SP / '+count+' cái':'Giỏ trống';
+  document.getElementById('barNc').textContent = 'Giá: '+fmt(nc);
+  document.getElementById('barMarze').textContent = 'Lợi: '+fmt(marze);
+  const b = document.getElementById('cartBadge');
+  if(items>0){b.style.display='flex';b.textContent=items;}else b.style.display='none';
+}
+
+function filterProducts(){
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = q?CATALOG.filter(p=>
+    p.nazev.toLowerCase().includes(q)||p.kod.includes(q)||(p.ean||'').includes(q)
+  ):CATALOG;
+  
+  renderProducts(filtered);
+}
+
+function renderProducts(list){
+  const c = document.getElementById('productList');
+  if(!list.length){
+    c.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div style="font-size:14px;font-weight:500">Không có kết quả</div></div>';
+    return;
+  }
+  
+  c.innerHTML = list.map(p=>{
+    const qty = cart[p.kod]||0;
+    const marze = (p.moc-p.nc)*qty;
+    return `<div class="product-card">
+      <div class="status-dot ok"></div>
+      <div class="product-info">
+        <div class="product-name">${p.nazev}</div>
+        <div class="product-meta">
+          <span class="p-code">${p.kod}</span>
+          <span class="p-moc">${fmt(p.moc)}</span>
+          <span class="p-nc">Giá: ${fmt(p.nc)}</span>
+          <span class="p-min">min ${MIN_QTY} cái</span>
+        </div>
+        ${qty>0?`<div style="font-size:10px;color:var(--ok);margin-top:3px">∑ Giá ${fmt(p.nc*qty)} · Lợi ${fmt(marze)}</div>`:''}
+      </div>
+      <div class="qty-control">
+        <div class="qty-row">
+          <button class="qty-btn" onclick="changeQty('${p.kod}',-${MIN_QTY})">−</button>
+          <input class="qty-input${qty>0?' has-qty':''}" type="number" min="0" step="${MIN_QTY}" value="${qty}"
+                 onchange="setQty('${p.kod}',this.value)" id="qty-${p.kod}">
+          <button class="qty-btn" onclick="changeQty('${p.kod}',${MIN_QTY})">+</button>
+        </div>
+        <div style="font-size:9px;color:var(--muted)">×${MIN_QTY}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changeQty(kod, delta){
+  const cur = cart[kod]||0;
+  let nv = cur+delta;
+  if(nv<0) nv=0;
+  if(nv>0 && nv<MIN_QTY) nv = delta>0?MIN_QTY:0;
+  if(nv>0) nv = Math.round(nv/MIN_QTY)*MIN_QTY;
+  if(nv<=0) delete cart[kod]; else cart[kod]=nv;
+  const inp = document.getElementById('qty-'+kod);
+  if(inp){
+    inp.value = nv;
+    inp.className = 'qty-input'+(nv>0?' has-qty':'');
+  }
+  updateOrderBar();
+  save();
+}
+
+function setQty(kod, val){
+  let n = parseInt(val)||0;
+  if(n>0 && n<MIN_QTY) n=MIN_QTY;
+  if(n>0) n=Math.round(n/MIN_QTY)*MIN_QTY;
+  if(n<=0) delete cart[kod]; else cart[kod]=n;
+  updateOrderBar();
+  save();
+}
+
+function renderCart(){
+  const items = CATALOG.filter(p=>cart[p.kod]);
+  const{nc,marze,moc,count} = cartTotals();
+  const store = stores.find(s=>s.id===storeId);
+  const margeP = moc>0?(marze/moc*100).toFixed(1):0;
+  const minOk = moc>=1200000; // 1.2M VND
+  
+  if(!items.length){
+    document.getElementById('cartContent').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🛒</div>
+        <div style="font-size:14px;font-weight:500">Giỏ hàng trống</div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Thêm sản phẩm từ tab Sản phẩm</p>
+      </div>`;
+    return;
+  }
+  
+  document.getElementById('cartContent').innerHTML = `
+    <div class="cart-header-box">
+      <h3>🛒 Đơn hàng của bạn</h3>
+      ${store?`<div style="font-size:12px;opacity:.7;margin-bottom:10px">${store.chain?store.chain+' – ':''}${store.name}</div>`:'<div style="font-size:12px;color:#F9A090">⚠ Chưa chọn cửa hàng</div>'}
+      <div class="totals-grid">
+        <div class="total-cell"><div class="total-label">Giá nhập</div><div class="total-value">${fmt(nc)}</div></div>
+        <div class="total-cell"><div class="total-label">Giá bán</div><div class="total-value">${fmt(moc)}</div></div>
+        <div class="total-cell"><div class="total-label">Lợi nhuận</div><div class="total-value">${fmt(marze)}</div></div>
+        <div class="total-cell"><div class="total-label">Lợi %</div><div class="total-value">${margeP}%</div></div>
+      </div>
+    </div>
+    
+    <div style="background:${minOk?'var(--ok-light)':'var(--sos-light)'};border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;font-weight:600;color:${minOk?'var(--ok-dark)':'var(--sos-dark)'}">
+      ${minOk?`✅ Đơn hàng OK (${fmt(moc)} / 1.2M VND)`:`⚠ Cần thêm ${fmt(1200000-moc)} VND`}
+    </div>
+    
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:8px">📅 Giao hàng</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button style="border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer" onclick="setDeliv('asap')">⚡ Sớm nhất (24h)</button>
+        <button style="border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer" onclick="setDeliv('later')">📆 Khác</button>
+      </div>
+    </div>
+    
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+      ${items.map(p=>{
+        const q = cart[p.kod];
+        const m = (p.moc-p.nc)*q;
+        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500">${p.nazev}</div>
+            <div style="font-size:11px;color:var(--muted)">${q} × ${fmt(p.nc)}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;font-weight:600">${fmt(p.nc*q)}</div>
+            <div style="font-size:10px;color:var(--ok)">+${fmt(m)}</div>
+          </div>
+          <button style="background:none;border:none;cursor:pointer;color:var(--sos);font-size:16px" onclick="removeFromCart('${p.kod}')">✕</button>
+        </div>`;
+      }).join('')}
+    </div>
+    
+    <button class="btn-p" style="width:100%" onclick="openOrderConfirm()" ${(!storeId||!minOk)?'disabled':''}>
+      ${!storeId?'⚠ Chọn cửa hàng':!minOk?'⚠ Đơn quá nhỏ':'✓ Gửi đơn'}
+    </button>`;
+}
+
+function setDeliv(mode){
+  window.delivMode = mode;
+  showToast('Termín: '+mode);
+}
+
+function removeFromCart(kod){
+  delete cart[kod];
+  updateOrderBar();
+  save();
+  renderCart();
+  filterProducts();
+}
+
+function openOrderConfirm(){
+  const store = stores.find(s=>s.id===storeId);
+  if(!store){showToast('Chọn cửa hàng');return;}
+  const items = CATALOG.filter(p=>cart[p.kod]);
+  const{nc,marze,moc} = cartTotals();
+  const margeP = moc>0?(marze/moc*100).toFixed(1):0;
+  
+  document.getElementById('orderConfirmContent').innerHTML = `
+    <div style="background:#F5F0E8;border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-weight:700">${store.chain?store.chain+' – ':''}${store.name}</div>
+      ${store.address?`<div style="font-size:12px;color:var(--muted)">${store.address}</div>`:''}
+      ${store.manager?`<div style="font-size:12px;color:var(--muted)">Quản lý: ${store.manager}</div>`:''}
+    </div>
+    <div style="font-size:11px;max-height:35vh;overflow-y:auto;margin-bottom:12px">
+      ${items.map(p=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
+        <span>${p.nazev} ×${cart[p.kod]}</span>
+        <span style="color:var(--sos)">${fmt(p.nc*cart[p.kod])}</span>
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-weight:700;padding:5px 0;font-size:14px">
+      <span>Tổng cộng:</span><span>${fmt(nc)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ok);padding:3px 0">
+      <span>Lợi nhuận:</span><span>${fmt(marze)} (${margeP}%)</span>
+    </div>`;
+  
+  document.getElementById('orderModal').classList.add('open');
+}
+
+function closeOrderModal(){
+  document.getElementById('orderModal').classList.remove('open');
+}
+
+function confirmOrder(){
+  const store = stores.find(s=>s.id===storeId);
+  const items = CATALOG.filter(p=>cart[p.kod]).map(p=>({...p,qty:cart[p.kod]}));
+  const{nc,marze,moc} = cartTotals();
+  const now = new Date().toISOString();
+  
+  // Track last ordered
+  items.forEach(i=>{
+    const key = storeId?storeId+'_'+i.kod:i.kod;
+    lastOrdered[key] = now;
+  });
+  
+  orders.unshift({
+    id:Date.now(),
+    storeId,
+    storeName:store?(store.chain?store.chain+' – '+store.name:store.name):'?',
+    date:now,
+    items,
+    nc,marze,moc,
+    status:'new'
+  });
+  
+  // Save to IndexedDB
+  saveOrder(orders[0]);
+  
+  cart = {};
+  closeOrderModal();
+  updateOrderBar();
+  save();
+  filterProducts();
+  showToast('✓ Đơn hàng được tạo');
+  setTimeout(()=>switchTab('orders'), 600);
+}
+
+function renderStores(){
+  const el = document.getElementById('storeList');
+  if(!stores.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏪</div><div style="font-size:14px;font-weight:500">Chưa có cửa hàng</div></div>';
+    return;
+  }
+  el.innerHTML = stores.map(s=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:6px">${s.chain?s.chain+' – ':''}${s.name}</div>
+    ${s.manager?`<div style="font-size:12px;color:var(--muted)">Quản lý: ${s.manager}</div>`:''}
+    ${s.phone?`<div style="font-size:12px;color:var(--muted)">${s.phone}</div>`:''}
+    ${s.address?`<div style="font-size:12px;color:var(--muted)">${s.address}</div>`:''}
+  </div>`).join('');
+}
+
+function openAddStore(){
+  document.getElementById('storeModalTitle').textContent = 'Thêm cửa hàng';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-chain').value = '';
+  document.getElementById('f-manager').value = '';
+  document.getElementById('f-phone').value = '';
+  document.getElementById('f-address').value = '';
+  document.getElementById('storeModal').classList.add('open');
+}
+
+function closeStoreModal(){
+  document.getElementById('storeModal').classList.remove('open');
+}
+
+function saveStore(){
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){showToast('Nhập tên cửa hàng');return;}
+  const store = {
+    id:Date.now(),
+    name,
+    chain:document.getElementById('f-chain').value,
+    manager:document.getElementById('f-manager').value,
+    phone:document.getElementById('f-phone').value,
+    address:document.getElementById('f-address').value
+  };
+  stores.push(store);
+  save();
+  populateStoreSelect();
+  renderStores();
+  closeStoreModal();
+  showToast('✓ Cửa hàng đã lưu');
+}
+
+function renderOrders(){
+  const el = document.getElementById('orderList');
+  if(!orders.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div style="font-size:14px;font-weight:500">Chưa có đơn hàng</div></div>';
+    return;
+  }
+  el.innerHTML = orders.map(o=>{
+    const d = new Date(o.date).toLocaleDateString('vi-VN');
+    const{nc,marze,moc} = o;
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div style="font-size:14px;font-weight:700">${o.storeName}</div>
+        <div style="font-size:11px;color:var(--muted)">${d}</div>
+      </div>
+      <div style="display:inline-block;background:${o.status==='new'?'var(--ok-light)':'var(--border)'};color:${o.status==='new'?'var(--ok-dark)':'var(--muted)'};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;margin-bottom:6px">${o.status==='new'?'Mới':'Đã gửi'}</div>
+      <div style="font-size:12px;margin-bottom:6px">
+        <div>Giá: <strong>${fmt(nc)}</strong></div>
+        <div style="color:var(--ok)">Lợi: ${fmt(marze)}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button style="flex:1;border:none;border-radius:7px;padding:8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;background:var(--dark);color:var(--cream)" onclick="sharOrder(${o.id})">📤 Chia sẻ</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function sharOrder(oid){
+  const o = orders.find(x=>x.id===oid);
+  if(!o) return;
+  const text = `Đơn hàng A-GROSS SOS\n${o.storeName}\n\nTổng giá: ${fmt(o.nc)}\nLợi nhuận: ${fmt(o.marze)}\n${new Date(o.date).toLocaleString('vi-VN')}`;
+  if(navigator.share){
+    navigator.share({text});
+  } else {
+    alert(text);
+  }
+}
+
+function openScanner(){
+  document.getElementById('scannerModal').classList.add('open');
+}
+
+function closeScanner(){
+  document.getElementById('scannerModal').classList.remove('open');
+  if(cameraStream){
+    cameraStream.getTracks().forEach(t=>t.stop());
+    cameraStream=null;
+  }
+}
+
+async function startCamera(){
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const video = document.getElementById('cameraFeed');
+    video.srcObject = cameraStream;
+    video.style.display = 'block';
+    document.getElementById('camPlaceholder').style.display = 'none';
+    document.getElementById('startCamBtn').textContent = '⏹ Dừng camera';
+    document.getElementById('startCamBtn').onclick = ()=>{
+      cameraStream.getTracks().forEach(t=>t.stop());
+      cameraStream=null;
+      video.style.display='none';
+      document.getElementById('camPlaceholder').style.display='flex';
+      document.getElementById('startCamBtn').textContent='▶ Khởi động';
+      document.getElementById('startCamBtn').onclick=startCamera;
+    };
+  } catch(e){
+    showToast('Lỗi camera: '+e.message);
+  }
+}
+
+function lookupEan(){
+  const ean = document.getElementById('manualEan').value.trim();
+  if(!ean) return;
+  const p = CATALOG.find(x=>x.ean===ean||x.kod===ean);
+  if(p){
+    changeQty(p.kod, MIN_QTY);
+    closeScanner();
+    showToast('✓ '+p.nazev+' thêm vào giỏ');
+  } else {
+    showToast('⚠ Không tìm thấy');
+  }
+}
+
+let cameraStream = null;
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', async ()=>{
+  await loadAppData();
+  registerServiceWorker();
+});
+</script>
+
+</body>
+</html>

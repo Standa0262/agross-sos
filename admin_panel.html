@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A-GROSS SOS – Admin Panel</title>
+<link href="https://cdn.jsdelivr.net/npm/chart.js"></link>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+}
+
+header {
+  background: #1a1a1a;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+header h1 { font-size: 24px; }
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+nav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+nav button {
+  padding: 10px 20px;
+  border: none;
+  background: #f0f0f0;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+nav button.active {
+  background: #1a1a1a;
+  color: white;
+}
+
+nav button:hover {
+  background: #333;
+  color: white;
+}
+
+.section { display: none; }
+.section.active { display: block; }
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.kpi-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-left: 4px solid #e8533a;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.kpi-change {
+  font-size: 12px;
+  color: #2a7a4a;
+  margin-top: 8px;
+}
+
+.chart-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 30px;
+}
+
+.chart-container h3 {
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+thead {
+  background: #f5f5f5;
+  border-bottom: 2px solid #ddd;
+}
+
+th, td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  font-weight: 600;
+  color: #666;
+  font-size: 12px;
+}
+
+tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge.new { background: #e8f5ee; color: #2a7a4a; }
+.badge.sent { background: #fff3e0; color: #c05000; }
+.badge.ok { background: #e8f5ee; color: #2a7a4a; }
+.badge.warn { background: #fdecea; color: #c03020; }
+
+input, select, textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+button {
+  padding: 10px 20px;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+button:hover { background: #333; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.alert {
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.alert.success { background: #e8f5ee; color: #2a7a4a; border: 1px solid #a8e8b8; }
+.alert.error { background: #fdecea; color: #c03020; border: 1px solid #f9c9c0; }
+.alert.info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+.loader {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #1a1a1a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid, .stats-row {
+    grid-template-columns: 1fr;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎯 A-GROSS SOS – Admin Panel</h1>
+  <div>
+    <span id="userInfo" style="margin-right: 20px;">Admin</span>
+    <button onclick="logout()" style="background: #e8533a;">Odhlásit</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- NAVIGATION -->
+  <nav>
+    <button class="active" onclick="switchView('dashboard')">📊 Dashboard</button>
+    <button onclick="switchView('networks')">🌐 Sítě</button>
+    <button onclick="switchView('products')">📦 Ceník</button>
+    <button onclick="switchView('orders')">📋 Objednávky</button>
+    <button onclick="switchView('notifications')">🔔 Notifikace</button>
+    <button onclick="switchView('reports')">📈 Reporty</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="section active">
+    <h2 style="margin-bottom: 20px;">📊 Dashboard – Real-time Přehled</h2>
+    
+    <div class="stats-row">
+      <div class="kpi-card">
+        <div class="kpi-label">Aktivní obchody</div>
+        <div class="kpi-value" id="kpiStores">—</div>
+        <div class="kpi-change">+12% oproti loňsku</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Objednávky měsíc</div>
+        <div class="kpi-value" id="kpiOrders">—</div>
+        <div class="kpi-change">+23% trend</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Nákupy bez DPH</div>
+        <div class="kpi-value" id="kpiPurchase">—</div>
+        <div class="kpi-change">trend +5%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Provize k výplatě</div>
+        <div class="kpi-value" id="kpiCommission">—</div>
+        <div class="kpi-change">měsíč</div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h3>📈 Objednávky za poslední 30 dní</h3>
+      <canvas id="ordersChart" height="80"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h3>🌐 Distribuce po sítích</h3>
+      <canvas id="networksChart" height="80"></canvas>
+    </div>
+
+    <h3 style="margin-top: 30px; margin-bottom: 15px;">🏪 Top obchody (měsíc)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Obchod</th>
+          <th>Síť</th>
+          <th>Objednávky</th>
+          <th>Nákup CZK</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="topStoresBody"></tbody>
+    </table>
+  </div>
+
+  <!-- NETWORKS -->
+  <div id="networks" class="section">
+    <h2 style="margin-bottom: 20px;">🌐 Správa Sítí</h2>
+    
+    <button onclick="openNetworkForm()" style="margin-bottom: 20px;">+ Přidat síť</button>
+
+    <div id="networksList"></div>
+
+    <div id="networkFormModal" style="display: none; background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h3>Přidat novou síť</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Název sítě *</label>
+          <input type="text" id="netName" placeholder="Provector">
+        </div>
+        <div class="form-group">
+          <label>Email kontakt *</label>
+          <input type="email" id="netEmail" placeholder="finance@provector.vn">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sazba provize (%) *</label>
+          <input type="number" id="netCommission" placeholder="5" step="0.1" min="0" max="100">
+        </div>
+        <div class="form-group">
+          <label>Telefon</label>
+          <input type="tel" id="netPhone" placeholder="+84 9xxx xxxx">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Poznámka</label>
+        <textarea id="netNote" placeholder="Další info..." rows="3"></textarea>
+      </div>
+      <button onclick="saveNetwork()">✓ Uložit</button>
+      <button onclick="closeNetworkForm()" style="background: #ccc; color: #333;">Zrušit</button>
+    </div>
+  </div>
+
+  <!-- PRODUCTS (CENÍK) -->
+  <div id="products" class="section">
+    <h2 style="margin-bottom: 20px;">📦 Správa Ceníku</h2>
+    
+    <div style="margin-bottom: 20px;">
+      <button onclick="exportCatalog()">📥 Import z Excelu</button>
+      <button onclick="downloadCatalog()" style="background: #2a7a4a;">📤 Export Katalog</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Kód</th>
+          <th>Název produktu</th>
+          <th>NC (Kč)</th>
+          <th>MOC (Kč)</th>
+          <th>EAN</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody id="productsBody"></tbody>
+    </table>
+  </div>
+
+  <!-- ORDERS -->
+  <div id="orders" class="section">
+    <h2 style="margin-bottom: 20px;">📋 Všechny Objednávky</h2>
+    
+    <div class="form-row" style="margin-bottom: 20px;">
+      <div class="form-group">
+        <label>Filtr síť</label>
+        <select id="filterNetwork" onchange="filterOrders()">
+          <option value="">— Všechny —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Období</label>
+        <select id="filterPeriod" onchange="filterOrders()">
+          <option value="month">Poslední měsíc</option>
+          <option value="week">Poslední týden</option>
+          <option value="day">Dnes</option>
+          <option value="all">Všechno</option>
+        </select>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Obchod</th>
+          <th>Síť</th>
+          <th>Datum</th>
+          <th>Položky</th>
+          <th>NC (Kč)</th>
+          <th>Marže (Kč)</th>
+          <th>Status</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div id="notifications" class="section">
+    <h2 style="margin-bottom: 20px;">🔔 Push Notifikace</h2>
+    
+    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h3>Poslat notifikaci</h3>
+      <div class="form-group">
+        <label>Cíl</label>
+        <select id="notifTarget">
+          <option value="all">Všem (Broadcast)</option>
+          <option value="network">Konkrétní síti</option>
+          <option value="store">Jednomu obchodu</option>
+        </select>
+      </div>
+      <div id="notifNetworkSelect" style="display:none; margin-bottom: 15px;">
+        <label>Vyber síť</label>
+        <select id="notifNetwork"></select>
+      </div>
+      <div class="form-group">
+        <label>Nadpis</label>
+        <input type="text" id="notifTitle" placeholder="Nový katalog je dostupný">
+      </div>
+      <div class="form-group">
+        <label>Obsah zprávy</label>
+        <textarea id="notifBody" placeholder="Od 1.7. jsou nové ceny..." rows="4"></textarea>
+      </div>
+      <button onclick="sendNotification()" style="background: #e8533a;">📤 Poslat notifikaci</button>
+    </div>
+
+    <h3>Poslané notifikace</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Čas</th>
+          <th>Cíl</th>
+          <th>Nadpis</th>
+          <th>Stav</th>
+          <th>Doručeno</th>
+        </tr>
+      </thead>
+      <tbody id="notificationsBody"></tbody>
+    </table>
+  </div>
+
+  <!-- REPORTS -->
+  <div id="reports" class="section">
+    <h2 style="margin-bottom: 20px;">📈 Měsíční Reporty</h2>
+    
+    <div class="form-row" style="margin-bottom: 20px;">
+      <div class="form-group">
+        <label>Síť</label>
+        <select id="reportNetwork">
+          <option value="">— Vyberte síť —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Měsíc/Rok</label>
+        <input type="month" id="reportMonth">
+      </div>
+    </div>
+    <button onclick="generateReport()" style="margin-bottom: 20px;">📊 Generovat Report</button>
+    <button onclick="sendReportEmail()" style="background: #2a7a4a; margin-bottom: 20px;">📧 Poslat emailem</button>
+
+    <div id="reportContent"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const API_URL = 'http://localhost:5000';
+let chartsInit = false;
+let ordersChart, networksChart;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadDashboard();
+  loadNetworks();
+  loadProducts();
+  loadOrders();
+  loadNotifications();
+  setReportMonth();
+});
+
+function switchView(view){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(view).classList.add('active');
+  
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if(view==='dashboard') loadDashboard();
+  if(view==='networks') loadNetworks();
+  if(view==='products') loadProducts();
+  if(view==='orders') loadOrders();
+}
+
+async function loadDashboard(){
+  try {
+    const resp = await fetch(`${API_URL}/api/stats/monthly`);
+    const data = await resp.json();
+    
+    document.getElementById('kpiStores').textContent = data.active_stores || '—';
+    document.getElementById('kpiOrders').textContent = data.total_orders || '—';
+    document.getElementById('kpiPurchase').textContent = 
+      (data.total_purchase || 0).toLocaleString('cs-CZ') + ' Kč';
+    document.getElementById('kpiCommission').textContent = 
+      (data.total_commission || 0).toLocaleString('cs-CZ') + ' Kč';
+    
+    // Load charts
+    if(!chartsInit) initCharts(data);
+    loadTopStores();
+  } catch(e){
+    console.error('Dashboard error:', e);
+  }
+}
+
+function initCharts(data){
+  const ctx1 = document.getElementById('ordersChart').getContext('2d');
+  ordersChart = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: ['1.','5.','10.','15.','20.','25.','30.'],
+      datasets: [{
+        label: 'Objednávky',
+        data: [12, 19, 15, 25, 22, 30, 28],
+        borderColor: '#1a1a1a',
+        backgroundColor: 'rgba(26,26,26,0.05)',
+        tension: 0.4
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  const ctx2 = document.getElementById('networksChart').getContext('2d');
+  networksChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: ['Provector', 'MO Partner'],
+      datasets: [{
+        data: [60, 40],
+        backgroundColor: ['#1a1a1a', '#e8533a']
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+  
+  chartsInit = true;
+}
+
+async function loadTopStores(){
+  try {
+    const resp = await fetch(`${API_URL}/api/stores/top?limit=5`);
+    const stores = await resp.json();
+    
+    document.getElementById('topStoresBody').innerHTML = stores.map(s=>`<tr>
+      <td>${s.name}</td>
+      <td>${s.network}</td>
+      <td>${s.orders_count}</td>
+      <td>${s.total_purchase.toLocaleString('cs-CZ')} Kč</td>
+      <td><span class="badge ok">Aktivní</span></td>
+    </tr>`).join('');
+  } catch(e){
+    console.error('Top stores error:', e);
+  }
+}
+
+async function loadNetworks(){
+  try {
+    const resp = await fetch(`${API_URL}/api/networks`);
+    const networks = await resp.json();
+    
+    document.getElementById('networksList').innerHTML = networks.map(n=>`<div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+      <div style="display: flex; justify-content: space-between;">
+        <div>
+          <h4>${n.name}</h4>
+          <p style="color: #666; font-size: 13px;">${n.email} · ${n.commission_rate}%</p>
+        </div>
+        <button onclick="deleteNetwork('${n.id}')" style="background: #e8533a; padding: 8px 15px;">Smazat</button>
+      </div>
+    </div>`).join('');
+  } catch(e){
+    console.error('Networks error:', e);
+  }
+}
+
+function openNetworkForm(){
+  document.getElementById('networkFormModal').style.display = 'block';
+}
+
+function closeNetworkForm(){
+  document.getElementById('networkFormModal').style.display = 'none';
+}
+
+async function saveNetwork(){
+  const network = {
+    name: document.getElementById('netName').value,
+    email: document.getElementById('netEmail').value,
+    commission_rate: parseFloat(document.getElementById('netCommission').value),
+    phone: document.getElementById('netPhone').value
+  };
+  
+  try {
+    const resp = await fetch(`${API_URL}/api/networks`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(network)
+    });
+    
+    if(resp.ok){
+      alert('✓ Síť uložena');
+      closeNetworkForm();
+      loadNetworks();
+    }
+  } catch(e){
+    alert('Chyba: '+e.message);
+  }
+}
+
+async function loadProducts(){
+  try {
+    const resp = await fetch(`${API_URL}/api/catalogs/sync`);
+    const data = await resp.json();
+    
+    document.getElementById('productsBody').innerHTML = data.products.slice(0,20).map(p=>`<tr>
+      <td>${p.kod}</td>
+      <td>${p.nazev}</td>
+      <td>${p.nc.toFixed(2)}</td>
+      <td>${p.moc.toFixed(2)}</td>
+      <td>${p.ean || '—'}</td>
+      <td><button onclick="editProduct('${p.kod}')" style="padding: 5px 10px; font-size: 12px;">✏️ Upravit</button></td>
+    </tr>`).join('');
+  } catch(e){
+    console.error('Products error:', e);
+  }
+}
+
+async function loadOrders(){
+  try {
+    const resp = await fetch(`${API_URL}/api/orders`);
+    const data = await resp.json();
+    
+    document.getElementById('ordersBody').innerHTML = data.orders.slice(0,20).map(o=>`<tr>
+      <td>${o.id}</td>
+      <td>${o.storeName}</td>
+      <td>—</td>
+      <td>${new Date(o.date).toLocaleDateString('cs-CZ')}</td>
+      <td>${o.items.length}</td>
+      <td>${o.nc.toLocaleString('cs-CZ')} Kč</td>
+      <td>${o.marze.toLocaleString('cs-CZ')} Kč</td>
+      <td><span class="badge ${o.status==='new'?'new':'sent'}">${o.status==='new'?'Nová':'Odeslána'}</span></td>
+      <td><button onclick="viewOrder('${o.id}')" style="padding: 5px 10px; font-size: 12px;">📄 Detail</button></td>
+    </tr>`).join('');
+  } catch(e){
+    console.error('Orders error:', e);
+  }
+}
+
+async function loadNotifications(){
+  try {
+    const resp = await fetch(`${API_URL}/api/notifications`);
+    const data = await resp.json();
+    
+    document.getElementById('notificationsBody').innerHTML = data.notifications.slice(0,10).map(n=>`<tr>
+      <td>${new Date(n.sent_at).toLocaleString('cs-CZ')}</td>
+      <td>${n.target}</td>
+      <td>${n.title}</td>
+      <td><span class="badge ok">Odeslána</span></td>
+      <td>${n.delivered || 0}</td>
+    </tr>`).join('');
+  } catch(e){
+    console.error('Notifications error:', e);
+  }
+}
+
+async function sendNotification(){
+  const notif = {
+    target: document.getElementById('notifTarget').value,
+    title: document.getElementById('notifTitle').value,
+    body: document.getElementById('notifBody').value
+  };
+  
+  try {
+    const resp = await fetch(`${API_URL}/api/notifications/send`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(notif)
+    });
+    
+    if(resp.ok) alert('✓ Notifikace poslána');
+    else alert('Chyba: '+resp.statusText);
+  } catch(e){
+    alert('Chyba: '+e.message);
+  }
+}
+
+function setReportMonth(){
+  const today = new Date();
+  document.getElementById('reportMonth').valueAsDate = today;
+}
+
+async function generateReport(){
+  const network = document.getElementById('reportNetwork').value;
+  const month = document.getElementById('reportMonth').value;
+  
+  if(!network){
+    alert('Vyberte síť');
+    return;
+  }
+  
+  try {
+    const [year, m] = month.split('-');
+    const resp = await fetch(
+      `${API_URL}/api/reports/monthly?network=${network}&year=${year}&month=${m}`
+    );
+    const report = await resp.json();
+    
+    document.getElementById('reportContent').innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 8px;">
+        <h3>${report.network} – ${report.period}</h3>
+        <table style="margin-top: 15px;">
+          <tr>
+            <td><strong>Obchody:</strong></td><td>${report.stores_count}</td>
+          </tr>
+          <tr>
+            <td><strong>Objednávky:</strong></td><td>${report.total_orders}</td>
+          </tr>
+          <tr>
+            <td><strong>Nákupy bez DPH:</strong></td><td>${report.total_purchase_value.toLocaleString('cs-CZ')} Kč</td>
+          </tr>
+          <tr style="background: #fff3e0;">
+            <td><strong>Provize (${report.commission_rate*100}%):</strong></td>
+            <td style="font-weight: 700; color: #c05000;">${report.commission_amount.toLocaleString('cs-CZ')} Kč</td>
+          </tr>
+        </table>
+        
+        <h4 style="margin-top: 20px; margin-bottom: 10px;">Detailně po obchodech:</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Obchod</th><th>Objednávky</th><th>Nákup Kč</th><th>Provize Kč</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${report.stores.map(s=>`<tr>
+              <td>${s.store_name}</td>
+              <td>${s.orders_count}</td>
+              <td>${s.total_purchase.toLocaleString('cs-CZ')}</td>
+              <td style="font-weight: 700; color: #2a7a4a;">${s.commission.toLocaleString('cs-CZ')}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch(e){
+    alert('Chyba: '+e.message);
+  }
+}
+
+async function sendReportEmail(){
+  const network = document.getElementById('reportNetwork').value;
+  if(!network) {
+    alert('Vyberte síť');
+    return;
+  }
+  
+  try {
+    const resp = await fetch(`${API_URL}/api/reports/send-email?network=${network}`, {
+      method: 'POST'
+    });
+    
+    if(resp.ok) alert('✓ Report poslán emailem');
+    else alert('Chyba: '+resp.statusText);
+  } catch(e){
+    alert('Chyba: '+e.message);
+  }
+}
+
+function filterOrders(){
+  // TODO: Implementovat filtrování
+  loadOrders();
+}
+
+function exportCatalog(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.xlsx,.csv';
+  input.onchange = (e)=>{
+    alert('Import: TODO - implementovat');
+  };
+  input.click();
+}
+
+function downloadCatalog(){
+  window.open(`${API_URL}/api/catalogs/download`);
+}
+
+function editProduct(kod){
+  alert('Úprava produktu: '+kod+' – TODO');
+}
+
+function viewOrder(id){
+  alert('Detail objednávky: '+id+' – TODO');
+}
+
+function deleteNetwork(id){
+  if(confirm('Smazat síť?')){
+    alert('Smazáno – TODO');
+  }
+}
+
+function logout(){
+  if(confirm('Odhlásit se?')){
+    window.location.href = '/login';
+  }
+}
+</script>
+</body>
+</html>
