@@ -1491,7 +1491,7 @@ function confirmOrder(){
 }
 
 function syncOrderToBackend(order){
-  fetch('http://localhost:5000/api/orders/sync',{
+  fetch('https://agross-sos.onrender.com/api/orders/sync',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(order)
