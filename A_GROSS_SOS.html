@@ -1615,14 +1615,17 @@ function startCamera() {
   document.getElementById('startCamBtn').onclick=stopCamera;
   html5QrCode.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: 250, height: 150 } },
+    { fps: 15, qrbox: { width: 280, height: 80 },
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true } },
     (decodedText) => {
       document.getElementById('manualEan').value = decodedText;
       lookupEan();
-      html5QrCode.stop();
+      html5QrCode.stop().then(() => {
+        window._qrScanner = null;
+      }).catch(()=>{});
     },
-    (error) => {}
-  ).catch(err => showToast('Kamera nedostupná: ' + err));
+    (error) => { /* ignoruj chyby čtení - kamera zůstane otevřená */ }
+  ).catch(err => showToast('Kamera nedostupná'));
 }
 function stopCamera() {
   document.getElementById('startCamBtn').textContent='▶ Spustit kameru';
