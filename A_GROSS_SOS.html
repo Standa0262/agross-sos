@@ -15,7 +15,7 @@
 <title>A-GROSS SOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js" defer></script>
+<script src="https://unpkg.com/html5-qrcode" defer></script>
 <style>
 :root{
   /* A-GROSS brand */
@@ -595,171 +595,155 @@ header{
 <div class="page" id="page-info">
   <div class="info-hero">
     <h2>A-GROSS <span style="color:var(--sos)">SOS</span></h2>
-    <p>Galanterni prvni pomoc pro venkovske prodejny</p>
+    <p>Galanterní první pomoc pro venkovské prodejny</p>
   </div>
   <div class="info-chapter">
     <div class="ich-header" onclick="toggleCh('c1')">
-      <div class="ich-num">1</div><div class="ich-title">Pribeh SOS &#8211; proc galanterie mizi z vesnic</div>
+      <div class="ich-num">1</div><div class="ich-title">Příběh SOS &#8211; proč galanterie mizí z vesnic</div>
       <div class="ich-arrow" id="arr-c1">&#9660;</div>
     </div>
     <div class="ich-body" id="c1">
-      <p class="ip">Kazdy den v tisicich venkobskych prodejen po cele republice se opakuje stejna scena.</p>
-      <p class="ip" style="font-style:italic;color:var(--sos)">&#8222;Mate jehlu a nit? Utrhlo se mi knoflík.&#8220;<br><span style="color:var(--muted);font-style:normal">Odpoved je skoro vzdy: &#8222;To bohuzel nemame.&#8220;</span></p>
+      <p class="ip">Každý den v tisících venkovských prodejen po celé republice se opakuje stejná scéna.</p>
+      <p class="ip" style="font-style:italic;color:var(--sos)">&#8222;Máte jehlu a nit? Utrhlo se mi knoflík.&#8220;<br><span style="color:var(--muted);font-style:normal">Odpověď je skoro vždy: &#8222;To bohužel nemáme.&#8220;</span></p>
       <div class="i-divider"></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Praskla guma v kalhotach. Utrzeny knoflík u kabatu. Rotrzene dziny ve svu.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Nejblizsi specializovana galanterie je <strong>20&#8211;40 km daleko</strong>. Kvuli jedne niti tam nikdo nejede.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Zakaznik zustane neobslouzen. Trzba unikne. Prilezitost zmizi.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Praskla guma v kalhotách. Utržený knoflík u kabátu. Roztržené džíny ve švu.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Nejbližší specializovaná galanterie je <strong>20&#8211;40 km daleko</strong>. Kvůli jedné niti tam nikdo nejede.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Zákazník zůstane neobsloužen. Tržba uniká. Příležitost zmizí.</div></div>
       <div class="i-divider"></div>
-      <p class="ip"><strong>A-GROSS SOS</strong> je kompaktni prodejni modul &#8211; stojan, pultovy displej nebo stenovy panel o plose pouhych <strong>0,25 m&#178;</strong> &#8211; s ~35 artiklů zakladni galanterie, primo do prodejen potravin.</p>
-      <div style="text-align:center;margin-top:10px"><div class="i-since">&#127981; <span>v oboru od roku 1992</span> &nbsp;&middot;&nbsp; sklad 8 000 polozek &nbsp;&middot;&nbsp; Olomouc-Holice</div></div>
+      <p class="ip"><strong>A-GROSS SOS</strong> je kompaktní prodejní modul &#8211; stojan, pultový displej nebo stěnový panel o ploše pouhých <strong>0,25 m&#178;</strong> &#8211; s ~35 artikly základní galanterie, přímo do prodejen potravin.</p>
+      <div style="text-align:center;margin-top:10px"><div class="i-since">&#127981; <span>v oboru od roku 1992</span> &nbsp;&middot;&nbsp; sklad 8 000 položek &nbsp;&middot;&nbsp; Olomouc-Holice</div></div>
     </div>
   </div>
   <div class="info-chapter">
     <div class="ich-header" onclick="toggleCh('c2')">
-      <div class="ich-num">2</div><div class="ich-title">Financni logika &#8211; garantovana marze 50&nbsp;%</div>
+      <div class="ich-num">2</div><div class="ich-title">Finanční logika &#8211; garantovaná marže 50&nbsp;%</div>
       <div class="ich-arrow" id="arr-c2">&#9660;</div>
     </div>
     <div class="ich-body" id="c2">
-      <div class="i-highlight"><strong>50&nbsp;% cista marze</strong><span>z kazde prodane polozky &#8211; garantovano pevnym cenikem</span></div>
+      <div class="i-highlight"><strong>50&nbsp;% čistá marže</strong><span>z každé prodané položky &#8211; garantováno pevným ceníkem</span></div>
       <div class="kpi-tbl">
         <div class="kpi-row"><div class="kpi-lbl">Plocha modulu</div><div class="kpi-val">0,25 m&#178;</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Pocet artiklů</div><div class="kpi-val">~35 polozek</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Cista marze obchodnika</div><div class="kpi-val sos">PEVNYCH 50&nbsp;%</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Obchodni prirazka (markup)</div><div class="kpi-val">100&nbsp;% &#8211; zdvojnasobite NC</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Odhadovany rocni zisk / stojan</div><div class="kpi-val ok">~20 000 Kc</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Minimalni objednavka</div><div class="kpi-val">1 200 Kc vcetne DPH</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Doprava</div><div class="kpi-val ok">ZDARMA nad 1 200 Kc</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Počet artiklů</div><div class="kpi-val">~35 položek</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Čistá marže obchodníka</div><div class="kpi-val sos">PEVNÝCH 50&nbsp;%</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Obchodní přirážka (markup)</div><div class="kpi-val">100&nbsp;% &#8211; zdvojnásobíte NC</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Odhadovaný roční zisk / stojan</div><div class="kpi-val ok">~20 000 Kč</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Minimální objednávka</div><div class="kpi-val">1 200 Kč včetně DPH</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Doprava</div><div class="kpi-val ok">ZDARMA nad 1 200 Kč</div></div>
       </div>
-      <p class="ip"><strong>Co je to 50&nbsp;% cista marze?</strong><br>Pro retail je 50&nbsp;% u non-food sortimentu mimoradne atraktivni cislo. Typicka marze u zakladnich potravin se pohybuje kolem 10&#8211;20&nbsp;%.</p>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Priklad: jehly Organ &#8211; NC <strong>39,44 Kc</strong>, prodejni cena <strong>95,90 Kc</strong>, vas zisk: <strong style="color:var(--ok)">56,46 Kc</strong> = 50&nbsp;% ciste marze.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Princip plati pro <strong>kazdou polozku v modulu</strong>. Marze je pevna a garantovana.</div></div>
+      <p class="ip"><strong>Co je to 50&nbsp;% čistá marže?</strong><br>Pro retail je 50&nbsp;% u non-food sortimentu mimořádně atraktivní číslo. Typická marže u základních potravin se pohybuje kolem 10&#8211;20&nbsp;%.</p>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Příklad: jehly Organ &#8211; NC <strong>39,44 Kč</strong>, prodejní cena <strong>95,90 Kč</strong>, váš zisk: <strong style="color:var(--ok)">56,46 Kč</strong> = 50&nbsp;% čisté marže.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Princip platí pro <strong>každou položku v modulu</strong>. Marže je pevná a garantovaná.</div></div>
       <div class="i-divider"></div>
-      <p class="ip"><strong>Nulove riziko lezaku</strong></p>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Zbozi kupujete standardni fakturou &#8211; <strong>zadna komise, zadna slozitost</strong>.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Artikl bez pohybu 3 mesice pri nejblizim zavozu <strong>bezplatne vymenime</strong> za overene bestsellery.</div></div>
-      <div class="i-tip">&#128161; <strong>Proc ne komise?</strong> Prodejny se k cizim komisnim zbozim chovaji neopatrne. Pevny nakup motivuje jinak &#8211; a my rucime rotaci sortimentu pres aplikaci.</div>
+      <p class="ip"><strong>Nulové riziko ležáků</strong></p>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Zboží kupujete standardní fakturou &#8211; <strong>žádná komise, žádná složitost</strong>.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Artikl bez pohybu 3 měsíce při nejbližším zavozu <strong>bezplatně vyměníme</strong> za ověřené bestsellery.</div></div>
+      <div class="i-tip">&#128161; <strong>Proč ne komise?</strong> Prodejny se k cizímu komisnímu zboží chovají neopatrně. Pevný nákup motivuje jinak &#8211; a my ručíme rotací sortimentu přes aplikaci.</div>
     </div>
   </div>
   <div class="info-chapter">
     <div class="ich-header" onclick="toggleCh('c3')">
-      <div class="ich-num">3</div><div class="ich-title">Aplikace a logistika &#8211; jednoduchost pro personal</div>
+      <div class="ich-num">3</div><div class="ich-title">Aplikace a logistika &#8211; jednoduchost pro personál</div>
       <div class="ich-arrow" id="arr-c3">&#9660;</div>
     </div>
     <div class="ich-body" id="c3">
-      <p class="ip">Tato aplikace je navrzena primo pro personal potravinovych prodejen. <strong>Zadne skoleni, zadna slozitost.</strong></p>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Funguje v mobilnim prohlizeci &#8211; <strong>instalace neni nutna</strong>, staci otevrit odkaz.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Prehledny katalog ~35 polozek s tlacitky <strong>+/&#8722; po 5 kusech</strong>.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Skenovani caroveho kodu kamerou &#8211; bez hledani v seznamu.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Objednavka se odesila e-mailem na <strong>objednavky@a-gross.cz</strong> primo z aplikace.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Aplikace hlida minimum <strong>1 200 Kc vcetne DPH</strong> &#8211; doprava pak zdarma.</div></div>
+      <p class="ip">Tato aplikace je navržena přímo pro personál potravinových prodejen. <strong>Žádné školení, žádná složitost.</strong></p>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Funguje v mobilním prohlížeči &#8211; <strong>instalace není nutná</strong>, stačí otevřít odkaz.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Přehledný katalog ~35 položek s tlačítky <strong>+/&#8722; po 5 kusech</strong>.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Skenování čárového kódu kamerou &#8211; bez hledání v seznamu.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Objednávka se odesílá e-mailem na <strong>objednavky@a-gross.cz</strong> přímo z aplikace.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Aplikace hlídá minimum <strong>1 200 Kč včetně DPH</strong> &#8211; doprava pak zdarma.</div></div>
       <div class="i-divider"></div>
-      <p class="ip"><strong>&#128308; Cerveny SOS bod &#8211; vas digitalni strazce</strong></p>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text"><strong style="color:var(--sos)">Cerveny bod</strong> = artikl nebyl 3 mesice v zadne objednavce. Kliknutim zahajite vymenu za bestseller.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text"><strong style="color:var(--ok)">Zeleny bod</strong> = pravidelne objednavane zbozi. System upozorni: doporucujeme vzit vice.</div></div>
+      <p class="ip"><strong>&#128308; Červený SOS bod &#8211; váš digitální strážce</strong></p>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text"><strong style="color:var(--sos)">Červený bod</strong> = artikl nebyl 3 měsíce v žádné objednávce. Kliknutím zahájíte výměnu za bestseller.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text"><strong style="color:var(--ok)">Zelený bod</strong> = pravidelně objednávané zboží. Systém upozorní: doporučujeme vzít více.</div></div>
       <div class="kpi-tbl" style="margin-top:12px">
-        <div class="kpi-row"><div class="kpi-lbl">Dodaci lhuta</div><div class="kpi-val">do 24 hodin</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Doprava</div><div class="kpi-val ok">ZDARMA &ge; 1 200 Kc</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Dodací lhůta</div><div class="kpi-val">do 24 hodin</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Doprava</div><div class="kpi-val ok">ZDARMA &ge; 1 200 Kč</div></div>
         <div class="kpi-row"><div class="kpi-lbl">Oblast dovozu</div><div class="kpi-val">Morava a Slezsko</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Objednavky na</div><div class="kpi-val">objednavky@a-gross.cz</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Objednávky na</div><div class="kpi-val">objednavky@a-gross.cz</div></div>
       </div>
     </div>
   </div>
   <div class="info-chapter">
     <div class="ich-header" onclick="toggleCh('c4')">
-      <div class="ich-num">4</div><div class="ich-title">Pilotni projekt &#8211; 10&#8211;15 prodejen, 3 mesice, bez rizika</div>
+      <div class="ich-num">4</div><div class="ich-title">Pilotní projekt &#8211; 10&#8211;15 prodejen, 3 měsíce, bez rizika</div>
       <div class="ich-arrow" id="arr-c4">&#9660;</div>
     </div>
     <div class="ich-body" id="c4">
-      <p class="ip">Nabizime <strong>bezplatny 3mesicni pilotni projekt</strong> pro vybranych 10&#8211;15 prodejen vasi site.</p>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Nasazeni kompaktniho modulu A-GROSS SOS (0,25 m&#178;) v kazde pilotni prodejne.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Pevny nakup standardni fakturou &#8211; <strong>zadna komise, zadny specialni rezim</strong>. Prodavate se 50&nbsp;% marzi.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">U artiklů s cervenim SOS bodem garantujeme <strong>bezplatnou vymenu za bestsellery</strong> (neposkozenym zbozim v orig. obalu).</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Vyhodnoceni po 3 mesicich: prehled prodejnosti, top artiklů, navrh optimalizace pro celou sit.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Doprava zdarma na kazdy zavoz &ge; 1 200 Kc vcetne DPH.</div></div>
+      <p class="ip">Nabízíme <strong>bezplatný 3měsíční pilotní projekt</strong> pro vybraných 10&#8211;15 prodejen vaší sítě.</p>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Nasazení kompaktního modulu A-GROSS SOS (0,25 m&#178;) v každé pilotní prodejně.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Pevný nákup standardní fakturou &#8211; <strong>žádná komise, žádný speciální režim</strong>. Prodáváte se 50&nbsp;% marží.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">U artiklů s červeným SOS bodem garantujeme <strong>bezplatnou výměnu za bestsellery</strong> (nepoškozeným zbožím v orig. obalu).</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Vyhodnocení po 3 měsících: přehled prodejnosti, top artiklů, návrh optimalizace pro celou síť.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Doprava zdarma na každý zavoz &ge; 1 200 Kč včetně DPH.</div></div>
       <div class="i-divider"></div>
-      <p class="ip"><strong>Proc nam muzete duverat</strong></p>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Stabilni cesky rodinny podnik &#8211; <strong>v oboru od roku 1992</strong>.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Sklad 8 000 polozek v Olomouci-Holici &#8211; nikdy nechybi zbozi.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Vlastni obchodni zastupci pokryvaji Moravu a Slezsko <strong>osobne</strong>.</div></div>
-      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Zarucni vymena lezaku: pokud system ukaze cerveny SOS bod, jedeme to vyresit za vami &#8211; ne naopak.</div></div>
+      <p class="ip"><strong>Proč nám můžete důvěřovat</strong></p>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Stabilní český rodinný podnik &#8211; <strong>v oboru od roku 1992</strong>.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Sklad 8 000 položek v Olomouci-Holici &#8211; nikdy nechybí zboží.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Vlastní obchodní zástupci pokrývají Moravu a Slezsko <strong>osobně</strong>.</div></div>
+      <div class="ib"><div class="ib-dot"></div><div class="ib-text">Záruční výměna ležáků: pokud systém ukáže červený SOS bod, jedeme to vyřešit za vámi &#8211; ne naopak.</div></div>
       <div class="i-highlight" style="margin-top:14px">
-        <strong>50&nbsp;% marze &nbsp;&middot;&nbsp; 0,25 m&#178; &nbsp;&middot;&nbsp; Nulove riziko lezaku</strong>
-        <span>A-GROSS SOS &#8211; Galanterni prvni pomoc od roku 1992</span>
+        <strong>50&nbsp;% marže &nbsp;&middot;&nbsp; 0,25 m&#178; &nbsp;&middot;&nbsp; Nulové riziko ležáků</strong>
+        <span>A-GROSS SOS &#8211; Galanterní první pomoc od roku 1992</span>
       </div>
     </div>
   </div>
   <div class="info-chapter">
     <div class="ich-header" onclick="toggleCh('c5')">
-      <div class="ich-num">&#9993;</div><div class="ich-title">Oslovovaci e-mail pro reditele a nakupci</div>
+      <div class="ich-num">&#9993;</div><div class="ich-title">Oslovovací e-mail pro ředitele a nákupčí</div>
       <div class="ich-arrow" id="arr-c5">&#9660;</div>
     </div>
     <div class="ich-body" id="c5">
-      <p class="ip" style="color:var(--muted);font-style:italic">Sablona pro osloveni central siti (Hruska, COOP, Flop). Doplnte jmeno, telefon a e-mail.</p>
+      <p class="ip" style="color:var(--muted);font-style:italic">Šablona pro oslovení centrál sítí (Hruška, COOP, Flop). Doplňte jméno, telefon a e-mail.</p>
       <div class="email-box">
-        <div class="email-subj-lbl">Predmet:</div>
-        <div class="email-subj">Novy zdroj prijmu pro vase prodejny: textilni galanterie na 0,25 m&#178; s garantovanou marzi 50 % &#8211; pilotni nabidka A-GROSS SOS</div>
+        <div class="email-subj-lbl">Předmět:</div>
+        <div class="email-subj">Nový zdroj příjmů pro vaše prodejny: textilní galanterie na 0,25 m&#178; s garantovanou marží 50 % &#8211; pilotní nabídka A-GROSS SOS</div>
         <hr style="border:none;border-top:1px solid var(--border);margin-bottom:12px">
-        <div class="email-body-txt" id="emailBodyText">Vazeny pane / Vazena pani,
+        <div class="email-body-txt" id="emailBodyText">Vážený pane / Vážená paní,
 
-dovoluji si vas oslovit jmenem spolecnosti A-GROSS, s.r.o. z Olomouce-Holice - moravskeho rodinneho velkoobchodu s textilni galanterií, ktery v oboru nepretrzite pusobi od roku 1992. Za tu dobu jsme vybudovali sklad s 8 000 polozkami, vlastni kamenne prodejny a stabilni distribuci po Morave a Slezsku.
+dovoluji si Vás oslovit jménem společnosti A-GROSS, s.r.o. z Olomouce-Holice - moravského rodinného velkoobchodu s textilní galanterií, který v oboru nepřetržitě působí od roku 1992. Za tu dobu jsme vybudovali sklad s 8 000 položkami, vlastní kamenné prodejny a stabilní distribuci po Moravě a Slezsku.
 
-Prichazime s projektem A-GROSS SOS - "Galanterni prvni pomoc".
+Přicházíme s projektem A-GROSS SOS - "Galanterní první pomoc".
 
-Kompaktni prodejni modul (plocha pouhych 0,25 m2) s ~35 artiklů zakladni textilni galanterie umistime primo do vasich prodejen potravin. Reagujeme na jednoduchy fakt: zakaznik na vesnici nebo malomeste nema kde koupit jehlu, nit ani zip - nejblizsi galanterie je desitky kilometrů daleko.
+Kompaktní prodejní modul (plocha pouhých 0,25 m2) s ~35 artikly základní textilní galanterie umístíme přímo do vašich prodejen potravin. Reagujeme na jednoduchý fakt: zákazník na vesnici nebo malém městě nemá kde koupit jehlu, nit ani zip - nejbližší galanterie je desítky kilometrů daleko.
 
-Co nabizime konkretne:
+Co nabízíme konkrétně:
 
-* Garantovana cista marze 50 % z kazde prodane polozky - pro non-food sortiment zcela vyjimecne cislo (porovnejte s 10-20 % u zakladnich potravin).
-* Primy pevny nakup standardni fakturou - zadna komise, zadna administrativa navic.
-* Nulove riziko lezaku: system SOS automaticky hlida pohyb zbozi. Artikl bez pohybu 3 mesice pri nejblizim zavozu bezplatne vymenime za overene bestsellery.
-* Jednoduche objednavani pres mobilni aplikaci (3 kliknuti, skenovani EAN).
-* Dodavka do 24 hodin, doprava zdarma pri objednavce od 1 200 Kc vcetne DPH.
+* Garantovaná čistá marže 50 % z každé prodané položky - pro non-food sortiment zcela výjimečné číslo (porovnejte s 10-20 % u základních potravin).
+* Přímý pevný nákup standardní fakturou - žádná komise, žádná administrativa navíc.
+* Nulové riziko ležáků: systém SOS automaticky hlídá pohyb zboží. Artikl bez pohybu 3 měsíce při nejbližším zavozu bezplatně vyměníme za ověřené bestsellery.
+* Jednoduché objednávání přes mobilní aplikaci (3 kliknutí, skenování EAN).
+* Dodávka do 24 hodin, doprava zdarma při objednávce od 1 200 Kč včetně DPH.
 
-Nas navrh:
-Radi bychom zahajili 3mesicni pilotni projekt na 10-15 vybranych prodejnach. Po vyhodnoceni mate jasna data o prodejnosti - a rozhodujete se sami, bez zavazku.
+Náš návrh:
+Rádi bychom zahájili 3měsíční pilotní projekt na 10-15 vybraných prodejnách. Po vyhodnocení máte jasná data o prodejnosti - a rozhodujete se sami, bez závazku.
 
-Jsme moravsky partner, ktery zna mistni trh a je dosazitelny primo. Domluvme si kratknou schuzku nebo videohovor, kde vam ukazeme ukazkovy modul a presne kalkulace.
+Jsme moravský partner, který zná místní trh a je dosažitelný přímo. Domluvme si krátkou schůzku nebo videohovor, kde vám ukážeme ukázkový modul a přesné kalkulace.
 
-S pratelskym pozdravem,
+S přátelským pozdravem,
 
-[Jmeno obchodniho zastupce]
+[Jméno obchodního zástupce]
 A-GROSS, s.r.o. | Olomouc-Holice
-Tel.: [cislo] | E-mail: [e-mail]
+Tel.: [číslo] | E-mail: [e-mail]
 www.a-gross.cz</div>
-        <button class="copy-btn" onclick="copyEmail()">&#128203; Kopirovat e-mail do schranky</button>
+        <button class="copy-btn" onclick="copyEmail()">&#128203; Kopírovat e-mail do schránky</button>
       </div>
-      <div class="i-tip">&#128161; <strong>Tip:</strong> Predmet e-mailu udrzte presne v navrhenem zneni - obsahuje klicove motivatory (marze, plocha, pilot), ktere nakupci zaujmou pri skenovani prichozich zprav.</div>
+      <div class="i-tip">&#128161; <strong>Tip:</strong> Předmět e-mailu udržte přesně v navrženém znění - obsahuje klíčové motivátory (marže, plocha, pilot), které nákupčí zaujmou při skenování příchozích zpráv.</div>
     </div>
   </div>
   <div style="height:24px"></div>
 </div>
 
-<!-- ONBOARDING -->
+<!-- VÝBĚR JAZYKA -->
 <div class="onboarding" id="onboarding">
   <div class="ob-hero">
     <div class="ob-logo-a">A-GROSS</div>
     <div class="ob-logo-s">SOS</div>
-    <div class="ob-tagline">Galanterni prvni pomoc pro venkovske prodejny</div>
+    <div class="ob-tagline">Vyberte jazyk &nbsp;/&nbsp; Chọn ngôn ngữ</div>
   </div>
-  <div class="ob-body">
-    <div class="ob-card">
-      <div class="ob-card-icon">&#129513;</div>
-      <h3>Praskla guma. Utrzeny knoflík.</h3>
-      <p>Zakaznik to potrebuje <strong>ted</strong> &#8211; ale v potravinach to neni. Nejblizsi galanterie je 30 km. Trzba unika.</p>
-    </div>
-    <div class="ob-card">
-      <div class="ob-card-icon">&#128230;</div>
-      <h3>Modul 0,25 m&#178; &#8211; vse vyreseno</h3>
-      <p>Kompaktni stojan nebo pultovy displej s ~35 artiklů zakladni galanterie. Objednavani pres tuto aplikaci na <strong>3 kliknuti</strong>.</p>
-    </div>
-    <div class="ob-stat-grid">
-      <div class="ob-stat"><div class="ob-stat-val">50&nbsp;%+</div><div class="ob-stat-label">Cista marze<br>z kazde polozky</div></div>
-      <div class="ob-stat"><div class="ob-stat-val">24&nbsp;h</div><div class="ob-stat-label">Dodani<br>od objednavky</div></div>
-      <div class="ob-stat"><div class="ob-stat-val">0&nbsp;Kc</div><div class="ob-stat-label">Doprava<br>(min. 1 200 Kc)</div></div>
-      <div class="ob-stat"><div class="ob-stat-val">&#128308; SOS</div><div class="ob-stat-label">Lezaky vymenime<br>za bestsellery</div></div>
-    </div>
-    <button class="ob-start-btn" onclick="dismissOnboarding()">Spustit aplikaci &#8594;</button>
-    <div class="ob-since">A-GROSS, s.r.o. &nbsp;&middot;&nbsp; Olomouc-Holice &nbsp;&middot;&nbsp; Tradicni cesky partner v oboru od roku 1992</div>
+  <div class="ob-body" style="display:flex;flex-direction:column;gap:16px;justify-content:center;flex:1">
+    <button class="ob-start-btn" onclick="dismissOnboarding()">🇨🇿 Čeština</button>
+    <button class="ob-start-btn" style="background:transparent;border:2px solid var(--sos)" onclick="location.href='A_GROSS_SOS_VI.html'">🇻🇳 Tiếng Việt</button>
   </div>
 </div>
 
@@ -769,10 +753,8 @@ www.a-gross.cz</div>
     <div class="modal-handle"></div>
     <div class="modal-title">📷 Skenovat čárový kód</div>
     <div class="scanner-area">
-      <video id="cameraFeed" autoplay playsinline></video>
-      <canvas id="scanCanvas" style="display:none"></canvas>
+      <div id="qrReader" style="width:100%"></div>
       <div class="cam-placeholder" id="camPlaceholder"><div>📱</div><div>Klikněte pro spuštění kamery</div></div>
-      <div class="scan-line" id="scanLine"></div>
     </div>
     <button class="btn-p" id="startCamBtn" onclick="startCamera()" style="margin-bottom:10px">▶ Spustit kameru</button>
     <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Nebo zadejte EAN ručně:</div>
@@ -1100,9 +1082,7 @@ let lastOrdered = JSON.parse(localStorage.getItem('ag_lastord') || '{}');
 
 let editStoreId   = null;
 let scannedProd   = null;
-let cameraStream  = null;
-let scanInterval  = null;
-let zxingReader   = null;
+let html5QrCode   = null;
 let delivMode     = 'ihned';
 let exchangeSourceKod = null;
 
@@ -1156,8 +1136,8 @@ function toggleCh(id){
 }
 function copyEmail(){
   const txt=document.getElementById('emailBodyText').innerText||document.getElementById('emailBodyText').textContent;
-  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>showToast('E-mail zkopirovan'));}
-  else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast('E-mail zkopirovan');}
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>showToast('E-mail zkopírován'));}
+  else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast('E-mail zkopírován');}
 }
 function dismissOnboarding(){
   document.getElementById('onboarding').classList.add('hidden');
@@ -1514,32 +1494,32 @@ function buildOrderText(store, items, nc, marze, moc, delivStr){
   const margeP = moc>0?(marze/moc*100).toFixed(1):0;
   const storeName = store?(store.chain?store.chain+' – ':'')+store.name:'?';
   const lines = [
-    'OBJEDNAVKA A-GROSS SOS',
+    'OBJEDNÁVKA A-GROSS SOS',
     '======================',
     '',
     'Prodejna: '+storeName,
     store?.address ? 'Adresa:   '+store.address : '',
-    store?.ico     ? 'IC:       '+store.ico+(store.dic?' / DIC: '+store.dic:'') : '',
+    store?.ico     ? 'IČ:       '+store.ico+(store.dic?' / DIČ: '+store.dic:'') : '',
     store?.email   ? 'E-mail:   '+store.email   : '',
-    store?.manager ? 'Vedouci:  '+store.manager : '',
+    store?.manager ? 'Vedoucí:  '+store.manager : '',
     store?.phone   ? 'Tel:      '+store.phone   : '',
     'Datum:    '+new Date().toLocaleDateString('cs-CZ'),
-    'Dodani:   '+delivStr,
+    'Dodání:   '+delivStr,
     '',
     '----------------------',
-    ...items.map(i=>i.kod.padEnd(10)+' '+i.nazev+'\n           '+i.qty+' ks x NC '+i.nc.toFixed(2)+' Kc = '+(i.nc*i.qty).toFixed(2)+' Kc'),
+    ...items.map(i=>i.kod.padEnd(10)+' '+i.nazev+'\n           '+i.qty+' ks x NC '+i.nc.toFixed(2)+' Kč = '+(i.nc*i.qty).toFixed(2)+' Kč'),
     '',
     '======================',
-    'NC celkem:  '+nc.toFixed(2)+' Kc',
-    'MOC celkem: '+moc.toFixed(2)+' Kc (vcetne DPH)',
-    'Marze:      '+marze.toFixed(2)+' Kc ('+margeP+' %)',
+    'NC celkem:  '+nc.toFixed(2)+' Kč',
+    'MOC celkem: '+moc.toFixed(2)+' Kč (včetně DPH)',
+    'Marže:      '+marze.toFixed(2)+' Kč ('+margeP+' %)',
   ];
   return lines.filter(x=>x!=='').join('\n');
 }
 
 function sendOrderEmail(store, items, nc, marze, moc, delivStr){
   _shareText    = buildOrderText(store, items, nc, marze, moc, delivStr);
-  _shareSubject = 'Objednavka A-GROSS SOS – '+(store?(store.chain?store.chain+' – ':'')+store.name:'')+' – '+new Date().toLocaleDateString('cs-CZ');
+  _shareSubject = 'Objednávka A-GROSS SOS – '+(store?(store.chain?store.chain+' – ':'')+store.name:'')+' – '+new Date().toLocaleDateString('cs-CZ');
   const storeName = store?(store.chain?store.chain+' – ':'')+store.name:'prodejna';
   openShareSheet(storeName);
 }
@@ -1565,9 +1545,9 @@ function doShare(method){
     window.open('mailto:'+ORDER_EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(text));
   } else if(method==='system'){
     if(navigator.share){
-      navigator.share({title:'A-GROSS SOS Objednavka', text});
+      navigator.share({title:'A-GROSS SOS Objednávka', text});
     } else {
-      navigator.clipboard?.writeText(text).then(()=>showToast('Zkopirováno'));
+      navigator.clipboard?.writeText(text).then(()=>showToast('Zkopírováno'));
     }
   } else if(method==='copy'){
     if(navigator.clipboard){
@@ -1703,7 +1683,7 @@ function shareOrder(id){
   const o=orders.find(x=>x.id===id);if(!o)return;
   const store=stores.find(s=>s.id===o.storeId);
   _shareText    = buildOrderText(store, o.items.map(i=>({...i})), o.nc, o.marze, o.moc, o.delivery||'–');
-  _shareSubject = 'Objednavka A-GROSS SOS – '+o.storeName+' – '+new Date(o.date).toLocaleDateString('cs-CZ');
+  _shareSubject = 'Objednávka A-GROSS SOS – '+o.storeName+' – '+new Date(o.date).toLocaleDateString('cs-CZ');
   openShareSheet(o.storeName);
 }
 
@@ -1717,39 +1697,33 @@ function openScanner(){
 function closeScanner(){stopCamera();document.getElementById('scannerModal').classList.remove('open');}
 
 async function startCamera(){
+  document.getElementById('camPlaceholder').style.display='none';
+  document.getElementById('startCamBtn').textContent='■ Zastavit';
+  document.getElementById('startCamBtn').onclick=stopCamera;
   try{
-    cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    const v=document.getElementById('cameraFeed');
-    v.srcObject=cameraStream;v.style.display='block';
-    document.getElementById('camPlaceholder').style.display='none';
-    document.getElementById('scanLine').style.display='block';
-    document.getElementById('startCamBtn').textContent='■ Zastavit';
-    document.getElementById('startCamBtn').onclick=stopCamera;
-    if('BarcodeDetector' in window){
-      const det=new BarcodeDetector({formats:['ean_13','ean_8','code_128']});
-      scanInterval=setInterval(async()=>{
-        if(v.readyState===v.HAVE_ENOUGH_DATA){
-          try{const bs=await det.detect(v);if(bs.length){document.getElementById('manualEan').value=bs[0].rawValue;lookupEan();}}catch(e){}
-        }
-      },500);
-    } else if(window.ZXing){
-      // Fallback pro prohlížeče bez Shape Detection API (Safari/iOS, Firefox, starší Chrome)
-      zxingReader=new ZXing.BrowserMultiFormatReader();
-      zxingReader.decodeFromVideoElementContinuously(v,(result,err)=>{
-        if(result){document.getElementById('manualEan').value=result.getText();lookupEan();}
-      });
-    } else showToast('Ruční zadání EAN – auto-sken není podporován');
-  }catch(e){showToast('Kamera nedostupná');}
+    html5QrCode=new Html5Qrcode('qrReader');
+    await html5QrCode.start(
+      {facingMode:'environment'},
+      {fps:10,qrbox:220},
+      decodedText=>{document.getElementById('manualEan').value=decodedText;lookupEan();},
+      ()=>{}
+    );
+  }catch(e){
+    html5QrCode=null;
+    showToast('Kamera nedostupná');
+    document.getElementById('camPlaceholder').style.display='flex';
+    document.getElementById('startCamBtn').textContent='▶ Spustit kameru';
+    document.getElementById('startCamBtn').onclick=startCamera;
+  }
 }
 function stopCamera(){
-  if(zxingReader){zxingReader.reset();zxingReader=null;}
-  if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
-  if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
-  const v=document.getElementById('cameraFeed');v.style.display='none';
   document.getElementById('camPlaceholder').style.display='flex';
-  document.getElementById('scanLine').style.display='none';
   document.getElementById('startCamBtn').textContent='▶ Spustit kameru';
   document.getElementById('startCamBtn').onclick=startCamera;
+  if(html5QrCode){
+    const reader=html5QrCode;html5QrCode=null;
+    reader.stop().then(()=>reader.clear()).catch(()=>{});
+  }
 }
 function lookupEan(){
   const code=document.getElementById('manualEan').value.trim();if(!code)return;
@@ -1759,7 +1733,7 @@ function lookupEan(){
     scannedProd=p;
     document.getElementById('srName').textContent=p.nazev+' · '+fmt(p.moc);
     document.getElementById('srEan').textContent='Kód: '+p.kod+(p.ean?' · EAN: '+p.ean:'');
-    r.className='scan-result vis found';if(cameraStream)stopCamera();
+    r.className='scan-result vis found';if(html5QrCode)stopCamera();
   }else{
     scannedProd=null;
     document.getElementById('srName').textContent='Nenalezen: '+code;
@@ -1789,18 +1763,7 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 
 // ── INIT ─────────────────────────────────────────────────────────────
 if(!stores.length){
-  stores=[
-    {id:'s1',name:'Třinec Centrum',chain:'Coop',manager:'Jana Nováková',phone:'+420 777 100 200',address:'Nádražní 12, 739 61 Třinec',hoursWeek:'7:00–19:00',hoursWeekend:'8:00–12:00',note:'Dodávat v úterý'},
-    {id:'s2',name:'Třinec Lyžbice',chain:'Balla',manager:'Petra Horáková',phone:'+420 777 300 400',address:'Lidická 5, 739 61 Třinec',hoursWeek:'7:00–18:00',hoursWeekend:'8:00–13:00',note:''},
-    {id:'s3',name:'Třinec Staré Město',chain:'JIP',manager:'',phone:'',address:'Frýdecká 22, 739 61 Třinec',hoursWeek:'6:30–19:00',hoursWeekend:'',note:''},
-  ];
-  // Simulate some order history for demo
-  const now=Date.now();
-  const demo={'s1_276921':new Date(now-10*86400000).toISOString(),'s1_80412':new Date(now-20*86400000).toISOString(),
-    's1_235':new Date(now-100*86400000).toISOString(),'s1_199':new Date(now-95*86400000).toISOString(),
-    's1_700808':new Date(now-15*86400000).toISOString()};
-  Object.assign(lastOrdered, demo);
-  save();
+  stores=[];
 }
 
 if(localStorage.getItem('ag_ob')){document.getElementById('onboarding').classList.add('hidden');}

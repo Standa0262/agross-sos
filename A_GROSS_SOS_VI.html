@@ -9,6 +9,7 @@
 <title>A-GROSS SOS - Ứng dụng đặt hàng</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode" defer></script>
 <style>
 :root{
   --cream:#F5F0E8;
@@ -150,8 +151,8 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
 <div class="order-bar" id="orderBar">
   <div class="bar-left" id="barItems">Giỏ trống</div>
   <div class="bar-right">
-    <span id="barNc">Giá: 0 VND</span>
-    <span id="barMarze">Lợi: 0 VND</span>
+    <span id="barNc">Giá: 0 Kč</span>
+    <span id="barMarze">Lợi: 0 Kč</span>
   </div>
 </div>
 
@@ -219,8 +220,7 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
     <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
     <div class="modal-title">📷 Quét mã vạch</div>
     <div style="background:var(--dark);border-radius:12px;overflow:hidden;margin-bottom:12px;position:relative;min-height:160px;display:flex;align-items:center;justify-content:center">
-      <video id="cameraFeed" autoplay playsinline style="width:100%;display:none"></video>
-      <canvas id="scanCanvas" style="display:none"></canvas>
+      <div id="qrReader" style="width:100%"></div>
       <div id="camPlaceholder" style="text-align:center;color:rgba(255,255,255,0.5);padding:20px;font-size:12px">
         <div style="font-size:44px;margin-bottom:8px">📱</div>
         <div>Nhấn để khởi động camera</div>
@@ -472,7 +472,7 @@ function save(){
 }
 
 function fmt(n){
-  return new Intl.NumberFormat('vi-VN',{minimumFractionDigits:0,maximumFractionDigits:0}).format(n)+' VND';
+  return n.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})+' Kč';
 }
 
 function setSyncStatus(state, text){
@@ -681,7 +681,7 @@ function renderCart(){
   const{nc,marze,moc,count} = cartTotals();
   const store = stores.find(s=>s.id===storeId);
   const margeP = moc>0?(marze/moc*100).toFixed(1):0;
-  const minOk = moc>=1200000; // 1.2M VND
+  const minOk = moc>=1200; // 1200 Kč
   
   if(!items.length){
     document.getElementById('cartContent').innerHTML = `
@@ -706,7 +706,7 @@ function renderCart(){
     </div>
     
     <div style="background:${minOk?'var(--ok-light)':'var(--sos-light)'};border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;font-weight:600;color:${minOk?'var(--ok-dark)':'var(--sos-dark)'}">
-      ${minOk?`✅ Đơn hàng OK (${fmt(moc)} / 1.2M VND)`:`⚠ Cần thêm ${fmt(1200000-moc)} VND`}
+      ${minOk?`✅ Đơn hàng OK (${fmt(moc)} / ${fmt(1200)})`:`⚠ Cần thêm ${fmt(1200-moc)}`}
     </div>
     
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
@@ -910,30 +910,37 @@ function openScanner(){
 
 function closeScanner(){
   document.getElementById('scannerModal').classList.remove('open');
-  if(cameraStream){
-    cameraStream.getTracks().forEach(t=>t.stop());
-    cameraStream=null;
-  }
+  stopCamera();
 }
 
 async function startCamera(){
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    const video = document.getElementById('cameraFeed');
-    video.srcObject = cameraStream;
-    video.style.display = 'block';
-    document.getElementById('camPlaceholder').style.display = 'none';
-    document.getElementById('startCamBtn').textContent = '⏹ Dừng camera';
-    document.getElementById('startCamBtn').onclick = ()=>{
-      cameraStream.getTracks().forEach(t=>t.stop());
-      cameraStream=null;
-      video.style.display='none';
-      document.getElementById('camPlaceholder').style.display='flex';
-      document.getElementById('startCamBtn').textContent='▶ Khởi động';
-      document.getElementById('startCamBtn').onclick=startCamera;
-    };
+  document.getElementById('camPlaceholder').style.display='none';
+  document.getElementById('startCamBtn').textContent='⏹ Dừng camera';
+  document.getElementById('startCamBtn').onclick=stopCamera;
+  try{
+    html5QrCode=new Html5Qrcode('qrReader');
+    await html5QrCode.start(
+      {facingMode:'environment'},
+      {fps:10,qrbox:220},
+      decodedText=>{document.getElementById('manualEan').value=decodedText;lookupEan();},
+      ()=>{}
+    );
   } catch(e){
+    html5QrCode=null;
     showToast('Lỗi camera: '+e.message);
+    document.getElementById('camPlaceholder').style.display='flex';
+    document.getElementById('startCamBtn').textContent='▶ Khởi động camera';
+    document.getElementById('startCamBtn').onclick=startCamera;
+  }
+}
+
+function stopCamera(){
+  document.getElementById('camPlaceholder').style.display='flex';
+  document.getElementById('startCamBtn').textContent='▶ Khởi động camera';
+  document.getElementById('startCamBtn').onclick=startCamera;
+  if(html5QrCode){
+    const reader=html5QrCode;html5QrCode=null;
+    reader.stop().then(()=>reader.clear()).catch(()=>{});
   }
 }
 
@@ -943,6 +950,7 @@ function lookupEan(){
   const p = CATALOG.find(x=>x.ean===ean||x.kod===ean);
   if(p){
     changeQty(p.kod, MIN_QTY);
+    if(html5QrCode)stopCamera();
     closeScanner();
     showToast('✓ '+p.nazev+' thêm vào giỏ');
   } else {
@@ -950,7 +958,7 @@ function lookupEan(){
   }
 }
 
-let cameraStream = null;
+let html5QrCode = null;
 
 // ═══════════════════════════════════════════════════════════════════
 // INIT
