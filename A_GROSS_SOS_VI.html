@@ -9,7 +9,7 @@
 <title>A-GROSS SOS - Ứng dụng đặt hàng</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/html5-qrcode" defer></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{
   --cream:#F5F0E8;
@@ -261,11 +261,7 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
     <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
     <div class="modal-title">📷 Quét mã vạch</div>
     <div style="background:var(--dark);border-radius:12px;overflow:hidden;margin-bottom:12px;position:relative;min-height:160px;display:flex;align-items:center;justify-content:center">
-      <div id="qrReader" style="width:100%"></div>
-      <div id="camPlaceholder" style="text-align:center;color:rgba(255,255,255,0.5);padding:20px;font-size:12px">
-        <div style="font-size:44px;margin-bottom:8px">📱</div>
-        <div>Nhấn để khởi động camera</div>
-      </div>
+      <div id="reader" style="width:100%"></div>
     </div>
     <button class="btn-p" id="startCamBtn" onclick="startCamera()" style="margin-bottom:10px;width:100%">▶ Khởi động camera</button>
     <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Hoặc nhập mã thủ công:</div>
@@ -892,34 +888,29 @@ function closeScanner(){
   stopCamera();
 }
 
-async function startCamera(){
-  document.getElementById('camPlaceholder').style.display='none';
+function startCamera() {
+  const html5QrCode = new Html5Qrcode("reader");
+  window._qrScanner = html5QrCode;
   document.getElementById('startCamBtn').textContent='⏹ Dừng camera';
   document.getElementById('startCamBtn').onclick=stopCamera;
-  try{
-    html5QrCode=new Html5Qrcode('qrReader');
-    await html5QrCode.start(
-      {facingMode:'environment'},
-      {fps:10,qrbox:220},
-      decodedText=>{document.getElementById('manualEan').value=decodedText;lookupEan();},
-      ()=>{}
-    );
-  } catch(e){
-    html5QrCode=null;
-    showToast('Lỗi camera: '+e.message);
-    document.getElementById('camPlaceholder').style.display='flex';
-    document.getElementById('startCamBtn').textContent='▶ Khởi động camera';
-    document.getElementById('startCamBtn').onclick=startCamera;
-  }
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 150 } },
+    (decodedText) => {
+      document.getElementById('manualEan').value = decodedText;
+      lookupEan();
+      html5QrCode.stop();
+    },
+    (error) => {}
+  ).catch(err => showToast('Lỗi camera: ' + err));
 }
 
-function stopCamera(){
-  document.getElementById('camPlaceholder').style.display='flex';
+function stopCamera() {
   document.getElementById('startCamBtn').textContent='▶ Khởi động camera';
   document.getElementById('startCamBtn').onclick=startCamera;
-  if(html5QrCode){
-    const reader=html5QrCode;html5QrCode=null;
-    reader.stop().then(()=>reader.clear()).catch(()=>{});
+  if (window._qrScanner) {
+    window._qrScanner.stop().catch(()=>{});
+    window._qrScanner = null;
   }
 }
 
@@ -929,15 +920,13 @@ function lookupEan(){
   const p = CATALOG.find(x=>x.ean===ean||x.kod===ean);
   if(p){
     changeQty(p.kod, MIN_QTY);
-    if(html5QrCode)stopCamera();
+    if(window._qrScanner)stopCamera();
     closeScanner();
     showToast('✓ '+p.nazev+' thêm vào giỏ');
   } else {
     showToast('⚠ Không tìm thấy');
   }
 }
-
-let html5QrCode = null;
 
 // ═══════════════════════════════════════════════════════════════════
 // INIT

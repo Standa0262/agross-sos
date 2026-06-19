@@ -15,7 +15,7 @@
 <title>A-GROSS SOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/html5-qrcode" defer></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{
   /* A-GROSS brand */
@@ -242,11 +242,6 @@ header{
 
 /* ── SCANNER ── */
 .scanner-area{background:var(--dark);border-radius:12px;overflow:hidden;margin-bottom:12px;position:relative;min-height:160px;display:flex;align-items:center;justify-content:center}
-.cam-placeholder{text-align:center;color:rgba(255,255,255,0.5);padding:20px;font-size:12px}
-.cam-placeholder div:first-child{font-size:44px;margin-bottom:8px}
-#cameraFeed{width:100%;display:none}
-.scan-line{position:absolute;left:0;right:0;height:2px;background:var(--sos);animation:scanA 2s linear infinite;display:none}
-@keyframes scanA{0%{top:0}100%{top:100%}}
 .barcode-manual{display:flex;gap:8px;margin-bottom:10px}
 .barcode-manual input{flex:1;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:13px;outline:none}
 .barcode-manual button{background:var(--sos);color:#fff;border:none;border-radius:8px;padding:10px 14px;font-family:inherit;font-weight:600;cursor:pointer}
@@ -768,8 +763,7 @@ www.a-gross.cz</div>
     <div class="modal-handle"></div>
     <div class="modal-title">📷 Skenovat čárový kód</div>
     <div class="scanner-area">
-      <div id="qrReader" style="width:100%"></div>
-      <div class="cam-placeholder" id="camPlaceholder"><div>📱</div><div>Klikněte pro spuštění kamery</div></div>
+      <div id="reader" style="width:100%"></div>
     </div>
     <button class="btn-p" id="startCamBtn" onclick="startCamera()" style="margin-bottom:10px">▶ Spustit kameru</button>
     <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Nebo zadejte EAN ručně:</div>
@@ -981,7 +975,6 @@ let lastOrdered = JSON.parse(localStorage.getItem('ag_lastord') || '{}');
 
 let editStoreId   = null;
 let scannedProd   = null;
-let html5QrCode   = null;
 let delivMode     = 'ihned';
 let exchangeSourceKod = null;
 
@@ -1615,33 +1608,28 @@ function openScanner(){
 }
 function closeScanner(){stopCamera();document.getElementById('scannerModal').classList.remove('open');}
 
-async function startCamera(){
-  document.getElementById('camPlaceholder').style.display='none';
+function startCamera() {
+  const html5QrCode = new Html5Qrcode("reader");
+  window._qrScanner = html5QrCode;
   document.getElementById('startCamBtn').textContent='■ Zastavit';
   document.getElementById('startCamBtn').onclick=stopCamera;
-  try{
-    html5QrCode=new Html5Qrcode('qrReader');
-    await html5QrCode.start(
-      {facingMode:'environment'},
-      {fps:10,qrbox:220},
-      decodedText=>{document.getElementById('manualEan').value=decodedText;lookupEan();},
-      ()=>{}
-    );
-  }catch(e){
-    html5QrCode=null;
-    showToast('Kamera nedostupná');
-    document.getElementById('camPlaceholder').style.display='flex';
-    document.getElementById('startCamBtn').textContent='▶ Spustit kameru';
-    document.getElementById('startCamBtn').onclick=startCamera;
-  }
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 150 } },
+    (decodedText) => {
+      document.getElementById('manualEan').value = decodedText;
+      lookupEan();
+      html5QrCode.stop();
+    },
+    (error) => {}
+  ).catch(err => showToast('Kamera nedostupná: ' + err));
 }
-function stopCamera(){
-  document.getElementById('camPlaceholder').style.display='flex';
+function stopCamera() {
   document.getElementById('startCamBtn').textContent='▶ Spustit kameru';
   document.getElementById('startCamBtn').onclick=startCamera;
-  if(html5QrCode){
-    const reader=html5QrCode;html5QrCode=null;
-    reader.stop().then(()=>reader.clear()).catch(()=>{});
+  if (window._qrScanner) {
+    window._qrScanner.stop().catch(()=>{});
+    window._qrScanner = null;
   }
 }
 function lookupEan(){
@@ -1652,7 +1640,7 @@ function lookupEan(){
     scannedProd=p;
     document.getElementById('srName').textContent=p.nazev+' · '+fmt(p.moc);
     document.getElementById('srEan').textContent='Kód: '+p.kod+(p.ean?' · EAN: '+p.ean:'');
-    r.className='scan-result vis found';if(html5QrCode)stopCamera();
+    r.className='scan-result vis found';if(window._qrScanner)stopCamera();
   }else{
     scannedProd=null;
     document.getElementById('srName').textContent='Nenalezen: '+code;
