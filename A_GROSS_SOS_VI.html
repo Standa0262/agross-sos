@@ -110,9 +110,75 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
 
 .offline-badge{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:var(--sos);color:#fff;padding:8px 14px;border-radius:20px;font-size:11px;font-weight:600;display:none;z-index:299}
 .offline-badge.show{display:block}
+
+/* VOP SOUHLAS */
+.vop-screen{position:fixed;inset:0;background:var(--cream);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.vop-screen.hidden{display:none}
+.vop-box{background:var(--surface);border-radius:16px;padding:22px;max-width:480px;width:100%;max-height:92vh;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.vop-title{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:14px;text-align:center}
+.vop-text{flex:1;min-height:0;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.vop-text h4{font-size:13px;font-weight:700;color:var(--dark);margin:14px 0 5px}
+.vop-text h4:first-child{margin-top:0}
+.vop-text p{margin-bottom:6px}
+.vop-checkbox-row{display:flex;align-items:flex-start;gap:10px;font-size:12px;font-weight:600;color:var(--dark);margin-bottom:14px;cursor:pointer}
+.vop-checkbox-row input{margin-top:2px;width:18px;height:18px;flex-shrink:0;cursor:pointer;accent-color:var(--sos)}
+.vop-continue-btn{width:100%;background:var(--sos);color:#fff;border:none;border-radius:12px;padding:15px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:opacity .2s}
+.vop-continue-btn:disabled{opacity:.35;cursor:not-allowed}
 </style>
 </head>
 <body>
+
+<!-- VOP SOUHLAS -->
+<div class="vop-screen" id="vopScreen">
+  <div class="vop-box">
+    <h2 class="vop-title">Điều khoản và điều kiện thương mại A-GROSS SOS</h2>
+    <div class="vop-text" id="vopText">
+      <p><strong>ĐIỀU KHOẢN VÀ ĐIỀU KIỆN THƯƠNG MẠI CHUNG (B2B) của dự án "A-GROSS SOS"</strong></p>
+
+      <h4>1. Quy định chung</h4>
+      <p>Nhà cung cấp: A-GROSS, s.r.o., Olomouc-Holice, Mã số doanh nghiệp (IČO): 47670215, Mã số thuế (DIČ): CZ47670215, đăng ký tại Tòa án khu vực Ostrava, mục C 5129.</p>
+      <p>Bên mua: Cá nhân hoặc pháp nhân hoạt động trong khuôn khổ kinh doanh (chủ cửa hàng thực phẩm hoặc đại diện chuỗi bán lẻ).</p>
+      <p>Hợp đồng này áp dụng riêng cho quan hệ B2B. Các quy định về bảo vệ người tiêu dùng không áp dụng cho hợp đồng này.</p>
+
+      <h4>2. Cho mượn giá trưng bày và đơn hàng đầu tiên</h4>
+      <p>Nhà cung cấp cho mượn miễn phí giá trưng bày sản phẩm A-GROSS SOS trong suốt thời gian hợp tác. Giá trưng bày vẫn thuộc quyền sở hữu của Nhà cung cấp.</p>
+      <p>Bên mua đặt giá trưng bày tối đa cách khu vực thu ngân 3 mét, trên quầy hoặc kệ (không đặt trên sàn).</p>
+      <p>Giá trưng bày chỉ được phép chứa hàng hóa do Nhà cung cấp giao.</p>
+      <p>Đơn hàng đầu tiên dùng để lấp đầy toàn bộ giá trưng bày.</p>
+      <p>Giá trị tối thiểu cho các đơn hàng bổ sung: 1.200 Kč đã bao gồm VAT.</p>
+
+      <h4>3. Giá cả, lợi nhuận và điều kiện thanh toán</h4>
+      <p>Nhà cung cấp đảm bảo mức lợi nhuận 50% trên giá bán (MOC).</p>
+      <p>Đối với chuỗi COOP: hóa đơn có thời hạn thanh toán 14 ngày kể từ khi nhận hàng.</p>
+      <p>Đối với các cửa hàng khác: thanh toán khi nhận hàng (COD), trừ khi có thỏa thuận khác.</p>
+
+      <h4>4. Điều kiện giao hàng</h4>
+      <p>Giao hàng trên toàn lãnh thổ Cộng hòa Séc.</p>
+      <p>Miễn phí vận chuyển cho đơn hàng từ 1.200 Kč đã bao gồm VAT.</p>
+      <p>Đơn vị vận chuyển: dịch vụ chuyển phát GLS.</p>
+      <p>Thời gian giao hàng thông thường trong vòng 24 giờ kể từ khi xác nhận đơn hàng, vào các ngày làm việc.</p>
+
+      <h4>5. Bảo đảm luân chuyển hàng hóa – đổi hàng tồn</h4>
+      <p>Mặt hàng được đánh dấu điểm đỏ SOS (không có đơn hàng trong 3 tháng trở lên) có thể được trả lại và đổi sang các mặt hàng bán chạy nhất.</p>
+      <p>Hàng trả lại phải còn nguyên vẹn, trong bao bì gốc.</p>
+      <p>Việc thu hồi hàng do đại diện kinh doanh (OZ) của Nhà cung cấp hoặc nhân viên giao hàng GLS thực hiện theo thỏa thuận.</p>
+      <p>Giá trị hàng trả lại sẽ được trừ vào hóa đơn tiếp theo.</p>
+
+      <h4>6. Khiếu nại</h4>
+      <p>Bên mua phải kiểm tra hàng khi nhận từ GLS.</p>
+      <p>Các lỗi rõ ràng cần báo ngay cho nhân viên giao hàng và gửi thông báo trong vòng 3 ngày làm việc tới địa chỉ objednavky@a-gross.cz.</p>
+
+      <h4>7. Quy định cuối cùng</h4>
+      <p>Điều khoản và điều kiện này có hiệu lực từ ngày 1/7/2026.</p>
+      <p>Áp dụng theo pháp luật Cộng hòa Séc, Luật số 89/2012 Sb.</p>
+    </div>
+    <label class="vop-checkbox-row">
+      <input type="checkbox" id="vopCheckbox" onchange="document.getElementById('vopContinueBtn').disabled=!this.checked">
+      <span>Tôi đồng ý với Điều khoản và điều kiện thương mại chung của dự án A-GROSS SOS</span>
+    </label>
+    <button class="vop-continue-btn" id="vopContinueBtn" disabled onclick="acceptVop()">Tiếp tục</button>
+  </div>
+</div>
 
 <header>
   <div class="logo">
@@ -860,7 +926,16 @@ let html5QrCode = null;
 // INIT
 // ═══════════════════════════════════════════════════════════════════
 
+function acceptVop(){
+  if(!document.getElementById('vopCheckbox').checked) return;
+  localStorage.setItem('ag_vop_souhlas','1');
+  document.getElementById('vopScreen').classList.add('hidden');
+}
+
 document.addEventListener('DOMContentLoaded', async ()=>{
+  if(localStorage.getItem('ag_vop_souhlas')==='1'){
+    document.getElementById('vopScreen').classList.add('hidden');
+  }
   await loadAppData();
   registerServiceWorker();
 });

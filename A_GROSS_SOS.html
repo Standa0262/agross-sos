@@ -342,6 +342,19 @@ header{
 .ob-stat-label{font-size:10px;color:rgba(255,255,255,.55);margin-top:4px;line-height:1.3}
 .ob-start-btn{width:100%;background:var(--sos);color:#fff;border:none;border-radius:12px;padding:16px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:.4px;margin-top:6px}
 .ob-since{text-align:center;font-size:11px;color:var(--muted);margin-top:12px}
+/* VOP SOUHLAS */
+.vop-screen{position:fixed;inset:0;background:var(--cream);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.vop-screen.hidden{display:none}
+.vop-box{background:var(--surface);border-radius:16px;padding:22px;max-width:480px;width:100%;max-height:92vh;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.vop-title{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:14px;text-align:center}
+.vop-text{flex:1;min-height:0;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.vop-text h4{font-size:13px;font-weight:700;color:var(--dark);margin:14px 0 5px}
+.vop-text h4:first-child{margin-top:0}
+.vop-text p{margin-bottom:6px}
+.vop-checkbox-row{display:flex;align-items:flex-start;gap:10px;font-size:12px;font-weight:600;color:var(--dark);margin-bottom:14px;cursor:pointer}
+.vop-checkbox-row input{margin-top:2px;width:18px;height:18px;flex-shrink:0;cursor:pointer;accent-color:var(--sos)}
+.vop-continue-btn{width:100%;background:var(--sos);color:#fff;border:none;border-radius:12px;padding:15px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:opacity .2s}
+.vop-continue-btn:disabled{opacity:.35;cursor:not-allowed}
 /* INFO PAGE */
 .info-hero{background:var(--dark);border-radius:14px;padding:22px 18px;margin-bottom:14px;text-align:center}
 .info-hero h2{font-size:22px;font-weight:800;color:var(--cream);margin-bottom:4px}
@@ -679,6 +692,58 @@ www.a-gross.cz</div>
   <div style="height:24px"></div>
 </div>
 
+<!-- VOP SOUHLAS -->
+<div class="vop-screen" id="vopScreen">
+  <div class="vop-box">
+    <h2 class="vop-title">Obchodní podmínky A-GROSS SOS</h2>
+    <div class="vop-text" id="vopText">
+      <p><strong>VŠEOBECNÉ OBCHODNÍ PODMÍNKY (B2B) projektu „A-GROSS SOS"</strong></p>
+
+      <h4>1. Úvodní ustanovení</h4>
+      <p>Dodavatel: A-GROSS, s.r.o., Olomouc-Holice, IČO: 47670215, DIČ: CZ47670215, zapsaná v OR Krajského soudu v Ostravě, C 5129.</p>
+      <p>Odběratel: Fyzická nebo právnická osoba jednající v rámci podnikatelské činnosti (provozovatel prodejny potravin nebo zástupce maloobchodní sítě).</p>
+      <p>Tato smlouva je určena výhradně pro vztahy B2B. Nevztahují se na ni ustanovení o ochraně spotřebitele.</p>
+
+      <h4>2. Výpůjčka stojanu a první objednávka</h4>
+      <p>Dodavatel bezplatně zapůjčí prodejní stojan A-GROSS SOS po dobu spolupráce. Stojan zůstává vlastnictvím Dodavatele.</p>
+      <p>Odběratel umístí stojan maximálně 3 metry od pokladní zóny, na pult nebo regál (nikoli na podlahu).</p>
+      <p>Stojan smí obsahovat výhradně zboží dodané Dodavatelem.</p>
+      <p>První objednávka slouží ke kompletnímu zaplnění stojanu.</p>
+      <p>Minimální hodnota doplňovacích objednávek: 1 200 Kč včetně DPH.</p>
+
+      <h4>3. Ceny, marže a platební podmínky</h4>
+      <p>Dodavatel garantuje marži 50 % z prodejní ceny (MOC).</p>
+      <p>Sítě COOP: faktura se splatností 14 dní od doručení zboží.</p>
+      <p>Ostatní prodejny: dobírka při převzetí zboží, pokud není dohodnuto jinak.</p>
+
+      <h4>4. Dodací podmínky</h4>
+      <p>Dodávky po celé České republice.</p>
+      <p>Doprava ZDARMA při objednávce od 1 200 Kč včetně DPH.</p>
+      <p>Přepravce: kurýrní služba GLS.</p>
+      <p>Dodání zpravidla do 24 hodin od potvrzení objednávky v pracovní dny.</p>
+
+      <h4>5. Garance rotace zboží – výměna ležáků</h4>
+      <p>Artikl označený červeným SOS bodem (bez objednávky 3+ měsíce) může být vrácen a vyměněn za bestsellery.</p>
+      <p>Vracené zboží musí být nepoškozené v originálním obalu.</p>
+      <p>Vyzvednutí zajistí OZ Dodavatele nebo kurýr GLS na základě dohody.</p>
+      <p>Hodnota vráceného zboží bude odečtena v následující faktuře.</p>
+
+      <h4>6. Reklamace</h4>
+      <p>Odběratel zkontroluje zásilku při převzetí od GLS.</p>
+      <p>Zjevné vady nahlásí kurýrovi a do 3 pracovních dnů na objednavky@a-gross.cz.</p>
+
+      <h4>7. Závěrečná ustanovení</h4>
+      <p>VOP platné od 1. 7. 2026.</p>
+      <p>Řídí se právním řádem České republiky, zákonem č. 89/2012 Sb.</p>
+    </div>
+    <label class="vop-checkbox-row">
+      <input type="checkbox" id="vopCheckbox" onchange="document.getElementById('vopContinueBtn').disabled=!this.checked">
+      <span>Souhlasím s Všeobecnými obchodními podmínkami projektu A-GROSS SOS</span>
+    </label>
+    <button class="vop-continue-btn" id="vopContinueBtn" disabled onclick="acceptVop()">Pokračovat</button>
+  </div>
+</div>
+
 <!-- VÝBĚR JAZYKA -->
 <div class="onboarding" id="onboarding">
   <div class="ob-hero">
@@ -970,6 +1035,15 @@ function copyEmail(){
 function dismissOnboarding(){
   document.getElementById('onboarding').classList.add('hidden');
   localStorage.setItem('ag_ob','1');
+}
+
+function acceptVop(){
+  if(!document.getElementById('vopCheckbox').checked) return;
+  localStorage.setItem('ag_vop_souhlas','1');
+  document.getElementById('vopScreen').classList.add('hidden');
+  if(!localStorage.getItem('ag_ob')){
+    document.getElementById('onboarding').classList.remove('hidden');
+  }
 }
 
 // ── ORDER BAR ────────────────────────────────────────────────────────
@@ -1594,7 +1668,12 @@ if(!stores.length){
   stores=[];
 }
 
-if(localStorage.getItem('ag_ob')){document.getElementById('onboarding').classList.add('hidden');}
+if(localStorage.getItem('ag_vop_souhlas')==='1'){
+  document.getElementById('vopScreen').classList.add('hidden');
+  if(localStorage.getItem('ag_ob')){document.getElementById('onboarding').classList.add('hidden');}
+} else {
+  document.getElementById('onboarding').classList.add('hidden');
+}
 // Load saved notification
 const _savedNotif = localStorage.getItem('ag_notif');
 if(_savedNotif){ showNotifBar(_savedNotif); updateNotifPreview(_savedNotif); }
