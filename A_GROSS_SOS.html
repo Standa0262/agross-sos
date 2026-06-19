@@ -387,11 +387,6 @@ header{
 .i-tip strong{color:#5A4400}
 .i-since{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:var(--cream);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:600;margin-top:6px}
 .i-since span{color:var(--sos)}
-.email-box{background:#F8F8F8;border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:10px}
-.email-subj-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.email-subj{font-size:12px;font-weight:700;color:var(--dark);margin-bottom:12px;line-height:1.4}
-.email-body-txt{font-size:12px;color:var(--text);line-height:1.65;white-space:pre-line}
-.copy-btn{width:100%;margin-top:12px;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
 
 
 /* SHARE SHEET */
@@ -528,24 +523,6 @@ header{
     </div>
   </div>
 
-  <div class="settings-card">
-    <h3>&#128196; Formát souboru cenik.json</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Uložte na server soubor v tomto formátu (export z Excelu přes skript nebo ručně):</p>
-    <div style="background:var(--bg);border-radius:8px;padding:10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text);line-height:1.6;overflow-x:auto">
-[<br>
-&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"kod": "276921",<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"nazev": "JEHLY ORGAN UNIVERSAL 10ks",<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"nc": 39.44,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"moc": 95.90,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"ean": "8590580899993"<br>
-&nbsp;&nbsp;},<br>
-&nbsp;&nbsp;...<br>
-]
-    </div>
-    <div class="i-tip" style="margin-top:10px">&#128161; <strong>Postup:</strong> Otevřete Excel → uložte jako CSV → použijte nástroj (nebo kolegu s Pythonem &#128512;) pro převod na JSON → nahrajte na server. Nebo rovnou uložte Excel jako JSON pomocí Power Automate.</div>
-  </div>
-
   <div style="height:24px"></div>
 </div>
 
@@ -617,7 +594,7 @@ header{
       <div class="kpi-tbl" style="margin-top:12px">
         <div class="kpi-row"><div class="kpi-lbl">Dodací lhůta</div><div class="kpi-val">do 24 hodin</div></div>
         <div class="kpi-row"><div class="kpi-lbl">Doprava</div><div class="kpi-val ok">ZDARMA &ge; 1 200 Kč</div></div>
-        <div class="kpi-row"><div class="kpi-lbl">Oblast dovozu</div><div class="kpi-val">Morava a Slezsko</div></div>
+        <div class="kpi-row"><div class="kpi-lbl">Oblast dovozu</div><div class="kpi-val">celá Česká republika</div></div>
         <div class="kpi-row"><div class="kpi-lbl">Objednávky na</div><div class="kpi-val">objednavky@a-gross.cz</div></div>
       </div>
     </div>
@@ -644,49 +621,6 @@ header{
         <strong>50&nbsp;% marže &nbsp;&middot;&nbsp; 0,25 m&#178; &nbsp;&middot;&nbsp; Nulové riziko ležáků</strong>
         <span>A-GROSS SOS &#8211; Galanterní první pomoc od roku 1992</span>
       </div>
-    </div>
-  </div>
-  <div class="info-chapter">
-    <div class="ich-header" onclick="toggleCh('c5')">
-      <div class="ich-num">&#9993;</div><div class="ich-title">Oslovovací e-mail pro ředitele a nákupčí</div>
-      <div class="ich-arrow" id="arr-c5">&#9660;</div>
-    </div>
-    <div class="ich-body" id="c5">
-      <p class="ip" style="color:var(--muted);font-style:italic">Šablona pro oslovení centrál sítí (Hruška, COOP, Flop). Doplňte jméno, telefon a e-mail.</p>
-      <div class="email-box">
-        <div class="email-subj-lbl">Předmět:</div>
-        <div class="email-subj">Nový zdroj příjmů pro vaše prodejny: textilní galanterie na 0,25 m&#178; s garantovanou marží 50 % &#8211; pilotní nabídka A-GROSS SOS</div>
-        <hr style="border:none;border-top:1px solid var(--border);margin-bottom:12px">
-        <div class="email-body-txt" id="emailBodyText">Vážený pane / Vážená paní,
-
-dovoluji si Vás oslovit jménem společnosti A-GROSS, s.r.o. z Olomouce-Holice - moravského rodinného velkoobchodu s textilní galanterií, který v oboru nepřetržitě působí od roku 1992. Za tu dobu jsme vybudovali sklad s 8 000 položkami, vlastní kamenné prodejny a stabilní distribuci po Moravě a Slezsku.
-
-Přicházíme s projektem A-GROSS SOS - "Galanterní první pomoc".
-
-Kompaktní prodejní modul (plocha pouhých 0,25 m2) s ~35 artikly základní textilní galanterie umístíme přímo do vašich prodejen potravin. Reagujeme na jednoduchý fakt: zákazník na vesnici nebo malém městě nemá kde koupit jehlu, nit ani zip - nejbližší galanterie je desítky kilometrů daleko.
-
-Co nabízíme konkrétně:
-
-* Garantovaná čistá marže 50 % z každé prodané položky - pro non-food sortiment zcela výjimečné číslo (porovnejte s 10-20 % u základních potravin).
-* Přímý pevný nákup standardní fakturou - žádná komise, žádná administrativa navíc.
-* Nulové riziko ležáků: systém SOS automaticky hlídá pohyb zboží. Artikl bez pohybu 3 měsíce při nejbližším zavozu bezplatně vyměníme za ověřené bestsellery.
-* Jednoduché objednávání přes mobilní aplikaci (3 kliknutí, skenování EAN).
-* Dodávka do 24 hodin, doprava zdarma při objednávce od 1 200 Kč včetně DPH.
-
-Náš návrh:
-Rádi bychom zahájili 3měsíční pilotní projekt na 10-15 vybraných prodejnách. Po vyhodnocení máte jasná data o prodejnosti - a rozhodujete se sami, bez závazku.
-
-Jsme moravský partner, který zná místní trh a je dosažitelný přímo. Domluvme si krátkou schůzku nebo videohovor, kde vám ukážeme ukázkový modul a přesné kalkulace.
-
-S přátelským pozdravem,
-
-[Jméno obchodního zástupce]
-A-GROSS, s.r.o. | Olomouc-Holice
-Tel.: [číslo] | E-mail: [e-mail]
-www.a-gross.cz</div>
-        <button class="copy-btn" onclick="copyEmail()">&#128203; Kopírovat e-mail do schránky</button>
-      </div>
-      <div class="i-tip">&#128161; <strong>Tip:</strong> Předmět e-mailu udržte přesně v navrženém znění - obsahuje klíčové motivátory (marže, plocha, pilot), které nákupčí zaujmou při skenování příchozích zpráv.</div>
     </div>
   </div>
   <div style="height:24px"></div>
@@ -1024,11 +958,6 @@ function toggleCh(id){
   const a=document.getElementById('arr-'+id);
   const open=b.classList.toggle('open');
   a.classList.toggle('open',open);
-}
-function copyEmail(){
-  const txt=document.getElementById('emailBodyText').innerText||document.getElementById('emailBodyText').textContent;
-  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>showToast('E-mail zkopírován'));}
-  else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast('E-mail zkopírován');}
 }
 function dismissOnboarding(){
   document.getElementById('onboarding').classList.add('hidden');
