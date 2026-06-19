@@ -42,17 +42,6 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
 .icon-btn:hover{background:rgba(255,255,255,0.2)}
 .badge{position:absolute;top:-4px;right:-4px;background:var(--sos);color:#fff;border-radius:10px;font-size:9px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-weight:700;display:none}
 
-.sync-banner{background:var(--dark);color:var(--cream);font-size:12px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #333}
-.sync-banner.ok{background:#1a3a28}
-.sync-banner.warn{background:#3a2010}
-.sync-banner.error{background:#3a1010}
-.sync-info{display:flex;align-items:center;gap:7px;flex:1}
-.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse 1s infinite}
-.sync-dot.ok{background:var(--ok);animation:none}
-.sync-dot.warn{background:#FFB040;animation:none}
-.sync-dot.error{background:var(--sos);animation:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
 .order-bar{position:sticky;top:60px;z-index:90;background:var(--dark2);color:#fff;padding:7px 14px;display:flex;align-items:center;justify-content:space-between;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.08)}
 .bar-left{opacity:.7;font-size:11px}
 .bar-right{display:flex;gap:14px;align-items:center}
@@ -140,14 +129,6 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
   </div>
 </header>
 
-<div class="sync-banner" id="syncBanner">
-  <div class="sync-info">
-    <div class="sync-dot" id="syncDot"></div>
-    <div id="syncText">Danh mục: dữ liệu cục bộ</div>
-  </div>
-  <button class="icon-btn" style="background:rgba(255,255,255,0.1)" onclick="syncNow()">↻</button>
-</div>
-
 <div class="order-bar" id="orderBar">
   <div class="bar-left" id="barItems">Giỏ trống</div>
   <div class="bar-right">
@@ -194,17 +175,6 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
 
 <!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
-    <h3 style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:12px">🔄 Đồng bộ hóa</h3>
-    <div style="margin-bottom:10px">
-      <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px">URL danh mục</label>
-      <input style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);background:var(--bg);outline:none" 
-             id="settingsCatalogUrl" placeholder="https://..." oninput="saveSyncSettings()">
-    </div>
-    <button style="width:100%;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:11px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px" onclick="syncNow()">↻ Đồng bộ ngay</button>
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);max-height:120px;overflow-y:auto;line-height:1.6" id="syncLog">— chưa đồng bộ —</div>
-  </div>
-
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
     <h3 style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:12px">📱 Thiết bị</h3>
     <div style="font-size:12px;color:var(--muted)">
@@ -384,11 +354,8 @@ function updateOnlineStatus(){
   const badge = document.getElementById('offlineBadge');
   if(navigator.onLine){
     badge.classList.remove('show');
-    setSyncStatus('ok', 'Danh mục: đã cập nhật');
-    syncNow();
   } else {
     badge.classList.add('show');
-    setSyncStatus('warn', 'Danh mục: chế độ ngoại tuyến');
   }
 }
 
@@ -475,76 +442,6 @@ function fmt(n){
   return n.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})+' Kč';
 }
 
-function setSyncStatus(state, text){
-  const banner = document.getElementById('syncBanner');
-  const dot = document.getElementById('syncDot');
-  const txt = document.getElementById('syncText');
-  if(!banner) return;
-  banner.className = 'sync-banner ' + state;
-  dot.className = 'sync-dot ' + state;
-  txt.textContent = text;
-}
-
-function syncLog(msg){
-  const el = document.getElementById('syncLog');
-  if(!el) return;
-  const ts = new Date().toLocaleTimeString('vi-VN');
-  el.textContent = '['+ts+'] '+msg+'\n'+(el.textContent==='— chưa đồng bộ —'?'':el.textContent);
-}
-
-async function syncNow(){
-  if(!navigator.onLine){
-    setSyncStatus('warn','Danh mục: chế độ ngoại tuyến');
-    return;
-  }
-  
-  const url = document.getElementById('settingsCatalogUrl')?.value.trim();
-  if(!url){
-    setSyncStatus('warn','Danh mục: chưa có URL (xem Cài đặt)');
-    return;
-  }
-  
-  setSyncStatus('spin','Danh mục: đang tải…');
-  syncLog('Bắt đầu đồng bộ từ: '+url);
-  
-  try {
-    const resp = await fetch(url, {cache:'no-cache'});
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    
-    let data = await resp.json();
-    if(!Array.isArray(data)||data.length===0) throw new Error('Dữ liệu trống');
-    
-    CATALOG = data;
-    localStorage.setItem('ag_catalog_vi', JSON.stringify(data));
-    
-    // Save to IndexedDB
-    for(const p of data){
-      await saveProduct(p);
-    }
-    
-    setSyncStatus('ok','Danh mục: '+data.length+' sản phẩm');
-    syncLog('OK: '+data.length+' sản phẩm tải');
-    
-    filterProducts();
-    showToast('✓ Cập nhật thành công ('+data.length+' SP)');
-  } catch(e){
-    setSyncStatus('error','Danh mục: lỗi đồng bộ');
-    syncLog('Lỗi: '+e.message);
-    showToast('Lỗi: '+e.message);
-  }
-}
-
-function saveSyncSettings(){
-  const url = document.getElementById('settingsCatalogUrl')?.value.trim()||'';
-  localStorage.setItem('ag_catalog_url_vi', url);
-}
-
-function loadSyncSettings(){
-  const url = localStorage.getItem('ag_catalog_url_vi')||'';
-  const el = document.getElementById('settingsCatalogUrl');
-  if(el) el.value = url;
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // UI FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════
@@ -557,7 +454,6 @@ function switchTab(tab){
   if(tab==='cart') renderCart();
   if(tab==='stores') renderStores();
   if(tab==='orders') renderOrders();
-  if(tab==='settings') loadSyncSettings();
 }
 
 function showToast(msg){

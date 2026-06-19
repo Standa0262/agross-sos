@@ -399,22 +399,6 @@ header{
 .share-close{width:100%;padding:12px;background:var(--dark);color:var(--cream);border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
 
 
-/* SYNC / KATALOG */
-.sync-banner{background:var(--dark);color:var(--cream);font-size:12px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #333}
-.sync-banner.ok{background:#1a3a28}
-.sync-banner.warn{background:#3a2010}
-.sync-banner.error{background:#3a1010}
-.sync-info{display:flex;align-items:center;gap:7px;flex:1;min-width:0}
-.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.sync-dot.ok{background:var(--ok)}
-.sync-dot.warn{background:#FFB040}
-.sync-dot.error{background:var(--sos)}
-.sync-dot.spin{background:#888;animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.sync-text{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sync-btn{background:rgba(255,255,255,0.1);border:none;color:var(--cream);border-radius:6px;padding:4px 10px;font-family:inherit;font-size:11px;cursor:pointer;flex-shrink:0;white-space:nowrap}
-.sync-btn:hover{background:rgba(255,255,255,0.2)}
-
 /* NOTIFICATION TOAST (persistent) */
 .notif-bar{background:var(--sos);color:#fff;padding:10px 16px;display:none;align-items:center;gap:10px;font-size:12px}
 .notif-bar.show{display:flex}
@@ -429,18 +413,6 @@ header{
 .settings-row:last-child{border-bottom:none;padding-bottom:0}
 .settings-label{font-size:12px;color:var(--text)}
 .settings-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;inset:0;background:#ccc;border-radius:12px;cursor:pointer;transition:.3s}
-.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
-.toggle input:checked+.toggle-slider{background:var(--ok)}
-.toggle input:checked+.toggle-slider:before{transform:translateX(20px)}
-.url-input-wrap{margin-top:10px}
-.url-input-wrap label{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:5px}
-.url-input{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);background:var(--bg);outline:none}
-.url-input:focus{border-color:var(--dark)}
-.sync-now-btn{width:100%;margin-top:10px;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:11px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
-.sync-log{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);max-height:120px;overflow-y:auto;line-height:1.6}
 .notif-compose textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:12px;color:var(--text);background:var(--bg);outline:none;resize:vertical;min-height:60px;margin-top:8px}
 .notif-compose-btn{width:100%;margin-top:8px;background:var(--sos);color:#fff;border:none;border-radius:8px;padding:10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
 
@@ -463,13 +435,6 @@ header{
   </div>
 </header>
 
-<div class="sync-banner" id="syncBanner">
-  <div class="sync-info">
-    <div class="sync-dot" id="syncDot"></div>
-    <div class="sync-text" id="syncText">Katalog: lokální data</div>
-  </div>
-  <button class="sync-btn" onclick="syncNow()">&#8635; Aktualizovat</button>
-</div>
 <div class="notif-bar" id="notifBar">
   <div class="notif-bar-text" id="notifText"></div>
   <button class="notif-bar-close" onclick="dismissNotif()">&#10005;</button>
@@ -533,26 +498,6 @@ header{
 
 <!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
-
-  <div class="settings-card">
-    <h3>&#128257; Synchronizace katalogu</h3>
-    <div class="url-input-wrap">
-      <label>URL adresa souboru cenik.json nebo cenik.csv</label>
-      <input class="url-input" id="settingsCatalogUrl" placeholder="https://www.a-gross.cz/katalog/cenik.json" oninput="saveSyncSettings()">
-    </div>
-    <div class="settings-row" style="margin-top:10px">
-      <div>
-        <div class="settings-label">Automatická sync jednou denně</div>
-        <div class="settings-sub">Při spuštění app zkontroluje nová data</div>
-      </div>
-      <label class="toggle">
-        <input type="checkbox" id="settingsAutoSync" onchange="saveSyncSettings()">
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-    <button class="sync-now-btn" onclick="syncNow()">&#8635; Synchronizovat nyní</button>
-    <div class="sync-log" id="syncLog">— zatím žádná synchronizace —</div>
-  </div>
 
   <div class="settings-card">
     <h3>&#128276; Oznámení pro prodejny</h3>
@@ -876,122 +821,6 @@ www.a-gross.cz</div>
 <script>
 const MIN_QTY = 5;
 
-// ── CATALOG SYNC ─────────────────────────────────────────────────────
-let CATALOG = JSON.parse(localStorage.getItem('ag_catalog') || 'null') || null;
-
-function getProducts(){
-  return CATALOG || PRODUCTS; // fallback to built-in if no sync yet
-}
-
-function syncLog(msg){
-  const el = document.getElementById('syncLog');
-  if(!el) return;
-  const ts = new Date().toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  el.textContent = '['+ts+'] '+msg+'\n'+(el.textContent==='— zatím žádná synchronizace —'?'':el.textContent);
-}
-
-function setSyncStatus(state, text){
-  const banner = document.getElementById('syncBanner');
-  const dot    = document.getElementById('syncDot');
-  const txt    = document.getElementById('syncText');
-  if(!banner) return;
-  banner.className = 'sync-banner '+state;
-  dot.className    = 'sync-dot '+state;
-  txt.textContent  = text;
-}
-
-async function syncNow(){
-  const url = localStorage.getItem('ag_catalog_url') || '';
-  if(!url){
-    setSyncStatus('warn','Katalog: URL není nastavena (viz Nastavení)');
-    syncLog('Chyba: URL katalogu není zadána.');
-    showToast('Zadejte URL v záložce Nastavení');
-    switchTab('settings');
-    return;
-  }
-  setSyncStatus('spin','Katalog: načítám…');
-  syncLog('Zahajuji sync z: '+url);
-  try {
-    const resp = await fetch(url, {cache:'no-cache'});
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    let data;
-    const ct = resp.headers.get('content-type')||'';
-    if(ct.includes('json') || url.endsWith('.json')){
-      data = await resp.json();
-    } else {
-      // parse CSV: kod,nazev,nc,moc,ean
-      const text = await resp.text();
-      const lines = text.trim().split('\n').slice(1); // skip header
-      data = lines.map(line=>{
-        const cols = line.split(';').map(c=>c.replace(/"/g,'').trim());
-        if(cols.length<4) return null;
-        return {kod:cols[0],nazev:cols[1],nc:parseFloat(cols[2].replace(',','.')),moc:parseFloat(cols[3].replace(',','.')),ean:cols[4]||''};
-      }).filter(Boolean);
-    }
-    if(!Array.isArray(data)||data.length===0) throw new Error('Prázdná nebo neplatná data');
-    
-    // Detect changes
-    const oldCat  = CATALOG || PRODUCTS;
-    const changed = data.filter(np=>{
-      const op = oldCat.find(p=>p.kod===np.kod);
-      return !op || op.nc!==np.nc || op.moc!==np.moc;
-    });
-    const added = data.filter(np=>!(CATALOG||PRODUCTS).find(p=>p.kod===np.kod));
-    
-    CATALOG = data;
-    localStorage.setItem('ag_catalog', JSON.stringify(data));
-    localStorage.setItem('ag_catalog_ts', new Date().toISOString());
-    
-    const ts = new Date().toLocaleString('cs-CZ',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    setSyncStatus('ok','Katalog: '+data.length+' pol. · '+ts);
-    syncLog('OK: '+data.length+' položek načteno. Změn cen: '+changed.length+'. Novinek: '+added.length+'.');
-    
-    // Auto-notify if prices changed or items added
-    if(changed.length>0||added.length>0){
-      let msg='';
-      if(added.length>0) msg += 'Do katalogu přibyl'+( added.length>1 ? 'y novinky ('+added.length+' pol.)' : 'a novinka')+'. ';
-      if(changed.length>0) msg += 'Aktualizovány ceny u '+changed.length+' položek. ';
-      msg += 'Platné od '+new Date().toLocaleDateString('cs-CZ')+'.';
-      publishNotif(msg, false); // false = don't overwrite manual notif
-    }
-    
-    filterProducts();
-    showToast('✓ Katalog aktualizován ('+data.length+' pol.)');
-  } catch(e){
-    setSyncStatus('error','Katalog: chyba synchronizace');
-    syncLog('Chyba: '+e.message);
-    showToast('Chyba sync: '+e.message);
-  }
-}
-
-function saveSyncSettings(){
-  const url  = document.getElementById('settingsCatalogUrl')?.value.trim()||'';
-  const auto = document.getElementById('settingsAutoSync')?.checked;
-  localStorage.setItem('ag_catalog_url',  url);
-  localStorage.setItem('ag_catalog_auto', auto?'1':'0');
-}
-
-function loadSyncSettings(){
-  const url  = localStorage.getItem('ag_catalog_url')||'';
-  const auto = localStorage.getItem('ag_catalog_auto')==='1';
-  const urlEl  = document.getElementById('settingsCatalogUrl');
-  const autoEl = document.getElementById('settingsAutoSync');
-  if(urlEl)  urlEl.value   = url;
-  if(autoEl) autoEl.checked = auto;
-  // Show last sync time in banner
-  const ts = localStorage.getItem('ag_catalog_ts');
-  if(CATALOG){
-    const d = ts ? new Date(ts).toLocaleString('cs-CZ',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '?';
-    setSyncStatus('ok','Katalog: '+CATALOG.length+' pol. · '+d);
-  }
-  // Auto sync once per day
-  if(auto && url){
-    const lastSync = ts ? new Date(ts).getTime() : 0;
-    const oneDayMs = 24*60*60*1000;
-    if(Date.now()-lastSync > oneDayMs) syncNow();
-  }
-}
-
 // ── NOTIFICATIONS ─────────────────────────────────────────────────────
 function publishNotif(msg, overwrite=true){
   const text = msg || document.getElementById('notifInput')?.value.trim();
@@ -1126,7 +955,6 @@ function switchTab(tab){
   if(tab==='cart')   renderCart();
   if(tab==='stores') renderStores();
   if(tab==='orders') renderOrders();
-  if(tab==='settings') loadSyncSettings();
 }
 function toggleCh(id){
   const b=document.getElementById(id);
@@ -1223,7 +1051,7 @@ function renderProducts(list){
 
 function filterProducts(){
   const q=document.getElementById('searchInput').value.toLowerCase();
-  const src=getProducts();
+  const src=PRODUCTS;
   renderProducts(q?src.filter(p=>
     p.nazev.toLowerCase().includes(q)||p.kod.toLowerCase().includes(q)||(p.ean||'').includes(q)
   ):src);
@@ -1770,7 +1598,6 @@ if(localStorage.getItem('ag_ob')){document.getElementById('onboarding').classLis
 // Load saved notification
 const _savedNotif = localStorage.getItem('ag_notif');
 if(_savedNotif){ showNotifBar(_savedNotif); updateNotifPreview(_savedNotif); }
-loadSyncSettings();
 populateStoreSelect();
 filterProducts();
 updateOrderBar();
