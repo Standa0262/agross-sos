@@ -3,3 +3,4 @@ flask-cors
 gunicorn
 firebase-admin
 reportlab
+psycopg2-binary

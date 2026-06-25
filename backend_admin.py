@@ -5,15 +5,18 @@ A-GROSS SOS – Admin Backend
 Měsíční reporting pro sítě a správa komisí
 
 Instalace:
-    pip install flask flask-cors psycopg2 python-dateutil
-    
+    pip install flask flask-cors psycopg2-binary python-dateutil
+
 Spuštění:
-    python app.py
-    
+    DATABASE_URL=postgresql://... python backend_admin.py
+
 API Endpoints:
-    POST /api/orders/sync – Příjem offline objednávek
+    POST /api/db/init – Vytvoří databázové tabulky (pokud neexistují)
+    POST /api/orders/sync – Příjem offline objednávek (ukládá do DB)
+    GET /api/orders – Objednávky (filtr store_id, from_date, to_date, network)
+    POST /api/stores/sync – Uložení/aktualizace prodejny
+    GET /api/stores – Všechny prodejny
     GET /api/reports/monthly – Měsíční report pro síť
-    GET /api/orders – Všechny objednávky v období
 """
 
 from flask import Flask, request, jsonify
@@ -22,6 +25,8 @@ import json
 import os
 from datetime import datetime, timedelta
 from collections import defaultdict
+import psycopg2
+from psycopg2.extras import RealDictCursor, Json
 
 app = Flask(__name__)
 CORS(app)
@@ -36,27 +41,120 @@ COMMISSION_RATES = {
     # Přidat další sítě dle dohody
 }
 
-DATA_FILE = 'orders_db.json'
+# ═════════════════════════════════════════════════════════════════════
+# DATABÁZE (PostgreSQL – Neon.tech)
+# ═════════════════════════════════════════════════════════════════════
+# DATABASE_URL se nastavuje VÝHRADNĚ jako env proměnná (Render → Settings →
+# Environment), nikdy napevno v kódu – jde o produkční přístupové údaje.
 
-# ═════════════════════════════════════════════════════════════════════
-# DATABÁZE (JSONl soubor – ve výrobě bude PostgreSQL)
-# ═════════════════════════════════════════════════════════════════════
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+def get_db():
+    if not DATABASE_URL:
+        raise RuntimeError('DATABASE_URL není nastavena (env proměnná).')
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def load_orders():
-    """Načíst všechny objednávky ze souboru"""
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
-
-def save_orders(orders):
-    """Uložit objednávky"""
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(orders, f, ensure_ascii=False, indent=2)
+    """Načíst všechny objednávky z databáze (camelCase klíče pro frontend)."""
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM orders ORDER BY date DESC')
+        rows = cur.fetchall()
+        cur.close()
+    finally:
+        conn.close()
+    return [
+        {
+            'id': r['id'],
+            'storeId': r['store_id'],
+            'storeName': r['store_name'],
+            'date': r['date'].isoformat() if r['date'] else None,
+            'items': r['items'],
+            'nc': float(r['nc']) if r['nc'] is not None else 0,
+            'marze': float(r['marze']) if r['marze'] is not None else 0,
+            'moc': float(r['moc']) if r['moc'] is not None else 0,
+            'delivery': r['delivery'],
+            'status': r['status'],
+            'hasExchange': r['has_exchange'],
+        }
+        for r in rows
+    ]
 
 # ═════════════════════════════════════════════════════════════════════
 # API ENDPOINTS
 # ═════════════════════════════════════════════════════════════════════
+
+@app.route('/api/db/init', methods=['POST'])
+def db_init():
+    """Vytvoří databázové tabulky (pokud ještě neexistují)."""
+    try:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS stores (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    chain TEXT,
+                    manager TEXT,
+                    phone TEXT,
+                    address TEXT,
+                    ico TEXT,
+                    dic TEXT,
+                    email TEXT,
+                    hours_week TEXT,
+                    hours_weekend TEXT,
+                    note TEXT,
+                    created_at TIMESTAMPTZ DEFAULT now()
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS orders (
+                    id TEXT PRIMARY KEY,
+                    store_id TEXT,
+                    store_name TEXT,
+                    date TIMESTAMPTZ,
+                    items JSONB,
+                    nc NUMERIC,
+                    marze NUMERIC,
+                    moc NUMERIC,
+                    delivery TEXT,
+                    status TEXT,
+                    has_exchange BOOLEAN DEFAULT false,
+                    created_at TIMESTAMPTZ DEFAULT now()
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS sos_exchanges (
+                    id SERIAL PRIMARY KEY,
+                    store_id TEXT,
+                    old_kod TEXT,
+                    new_kod TEXT,
+                    date TIMESTAMPTZ,
+                    created_at TIMESTAMPTZ DEFAULT now()
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id SERIAL PRIMARY KEY,
+                    text TEXT,
+                    created_at TIMESTAMPTZ DEFAULT now(),
+                    active BOOLEAN DEFAULT true
+                )
+            ''')
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'Tabulky stores, orders, sos_exchanges, notifications jsou připraveny'
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/orders/sync', methods=['POST'])
 def sync_order():
@@ -86,27 +184,54 @@ def sync_order():
     """
     try:
         order = request.json
-        
+
         # Validace
         if not order.get('storeId') or not order.get('items'):
             return jsonify({'error': 'Chybí storeId nebo items'}), 400
-        
-        # Přidat metadata
-        order['id'] = order.get('id') or f"ORD-{int(datetime.now().timestamp()*1000)}"
-        order['synced'] = True
-        order['synced_at'] = datetime.now().isoformat()
-        
-        # Uložit
-        orders = load_orders()
-        orders.append(order)
-        save_orders(orders)
-        
+
+        order_id = str(order.get('id') or f"ORD-{int(datetime.now().timestamp()*1000)}")
+
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO orders (id, store_id, store_name, date, items, nc, marze, moc, delivery, status, has_exchange)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    store_id = EXCLUDED.store_id,
+                    store_name = EXCLUDED.store_name,
+                    date = EXCLUDED.date,
+                    items = EXCLUDED.items,
+                    nc = EXCLUDED.nc,
+                    marze = EXCLUDED.marze,
+                    moc = EXCLUDED.moc,
+                    delivery = EXCLUDED.delivery,
+                    status = EXCLUDED.status,
+                    has_exchange = EXCLUDED.has_exchange
+            ''', (
+                order_id,
+                order.get('storeId'),
+                order.get('storeName'),
+                order.get('date') or datetime.now().isoformat(),
+                Json(order.get('items')),
+                order.get('nc'),
+                order.get('marze'),
+                order.get('moc'),
+                order.get('delivery'),
+                order.get('status', 'new'),
+                bool(order.get('hasExchange', False)),
+            ))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+
         return jsonify({
             'success': True,
             'message': 'Objednávka přijata',
-            'orderId': order['id']
+            'orderId': order_id
         }), 201
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -147,7 +272,120 @@ def get_orders():
             'count': len(orders),
             'orders': orders
         }), 200
-        
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stores/sync', methods=['POST'])
+def sync_store():
+    """
+    Uložení/aktualizace prodejny.
+
+    JSON struktura:
+    {
+        "id": "1781773557752",
+        "name": "Coop Třinec",
+        "chain": "Coop",
+        "manager": "Jana Nováková",
+        "phone": "+420 777 100 200",
+        "address": "Nádražní 12, 739 61 Třinec",
+        "ico": "12345678",
+        "dic": "CZ12345678",
+        "email": "prodejna@example.cz",
+        "hoursWeek": "7:00–19:00",
+        "hoursWeekend": "8:00–12:00",
+        "note": "Dodávat v úterý"
+    }
+    """
+    try:
+        store = request.json
+
+        if not store.get('id') or not store.get('name'):
+            return jsonify({'error': 'Chybí id nebo name'}), 400
+
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO stores (id, name, chain, manager, phone, address, ico, dic, email, hours_week, hours_weekend, note)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    chain = EXCLUDED.chain,
+                    manager = EXCLUDED.manager,
+                    phone = EXCLUDED.phone,
+                    address = EXCLUDED.address,
+                    ico = EXCLUDED.ico,
+                    dic = EXCLUDED.dic,
+                    email = EXCLUDED.email,
+                    hours_week = EXCLUDED.hours_week,
+                    hours_weekend = EXCLUDED.hours_weekend,
+                    note = EXCLUDED.note
+            ''', (
+                str(store.get('id')),
+                store.get('name'),
+                store.get('chain'),
+                store.get('manager'),
+                store.get('phone'),
+                store.get('address'),
+                store.get('ico'),
+                store.get('dic'),
+                store.get('email'),
+                store.get('hoursWeek'),
+                store.get('hoursWeekend'),
+                store.get('note'),
+            ))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'Prodejna uložena',
+            'storeId': str(store.get('id'))
+        }), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stores', methods=['GET'])
+def get_stores():
+    """Vrátí všechny prodejny."""
+    try:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM stores ORDER BY created_at DESC')
+            rows = cur.fetchall()
+            cur.close()
+        finally:
+            conn.close()
+
+        stores = [
+            {
+                'id': r['id'],
+                'name': r['name'],
+                'chain': r['chain'],
+                'manager': r['manager'],
+                'phone': r['phone'],
+                'address': r['address'],
+                'ico': r['ico'],
+                'dic': r['dic'],
+                'email': r['email'],
+                'hoursWeek': r['hours_week'],
+                'hoursWeekend': r['hours_weekend'],
+                'note': r['note'],
+            }
+            for r in rows
+        ]
+
+        return jsonify({
+            'success': True,
+            'count': len(stores),
+            'stores': stores
+        }), 200
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
