@@ -516,6 +516,7 @@ async function loadAppData(){
   populateStoreSelect();
   filterProducts();
   updateOrderBar();
+  loadStoresFromBackend();
 }
 
 function save(){
@@ -525,6 +526,31 @@ function save(){
   localStorage.setItem('ag_orders_vi', JSON.stringify(orders));
   localStorage.setItem('ag_store_vi', storeId);
   localStorage.setItem('ag_lastord_vi', JSON.stringify(lastOrdered));
+}
+
+function syncStoreToBackend(store) {
+  fetch('https://agross-sos.onrender.com/api/stores/sync', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(store)
+  }).catch(err => console.error('Sync prodejny selhal:', err));
+}
+
+async function loadStoresFromBackend() {
+  try {
+    const res = await fetch('https://agross-sos.onrender.com/api/stores');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.success || !data.stores?.length) return;
+    const backendIds = data.stores.map(s => s.id);
+    const localOnly = stores.filter(s => !backendIds.includes(s.id));
+    stores = [...data.stores, ...localOnly];
+    save();
+    populateStoreSelect();
+    renderStores();
+  } catch (e) {
+    console.log('Backend nedostupný, používám localStorage:', e.message);
+  }
 }
 
 function fmt(n){
@@ -874,6 +900,7 @@ function saveStore(){
   renderStores();
   closeStoreModal();
   showToast('✓ Cửa hàng đã lưu');
+  syncStoreToBackend(stores[stores.length-1]);
 }
 
 function renderOrders(){
