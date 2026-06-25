@@ -106,6 +106,10 @@ def db_init():
                     hours_week TEXT,
                     hours_weekend TEXT,
                     note TEXT,
+                    lat DOUBLE PRECISION,
+                    lon DOUBLE PRECISION,
+                    city TEXT,
+                    population INTEGER,
                     created_at TIMESTAMPTZ DEFAULT now()
                 )
             ''')
@@ -616,6 +620,92 @@ def clear_notification():
         finally:
             conn.close()
         return jsonify({'success': True, 'message': 'Oznámení smazáno'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def haversine_km(lat1, lon1, lat2, lon2):
+    """Vzdálenost mezi dvěma GPS body v km (Haversine)."""
+    import math
+    R = 6371
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = math.sin(d_lat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lon/2)**2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+@app.route('/api/stores/check-exclusivity', methods=['POST'])
+def check_exclusivity():
+    """
+    Zkontroluje GPS exkluzivitu pro novou prodejnu.
+
+    Pravidla:
+    - Obce do 3 000 obyvatel: max. 1 prodejna (kontrola stejné obce dle názvu)
+    - Města nad 3 000 obyvatel: min. 800 m mezi prodejnami
+
+    JSON vstup:
+    {
+        "lat": 49.6778,
+        "lon": 18.3461,
+        "city": "Třinec",
+        "population": 35000,
+        "store_id": "optional-id-if-editing"
+    }
+
+    Odpověď:
+    {
+        "allowed": true/false,
+        "warning": "text varování nebo null",
+        "conflicts": [{"store_name": "...", "distance_m": 450}]
+    }
+    """
+    try:
+        data = request.json
+        lat = float(data.get('lat', 0))
+        lon = float(data.get('lon', 0))
+        population = int(data.get('population', 0))
+        city = (data.get('city') or '').strip().lower()
+        exclude_id = str(data.get('store_id') or '')
+
+        if not lat or not lon:
+            return jsonify({'allowed': True, 'warning': 'GPS nedostupné – exkluzivita nekontrolována', 'conflicts': []}), 200
+
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('SELECT id, name, chain, lat, lon, city FROM stores WHERE lat IS NOT NULL AND lon IS NOT NULL')
+            existing = cur.fetchall()
+            cur.close()
+        finally:
+            conn.close()
+
+        conflicts = []
+        for s in existing:
+            if str(s['id']) == exclude_id:
+                continue
+            if s['lat'] is None or s['lon'] is None:
+                continue
+            dist_km = haversine_km(lat, lon, float(s['lat']), float(s['lon']))
+            dist_m = dist_km * 1000
+
+            if population < 3000:
+                # Malá obec: kontrola stejné obce
+                s_city = (s['city'] or '').strip().lower()
+                if s_city and city and s_city == city:
+                    conflicts.append({'store_name': s['name'], 'distance_m': round(dist_m), 'reason': 'same_village'})
+            else:
+                # Město: min. 800 m
+                if dist_m < 800:
+                    conflicts.append({'store_name': s['name'], 'distance_m': round(dist_m), 'reason': 'too_close'})
+
+        if conflicts:
+            if population < 3000:
+                msg = f"V obci již existuje prodejna: {conflicts[0]['store_name']}. Malé obce (do 3 000 obyvatel) mají exkluzivitu pro 1 prodejnu."
+            else:
+                c = conflicts[0]
+                msg = f"Příliš blízko prodejně {c['store_name']} ({c['distance_m']} m). Minimum je 800 m."
+            return jsonify({'allowed': False, 'warning': msg, 'conflicts': conflicts}), 200
+
+        return jsonify({'allowed': True, 'warning': None, 'conflicts': []}), 200
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -436,6 +436,14 @@ header{
 .notif-compose textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:12px;color:var(--text);background:var(--bg);outline:none;resize:vertical;min-height:60px;margin-top:8px}
 .notif-compose-btn{width:100%;margin-top:8px;background:var(--sos);color:#fff;border:none;border-radius:8px;padding:10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
 
+.gps-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;margin-top:4px}
+.gps-badge.ok{background:var(--ok-light);color:var(--ok-dark)}
+.gps-badge.warn{background:#FFF3E0;color:#C05000}
+.gps-badge.err{background:var(--sos-light);color:var(--sos-dark)}
+.exclusivity-banner{border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:12px;font-weight:600;display:none}
+.exclusivity-banner.warn{background:#FFF3E0;border:1px solid #FFD090;color:#7A4000;display:block}
+.exclusivity-banner.block{background:var(--sos-light);border:1px solid #F9C9C0;color:var(--sos-dark);display:block}
+
 </style>
 </head>
 <body>
@@ -806,6 +814,8 @@ header{
       <label class="form-label">Poznámka</label>
       <input class="form-input" id="f-note" placeholder="Dodávat v úterý ráno…">
     </div>
+    <div id="exclusivityBanner" class="exclusivity-banner"></div>
+    <div id="gpsStatus" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
     <div class="modal-btns">
       <button class="btn-s" onclick="closeStoreModal()">Zrušit</button>
       <button class="btn-p" onclick="saveStore()">Uložit</button>
@@ -1370,6 +1380,49 @@ function syncStoreToBackend(store) {
   }).catch(err => console.error('Sync prodejny selhal:', err));
 }
 
+// GPS + exkluzivita
+let _gpsCoords = null;
+
+async function getGPS() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 8000 }
+    );
+  });
+}
+
+async function checkExclusivity(lat, lon, city, population, storeId) {
+  try {
+    const res = await fetch('https://agross-sos.onrender.com/api/stores/check-exclusivity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lat, lon, city, population: population || 0, store_id: storeId || '' })
+    });
+    return await res.json();
+  } catch (e) {
+    return { allowed: true, warning: null, conflicts: [] };
+  }
+}
+
+async function onStoreModalOpen() {
+  const statusEl = document.getElementById('gpsStatus');
+  const banner = document.getElementById('exclusivityBanner');
+  _gpsCoords = null;
+  banner.className = 'exclusivity-banner';
+  banner.textContent = '';
+  statusEl.textContent = '📍 Zjišťuji polohu…';
+  const coords = await getGPS();
+  if (coords) {
+    _gpsCoords = coords;
+    statusEl.textContent = `📍 GPS: ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+  } else {
+    statusEl.textContent = '📍 GPS nedostupné – exkluzivita nebude kontrolována';
+  }
+}
+
 async function loadStoresFromBackend() {
   try {
     const res = await fetch('https://agross-sos.onrender.com/api/stores');
@@ -1536,6 +1589,7 @@ function openAddStore(){
   ['name','manager','phone','address','ico','dic','email','hw','hwe','note'].forEach(f=>document.getElementById('f-'+f).value='');
   document.getElementById('f-chain').value='';
   document.getElementById('storeModal').classList.add('open');
+  onStoreModalOpen();
 }
 
 function editStore(id){
@@ -1558,9 +1612,27 @@ function editStore(id){
 
 function closeStoreModal(){ document.getElementById('storeModal').classList.remove('open'); }
 
-function saveStore(){
+async function saveStore(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){showToast('Zadejte název prodejny');return;}
+  // Zkontrolovat GPS exkluzivitu před uložením
+  if (_gpsCoords) {
+    const cityVal2 = document.getElementById('f-address').value.split(',').pop()?.trim() || '';
+    const excl = await checkExclusivity(_gpsCoords.lat, _gpsCoords.lon, cityVal2, 0, editStoreId);
+    const banner = document.getElementById('exclusivityBanner');
+    if (!excl.allowed) {
+      banner.className = 'exclusivity-banner block';
+      banner.textContent = '🚫 ' + excl.warning;
+      showToast('⚠ Exkluzivita: ' + excl.warning);
+      return; // Zablokuj uložení
+    } else if (excl.warning) {
+      banner.className = 'exclusivity-banner warn';
+      banner.textContent = '⚠ ' + excl.warning;
+    } else {
+      banner.className = 'exclusivity-banner';
+    }
+  }
+  const cityVal = document.getElementById('f-address').value.split(',').pop()?.trim() || '';
   const data={name,chain:document.getElementById('f-chain').value,
     manager:document.getElementById('f-manager').value.trim(),
     phone:document.getElementById('f-phone').value.trim(),
@@ -1570,7 +1642,11 @@ function saveStore(){
     email:document.getElementById('f-email').value.trim(),
     hoursWeek:document.getElementById('f-hw').value.trim(),
     hoursWeekend:document.getElementById('f-hwe').value.trim(),
-    note:document.getElementById('f-note').value.trim()};
+    note:document.getElementById('f-note').value.trim(),
+    lat: _gpsCoords ? _gpsCoords.lat : null,
+    lon: _gpsCoords ? _gpsCoords.lon : null,
+    city: cityVal,
+    population: 0};
   if(editStoreId){
     const i=stores.findIndex(s=>s.id===editStoreId);
     if(i>=0)stores[i]={...stores[i],...data};
