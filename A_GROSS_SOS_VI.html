@@ -517,6 +517,7 @@ async function loadAppData(){
   filterProducts();
   updateOrderBar();
   loadStoresFromBackend();
+  startRenderKeepAlive();
 }
 
 function save(){
@@ -551,6 +552,15 @@ async function loadStoresFromBackend() {
   } catch (e) {
     console.log('Backend nedostupný, používám localStorage:', e.message);
   }
+}
+
+// ── KEEP-ALIVE PING pro Render.com (free plán spí po 15 min) ────────
+function startRenderKeepAlive() {
+  // Ping každých 10 minut aby backend nespal
+  setInterval(() => {
+    fetch('https://agross-sos.onrender.com/api/health')
+      .catch(() => {}); // tiše ignoruj chyby (offline režim)
+  }, 10 * 60 * 1000);
 }
 
 function fmt(n){
