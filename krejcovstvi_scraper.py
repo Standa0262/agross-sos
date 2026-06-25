@@ -28,53 +28,48 @@ from openpyxl.styles import Font, PatternFill, Alignment
 # KONFIGURACE — uprav podle potřeby
 # ==================================================
 
-VYHLEDAVACI_DOTAZY = [
-    "Schneiderei Berlin",
-    "Schneiderei Hamburg",
-    "Schneiderei München",
-    "Schneiderei Köln",
-    "Schneiderei Frankfurt",
-    "Schneiderei Stuttgart",
-    "Schneiderei Düsseldorf",
-    "Schneiderei Leipzig",
-    "Schneiderei Dortmund",
-    "Schneiderei Essen",
-    "Schneiderei Bremen",
-    "Schneiderei Dresden",
-    "Schneiderei Hannover",
-    "Schneiderei Nürnberg",
-    "Schneiderei Duisburg",
-    "Schneiderei Bochum",
-    "Schneiderei Wuppertal",
-    "Schneiderei Bielefeld",
-    "Schneiderei Bonn",
-    "Schneiderei Münster",
-    "Schneiderei Karlsruhe",
-    "Schneiderei Mannheim",
-    "Schneiderei Augsburg",
-    "Schneiderei Wiesbaden",
-    "Schneiderei Gelsenkirchen",
-    "Schneiderei Mönchengladbach",
-    "Schneiderei Braunschweig",
-    "Schneiderei Kiel",
-    "Schneiderei Chemnitz",
-    "Schneiderei Aachen",
-    "Kleidungsreparatur Berlin",
-    "Kleidungsreparatur Hamburg",
-    "Kleidungsreparatur München",
-    "Kleidungsreparatur Köln",
-    "Kleidungsreparatur Frankfurt",
-    "Änderungsschneiderei Berlin",
-    "Änderungsschneiderei Hamburg",
-    "Änderungsschneiderei München",
-    "Änderungsschneiderei Köln",
-    "Änderungsschneiderei Frankfurt",
-    "Änderungsschneiderei Stuttgart",
-    "Änderungsschneiderei Düsseldorf",
-    "Änderungsschneiderei Leipzig",
-    "Änderungsschneiderei Dortmund",
-    "Änderungsschneiderei Nürnberg",
+MESTA = [
+    "Berlin", "Hamburg", "München", "Köln", "Frankfurt",
+    "Stuttgart", "Düsseldorf", "Leipzig", "Dortmund", "Essen",
+    "Bremen", "Dresden", "Hannover", "Nürnberg", "Duisburg",
+    "Bochum", "Wuppertal", "Bielefeld", "Bonn", "Münster",
+    "Karlsruhe", "Mannheim", "Augsburg", "Wiesbaden", "Gelsenkirchen",
+    "Mönchengladbach", "Braunschweig", "Kiel", "Chemnitz", "Aachen",
+    "Halle", "Magdeburg", "Freiburg", "Krefeld", "Lübeck",
+    "Oberhausen", "Erfurt", "Mainz", "Rostock", "Kassel",
+    "Hagen", "Hamm", "Saarbrücken", "Mülheim", "Potsdam",
+    "Ludwigshafen", "Oldenburg", "Leverkusen", "Osnabrück", "Solingen",
 ]
+
+KATEGORIE = [
+    "Schneiderei",
+    "Änderungsschneiderei",
+    "Maßschneiderei",
+    "Schneideratelier",
+    "Schneiderwerkstatt",
+    "Schneider",
+    "Nähatelier",
+    "Nähwerkstatt",
+    "Nähservice",
+    "Reparatur von Kleidung",
+    "Kleiderreparatur",
+    "Modedesigner",
+    "Modeatelier",
+    "Modestudio",
+    "Kostümschneiderei",
+    "Kostümwerkstatt",
+    "Theaterwerkstatt",
+    "Kostümdesign",
+    "Terzi",
+    "Terzi Schneiderei",
+]
+
+# Kombinace: každá kategorie × každé město = 20 × 50 = 1000 dotazů
+# Pro rozumnou dobu běhu scrapujeme prioritně větší města pro každou kategorii
+VYHLEDAVACI_DOTAZY = []
+for kategorie in KATEGORIE:
+    for mesto in MESTA:
+        VYHLEDAVACI_DOTAZY.append(f"{kategorie} {mesto}")
 
 VYSTUPNI_SOUBOR = "krejcovstvi_nemecko.xlsx"
 MAX_VYSLEDKU_NA_DOTAZ = 60   # Google Maps zobrazí max ~120, reálně 60 je spolehlivé
