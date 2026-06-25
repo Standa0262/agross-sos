@@ -567,6 +567,43 @@ def sync_catalog():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/notifications', methods=['POST'])
+def create_notification():
+    try:
+        data = request.json
+        text = data.get('text', '').strip()
+        if not text:
+            return jsonify({'error': 'Chybí text'}), 400
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE notifications SET active = false")
+            cur.execute("INSERT INTO notifications (text, active) VALUES (%s, true)", (text,))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True, 'message': 'Oznámení uloženo'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/notifications/active', methods=['GET'])
+def get_active_notification():
+    try:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT text FROM notifications WHERE active = true ORDER BY created_at DESC LIMIT 1")
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            conn.close()
+        if row:
+            return jsonify({'success': True, 'text': row['text']}), 200
+        return jsonify({'success': True, 'text': None}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ═════════════════════════════════════════════════════════════════════
 # HEALTH CHECK
 # ═════════════════════════════════════════════════════════════════════

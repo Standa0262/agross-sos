@@ -848,6 +848,7 @@ function publishNotif(msg, overwrite=true){
   const existing = localStorage.getItem('ag_notif');
   if(existing && !overwrite) return; // don't overwrite manual notif
   localStorage.setItem('ag_notif', text);
+  publishNotifToBackend(text);
   showNotifBar(text);
   updateNotifPreview(text);
   if(!msg) showToast('✓ Oznámení zveřejněno');
@@ -1395,6 +1396,33 @@ function startRenderKeepAlive() {
   }, 10 * 60 * 1000);
 }
 
+async function loadNotificationFromBackend() {
+  try {
+    const res = await fetch('https://agross-sos.onrender.com/api/notifications/active');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.success && data.text) {
+      localStorage.setItem('ag_notif', data.text);
+      showNotifBar(data.text);
+      updateNotifPreview(data.text);
+    }
+  } catch (e) {
+    // offline – použij localStorage
+  }
+}
+
+async function publishNotifToBackend(text) {
+  try {
+    await fetch('https://agross-sos.onrender.com/api/notifications', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text})
+    });
+  } catch (e) {
+    console.error('Sync oznámení selhal:', e.message);
+  }
+}
+
 // ── SHARE / SEND ─────────────────────────────────────────────────────
 let _shareText = '';
 let _shareSubject = '';
@@ -1688,6 +1716,7 @@ filterProducts();
 updateOrderBar();
 loadStoresFromBackend();
 startRenderKeepAlive();
+loadNotificationFromBackend();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
