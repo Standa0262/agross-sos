@@ -1361,6 +1361,31 @@ function syncOrderToBackend(order){
   }).catch(err=>console.error('Sync objednavky na backend selhal:',err));
 }
 
+function syncStoreToBackend(store) {
+  fetch('https://agross-sos.onrender.com/api/stores/sync', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(store)
+  }).catch(err => console.error('Sync prodejny selhal:', err));
+}
+
+async function loadStoresFromBackend() {
+  try {
+    const res = await fetch('https://agross-sos.onrender.com/api/stores');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.success || !data.stores?.length) return;
+    const backendIds = data.stores.map(s => s.id);
+    const localOnly = stores.filter(s => !backendIds.includes(s.id));
+    stores = [...data.stores, ...localOnly];
+    save();
+    populateStoreSelect();
+    renderStores();
+  } catch (e) {
+    console.log('Backend nedostupný, používám localStorage:', e.message);
+  }
+}
+
 // ── SHARE / SEND ─────────────────────────────────────────────────────
 let _shareText = '';
 let _shareSubject = '';
@@ -1514,6 +1539,7 @@ function saveStore(){
     if(i>=0)stores[i]={...stores[i],...data};
   } else stores.push({...data,id:Date.now().toString()});
   save(); closeStoreModal(); renderStores(); populateStoreSelect(); showToast('✓ Prodejna uložena');
+  syncStoreToBackend(editStoreId ? stores.find(s=>s.id===editStoreId) : stores[stores.length-1]);
 }
 
 function deleteStore(id){
@@ -1651,6 +1677,7 @@ if(_savedNotif){ showNotifBar(_savedNotif); updateNotifPreview(_savedNotif); }
 populateStoreSelect();
 filterProducts();
 updateOrderBar();
+loadStoresFromBackend();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
