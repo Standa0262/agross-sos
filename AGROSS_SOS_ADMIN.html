@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A-GROSS SOS · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dark:#1A1A1A;--dark2:#2C2C2C;--cream:#F5F0E8;
+  --sos:#E8533A;--sos-light:#FDECEA;--sos-dark:#C03020;
+  --ok:#2A7A4A;--ok-light:#E8F5EE;
+  --bg:#F5F0E8;--surface:#FFFFFF;--border:#DDD8CC;
+  --text:#1A1A14;--muted:#7A7468;
+  --shadow:0 2px 12px rgba(0,0,0,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+
+/* ── PIN SCREEN ── */
+.pin-screen{position:fixed;inset:0;background:var(--dark);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:24px}
+.pin-screen.hidden{display:none}
+.pin-logo{text-align:center}
+.pin-logo-a{font-weight:700;font-size:28px;color:var(--cream);letter-spacing:2px}
+.pin-logo-s{font-weight:800;font-size:32px;color:var(--sos);letter-spacing:4px}
+.pin-logo-admin{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:3px;text-transform:uppercase;margin-top:4px}
+.pin-box{background:#222;border-radius:16px;padding:28px 32px;width:280px;text-align:center}
+.pin-label{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.15);transition:background .2s}
+.pin-dot.filled{background:var(--sos)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pin-btn{background:rgba(255,255,255,.08);border:none;border-radius:10px;padding:14px;font-family:inherit;font-size:18px;font-weight:600;color:#fff;cursor:pointer;transition:background .15s}
+.pin-btn:hover{background:rgba(255,255,255,.15)}
+.pin-btn:active{background:var(--sos)}
+.pin-btn.del{font-size:14px;color:rgba(255,255,255,.5)}
+.pin-error{color:var(--sos);font-size:11px;margin-top:12px;min-height:16px}
+
+/* ── HEADER ── */
+header{background:var(--dark);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.logo{display:flex;align-items:baseline;gap:0}
+.logo-a{font-weight:700;font-size:17px;color:var(--cream);letter-spacing:1px}
+.logo-sep{color:rgba(255,255,255,.25);margin:0 3px}
+.logo-s{font-weight:800;font-size:19px;color:var(--sos);letter-spacing:2px}
+.logo-admin{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-left:8px;align-self:center}
+.header-right{display:flex;align-items:center;gap:12px}
+.sync-badge{font-size:10px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:5px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#666}
+.sync-dot.ok{background:var(--ok)}
+.sync-dot.err{background:var(--sos)}
+.logout-btn{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);border-radius:6px;padding:5px 10px;font-family:inherit;font-size:11px;cursor:pointer}
+.logout-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--dark2);padding:0 16px;border-bottom:2px solid #333;overflow-x:auto}
+.tab{padding:10px 16px;color:rgba(255,255,255,.45);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap;transition:color .2s}
+.tab.active{color:var(--sos);border-color:var(--sos)}
+
+/* ── PAGES ── */
+.page{display:none;padding:16px;max-width:900px;margin:0 auto}
+.page.active{display:block}
+
+/* ── STATS BAR ── */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.stat-card{background:var(--dark);border-radius:12px;padding:14px 16px;color:#fff}
+.stat-label{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.5px;margin-bottom:6px}
+.stat-value{font-size:22px;font-weight:700;color:var(--cream)}
+.stat-value.sos{color:var(--sos)}
+.stat-value.ok{color:#A8E8B8}
+
+/* ── SECTION HEADER ── */
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sh-title{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.8px}
+.sh-btn{background:var(--dark);color:var(--cream);border:none;border-radius:7px;padding:7px 12px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer}
+.sh-btn:hover{background:#333}
+
+/* ── ORDER CARD ── */
+.order-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.oc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.oc-store{font-size:14px;font-weight:700;color:var(--dark)}
+.oc-date{font-size:11px;color:var(--muted)}
+.oc-status{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;margin-bottom:6px}
+.s-new{background:var(--ok-light);color:var(--ok)}
+.s-sent{background:#FFF3E0;color:#C05000}
+.oc-totals{display:flex;gap:14px;flex-wrap:wrap;font-size:12px}
+.oc-items{margin-top:8px;border-top:1px solid var(--border);padding-top:8px;display:none}
+.oc-items.open{display:block}
+.oc-item-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:var(--muted)}
+.oc-item-row strong{color:var(--text)}
+.expand-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;font-family:inherit;padding:0;margin-top:4px}
+.expand-btn:hover{color:var(--sos)}
+
+/* ── STORE CARD ── */
+.store-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.sc-name{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:6px}
+.sc-field{display:flex;gap:8px;font-size:12px;color:var(--muted);margin-bottom:3px}
+.sc-field strong{color:var(--text);min-width:70px;flex-shrink:0}
+
+/* ── NOTIF PANEL ── */
+.notif-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.notif-panel h3{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px}
+.notif-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--text);background:var(--bg);outline:none;resize:vertical;min-height:70px}
+.notif-textarea:focus{border-color:var(--sos)}
+.notif-send-btn{width:100%;margin-top:8px;background:var(--sos);color:#fff;border:none;border-radius:8px;padding:11px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s}
+.notif-send-btn:hover{background:var(--sos-dark)}
+.notif-active{background:var(--sos-light);border:1px solid #F9C9C0;border-radius:10px;padding:12px;margin-bottom:12px}
+.notif-active-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--sos-dark);letter-spacing:.5px;margin-bottom:4px}
+.notif-active-text{font-size:13px;color:var(--sos-dark);font-weight:500}
+.notif-clear-btn{margin-top:8px;background:none;border:1px solid var(--sos);border-radius:6px;padding:5px 12px;font-family:inherit;font-size:11px;color:var(--sos);cursor:pointer}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:32px;color:var(--muted)}
+.empty-icon{font-size:32px;margin-bottom:8px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:var(--cream);padding:10px 18px;border-radius:20px;font-size:12px;font-weight:500;opacity:0;transition:opacity .3s,transform .3s;z-index:999;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── LOADING ── */
+.loading{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--sos);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.filter-input{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:12px;color:var(--text);outline:none;flex:1;min-width:120px}
+.filter-input:focus{border-color:var(--sos)}
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div class="pin-screen" id="pinScreen">
+  <div class="pin-logo">
+    <div class="pin-logo-a">A-GROSS <span class="pin-logo-s" style="display:inline">SOS</span></div>
+    <div class="pin-logo-admin">Admin Panel</div>
+  </div>
+  <div class="pin-box">
+    <div class="pin-label">Zadejte PIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" onclick="pinPress('')" style="opacity:0;pointer-events:none"></button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <span class="logo-a">A-GROSS</span>
+    <span class="logo-sep">·</span>
+    <span class="logo-s">SOS</span>
+    <span class="logo-admin">Admin</span>
+  </div>
+  <div class="header-right">
+    <div class="sync-badge">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">Připojuji…</span>
+    </div>
+    <button class="logout-btn" onclick="logout()">Odhlásit</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('orders')" id="tab-orders">📋 Objednávky</div>
+  <div class="tab" onclick="switchTab('stores')" id="tab-stores">🏪 Prodejny</div>
+  <div class="tab" onclick="switchTab('notif')" id="tab-notif">📢 Oznámení</div>
+</div>
+
+<!-- ORDERS PAGE -->
+<div class="page active" id="page-orders">
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card"><div class="stat-label">Objednávky celkem</div><div class="stat-value" id="statCount">—</div></div>
+    <div class="stat-card"><div class="stat-label">NC celkem</div><div class="stat-value ok" id="statNc">—</div></div>
+    <div class="stat-card"><div class="stat-label">Marže celkem</div><div class="stat-value sos" id="statMarze">—</div></div>
+    <div class="stat-card"><div class="stat-label">Prodejny</div><div class="stat-value" id="statStores">—</div></div>
+  </div>
+  <div class="filter-row">
+    <input class="filter-input" type="text" placeholder="Hledat prodejnu…" id="filterStore" oninput="renderOrders()">
+    <input class="filter-input" type="date" id="filterFrom" onchange="renderOrders()">
+    <input class="filter-input" type="date" id="filterTo" onchange="renderOrders()">
+  </div>
+  <div class="sh"><span class="sh-title">Objednávky</span><button class="sh-btn" onclick="loadAll()">↻ Obnovit</button></div>
+  <div id="orderList"><div class="loading"><div class="spinner"></div><br>Načítám…</div></div>
+</div>
+
+<!-- STORES PAGE -->
+<div class="page" id="page-stores">
+  <div class="sh"><span class="sh-title">Prodejny</span><button class="sh-btn" onclick="loadAll()">↻ Obnovit</button></div>
+  <div id="storeList"><div class="loading"><div class="spinner"></div><br>Načítám…</div></div>
+</div>
+
+<!-- NOTIF PAGE -->
+<div class="page" id="page-notif">
+  <div id="activeNotifBox"></div>
+  <div class="notif-panel">
+    <h3>📢 Poslat oznámení všem prodejnám</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Zpráva se zobrazí jako červený banner v aplikaci při příštím spuštění.</p>
+    <textarea class="notif-textarea" id="notifInput" placeholder="Např.: Od 1. 7. platí nové ceny. Zkontrolujte katalog."></textarea>
+    <button class="notif-send-btn" onclick="sendNotif()">📢 Zveřejnit oznámení</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://agross-sos.onrender.com';
+const PIN_HASH = '9bc7757cecd26b77ee84dd3f85bc3872502f421dd6007c71514aa3ff6a9e2cb3';
+
+let allOrders = [];
+let allStores = [];
+let pinBuffer = '';
+
+// ── PIN ──────────────────────────────────────────────────────────────
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function pinPress(digit){
+  if(pinBuffer.length>=4) return;
+  pinBuffer += digit;
+  updateDots();
+  if(pinBuffer.length===4) setTimeout(checkPin, 150);
+}
+
+function pinDel(){
+  pinBuffer = pinBuffer.slice(0,-1);
+  updateDots();
+  document.getElementById('pinError').textContent='';
+}
+
+function updateDots(){
+  for(let i=0;i<4;i++){
+    document.getElementById('d'+i).className='pin-dot'+(i<pinBuffer.length?' filled':'');
+  }
+}
+
+async function checkPin(){
+  const hash = await sha256(pinBuffer);
+  if(hash===PIN_HASH){
+    sessionStorage.setItem('ag_admin_auth','1');
+    document.getElementById('pinScreen').classList.add('hidden');
+    loadAll();
+  } else {
+    document.getElementById('pinError').textContent='Nesprávný PIN';
+    pinBuffer='';
+    updateDots();
+    setTimeout(()=>document.getElementById('pinError').textContent='',2000);
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem('ag_admin_auth');
+  location.reload();
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('page-'+tab).classList.add('active');
+  if(tab==='notif') loadNotif();
+}
+
+// ── API ───────────────────────────────────────────────────────────────
+async function loadAll(){
+  setSyncStatus('loading');
+  try {
+    const [ordRes, storeRes] = await Promise.all([
+      fetch(API+'/api/orders'),
+      fetch(API+'/api/stores')
+    ]);
+    const ordData = await ordRes.json();
+    const storeData = await storeRes.json();
+    allOrders = ordData.orders || [];
+    allStores = storeData.stores || [];
+    setSyncStatus('ok');
+    updateStats();
+    renderOrders();
+    renderStores();
+  } catch(e){
+    setSyncStatus('err');
+    showToast('⚠ Backend nedostupný');
+  }
+}
+
+async function loadNotif(){
+  try {
+    const res = await fetch(API+'/api/notifications/active');
+    const data = await res.json();
+    const box = document.getElementById('activeNotifBox');
+    if(data.success && data.text){
+      box.innerHTML=`<div class="notif-active">
+        <div class="notif-active-label">Aktivní oznámení</div>
+        <div class="notif-active-text">${data.text}</div>
+        <button class="notif-clear-btn" onclick="clearNotif()">✕ Smazat oznámení</button>
+      </div>`;
+    } else {
+      box.innerHTML='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Žádné aktivní oznámení.</div>';
+    }
+  } catch(e){}
+}
+
+async function sendNotif(){
+  const text = document.getElementById('notifInput').value.trim();
+  if(!text){ showToast('Zadejte text oznámení'); return; }
+  try {
+    const res = await fetch(API+'/api/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text})
+    });
+    const data = await res.json();
+    if(data.success){
+      showToast('✓ Oznámení odesláno');
+      document.getElementById('notifInput').value='';
+      loadNotif();
+    }
+  } catch(e){ showToast('⚠ Chyba při odesílání'); }
+}
+
+async function clearNotif(){
+  try {
+    await fetch(API+'/api/notifications/clear',{method:'POST'});
+    showToast('Oznámení smazáno');
+    loadNotif();
+  } catch(e){}
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────
+function fmt(n){ return n.toLocaleString('cs-CZ',{minimumFractionDigits:0,maximumFractionDigits:0})+' Kč'; }
+
+function updateStats(){
+  const totalNc = allOrders.reduce((s,o)=>s+(o.nc||0),0);
+  const totalMarze = allOrders.reduce((s,o)=>s+(o.marze||0),0);
+  const uniqueStores = new Set(allOrders.map(o=>o.storeId)).size;
+  document.getElementById('statCount').textContent = allOrders.length;
+  document.getElementById('statNc').textContent = fmt(totalNc);
+  document.getElementById('statMarze').textContent = fmt(totalMarze);
+  document.getElementById('statStores').textContent = allStores.length || uniqueStores;
+}
+
+// ── RENDER ORDERS ──────────────────────────────────────────────────────
+function renderOrders(){
+  const search = document.getElementById('filterStore').value.toLowerCase();
+  const from = document.getElementById('filterFrom').value;
+  const to = document.getElementById('filterTo').value;
+
+  let list = allOrders;
+  if(search) list = list.filter(o=>(o.storeName||'').toLowerCase().includes(search));
+  if(from) list = list.filter(o=>o.date>=from);
+  if(to) list = list.filter(o=>o.date<=to+'T23:59:59');
+
+  const el = document.getElementById('orderList');
+  if(!list.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>Žádné objednávky</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(o=>{
+    const d = new Date(o.date);
+    const ds = d.toLocaleDateString('cs-CZ')+' '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    const margeP = o.moc>0?((o.marze/o.moc)*100).toFixed(1):0;
+    const items = o.items||[];
+    return `<div class="order-card">
+      <div class="oc-header">
+        <div class="oc-store">${o.storeName||'?'}</div>
+        <div class="oc-date">${ds}</div>
+      </div>
+      <span class="oc-status ${o.status==='sent'?'s-sent':'s-new'}">${o.status==='sent'?'Odesláno':'Nová'}</span>
+      ${o.hasExchange?'<span class="oc-status" style="background:#FFF3E0;color:#C05000;margin-left:6px">🔄 Výměna</span>':''}
+      <div class="oc-totals">
+        <span>NC: <strong>${fmt(o.nc||0)}</strong></span>
+        <span>MOC: <strong>${fmt(o.moc||0)}</strong></span>
+        <span style="color:var(--ok)">Marže: <strong>${fmt(o.marze||0)}</strong> (${margeP}%)</span>
+      </div>
+      ${items.length?`<button class="expand-btn" onclick="toggleItems(this)">▸ Zobrazit ${items.length} artiklů</button>
+      <div class="oc-items">
+        ${items.map(i=>`<div class="oc-item-row"><strong>${i.nazev||i.kod}</strong><span>${i.qty||i.qty} ks · ${fmt((i.nc||0)*(i.qty||0))}</span></div>`).join('')}
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function toggleItems(btn){
+  const box = btn.nextElementSibling;
+  const open = box.classList.toggle('open');
+  btn.textContent = open ? '▾ Skrýt artikly' : `▸ Zobrazit ${box.children.length} artiklů`;
+}
+
+// ── RENDER STORES ──────────────────────────────────────────────────────
+function renderStores(){
+  const el = document.getElementById('storeList');
+  if(!allStores.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🏪</div>Žádné prodejny</div>';
+    return;
+  }
+  el.innerHTML = allStores.map(s=>`
+    <div class="store-card">
+      <div class="sc-name">${s.chain?`<span style="font-size:11px;background:#F0EDE6;padding:1px 7px;border-radius:4px;margin-right:6px;font-weight:500">${s.chain}</span>`:''  }${s.name}</div>
+      ${s.manager?`<div class="sc-field"><strong>Vedoucí:</strong><span>${s.manager}</span></div>`:''}
+      ${s.phone?`<div class="sc-field"><strong>Mobil:</strong><a href="tel:${s.phone}" style="color:var(--sos)">${s.phone}</a></div>`:''}
+      ${s.address?`<div class="sc-field"><strong>Adresa:</strong><span>${s.address}</span></div>`:''}
+      ${s.ico?`<div class="sc-field"><strong>IČ:</strong><span>${s.ico}${s.dic?' · DIČ: '+s.dic:''}</span></div>`:''}
+      ${s.email?`<div class="sc-field"><strong>E-mail:</strong><a href="mailto:${s.email}" style="color:var(--sos)">${s.email}</a></div>`:''}
+      ${s.hoursWeek?`<div class="sc-field"><strong>PO–PÁ:</strong><span>${s.hoursWeek}</span></div>`:''}
+      ${s.note?`<div class="sc-field"><strong>Poznámka:</strong><span>${s.note}</span></div>`:''}
+    </div>`).join('');
+}
+
+// ── SYNC STATUS ───────────────────────────────────────────────────────
+function setSyncStatus(state){
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  if(state==='ok'){ dot.className='sync-dot ok'; lbl.textContent='Neon.tech OK'; }
+  else if(state==='err'){ dot.className='sync-dot err'; lbl.textContent='Offline'; }
+  else { dot.className='sync-dot'; lbl.textContent='Připojuji…'; }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+if(sessionStorage.getItem('ag_admin_auth')==='1'){
+  document.getElementById('pinScreen').classList.add('hidden');
+  loadAll();
+}
+</script>
+</body>
+</html>

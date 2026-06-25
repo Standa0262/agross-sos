@@ -604,6 +604,21 @@ def get_active_notification():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/notifications/clear', methods=['POST'])
+def clear_notification():
+    try:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE notifications SET active = false")
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True, 'message': 'Oznámení smazáno'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ═════════════════════════════════════════════════════════════════════
 # HEALTH CHECK
 # ═════════════════════════════════════════════════════════════════════
