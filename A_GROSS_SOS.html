@@ -1622,12 +1622,12 @@ async function saveStore(){
     const banner = document.getElementById('exclusivityBanner');
     if (!excl.allowed) {
       banner.className = 'exclusivity-banner block';
-      banner.textContent = '🚫 ' + excl.warning;
+      banner.textContent = '🚫 ' + (excl.warning || 'Prodejna v této oblasti již existuje.');
       showToast('⚠ Exkluzivita: ' + excl.warning);
       return; // Zablokuj uložení
     } else if (excl.warning) {
       banner.className = 'exclusivity-banner warn';
-      banner.textContent = '⚠ ' + excl.warning;
+      banner.textContent = '⚠ ' + (excl.warning || '');
     } else {
       banner.className = 'exclusivity-banner';
     }
