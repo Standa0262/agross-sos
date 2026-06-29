@@ -698,13 +698,13 @@ def check_exclusivity():
 
         if conflicts:
             if population < 3000:
-                msg = f"V obci již existuje prodejna: {conflicts[0]['store_name']}. Malé obce (do 3 000 obyvatel) mají exkluzivitu pro 1 prodejnu."
+                msg = "V obci jiz existuje prodejna: {}. Male obce (do 3 000 obyvatel) maji exkluzivitu pro 1 prodejnu.".format(conflicts[0]['store_name'])
             else:
                 c = conflicts[0]
-                msg = f"Příliš blízko prodejně {c['store_name']} ({c['distance_m']} m). Minimum je 800 m."
-            return jsonify({'allowed': False, 'warning': msg, 'conflicts': conflicts}), 200
+                msg = "Prilis blizko prodejne {} ({} m). Minimum je 800 m.".format(c['store_name'], c['distance_m'])
+            return jsonify({'allowed': False, 'warning': msg, 'conflicts': conflicts, 'message': msg}), 200
 
-        return jsonify({'allowed': True, 'warning': None, 'conflicts': []}), 200
+        return jsonify({'allowed': True, 'warning': None, 'conflicts': [], 'message': None}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
