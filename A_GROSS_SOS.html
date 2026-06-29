@@ -17,7 +17,10 @@
 <title>A-GROSS SOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script type="module">
+import { BrowserMultiFormatReader, NotFoundException } from 'https://unpkg.com/@zxing/browser@0.1.4/esm/index.js';
+window.ZXingBrowser = { BrowserMultiFormatReader, NotFoundException };
+</script>
 <style>
 :root{
   /* A-GROSS brand */
@@ -719,7 +722,7 @@ header{
     <div class="modal-handle"></div>
     <div class="modal-title">📷 Skenovat čárový kód</div>
     <div class="scanner-area">
-      <div id="reader" style="width:100%"></div>
+      <video id="reader" style="width:100%;border-radius:8px" autoplay muted playsinline></video>
     </div>
     <button class="btn-p" id="startCamBtn" onclick="startCamera()" style="margin-bottom:10px">▶ Spustit kameru</button>
     <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Nebo zadejte EAN ručně:</div>
@@ -1713,30 +1716,25 @@ function openScanner(){
 function closeScanner(){stopCamera();document.getElementById('scannerModal').classList.remove('open');}
 
 function startCamera() {
-  const html5QrCode = new Html5Qrcode("reader");
-  window._qrScanner = html5QrCode;
-  document.getElementById('startCamBtn').textContent='■ Zastavit';
-  document.getElementById('startCamBtn').onclick=stopCamera;
-  html5QrCode.start(
-    { facingMode: "environment" },
-    { fps: 15, qrbox: { width: 280, height: 80 },
-      experimentalFeatures: { useBarCodeDetectorIfSupported: true } },
-    (decodedText) => {
-      document.getElementById('manualEan').value = decodedText;
+  const codeReader = new window.ZXingBrowser.BrowserMultiFormatReader();
+  window._zxingReader = codeReader;
+  document.getElementById('startCamBtn').textContent = '■ Zastavit';
+  document.getElementById('startCamBtn').onclick = stopCamera;
+
+  codeReader.decodeFromVideoDevice(null, 'reader', (result, err) => {
+    if (result) {
+      document.getElementById('manualEan').value = result.getText();
       lookupEan();
-      html5QrCode.stop().then(() => {
-        window._qrScanner = null;
-      }).catch(()=>{});
-    },
-    (error) => { /* ignoruj chyby čtení - kamera zůstane otevřená */ }
-  ).catch(err => showToast('Kamera nedostupná'));
+      stopCamera();
+    }
+  }).catch(err => showToast('Kamera nedostupná: ' + err.message));
 }
 function stopCamera() {
-  document.getElementById('startCamBtn').textContent='▶ Spustit kameru';
-  document.getElementById('startCamBtn').onclick=startCamera;
-  if (window._qrScanner) {
-    window._qrScanner.stop().catch(()=>{});
-    window._qrScanner = null;
+  document.getElementById('startCamBtn').textContent = '▶ Spustit kameru';
+  document.getElementById('startCamBtn').onclick = startCamera;
+  if (window._zxingReader) {
+    window._zxingReader.reset();
+    window._zxingReader = null;
   }
 }
 function lookupEan(){
