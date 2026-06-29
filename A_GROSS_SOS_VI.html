@@ -141,6 +141,9 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
 .vop-checkbox-row input{margin-top:2px;width:18px;height:18px;flex-shrink:0;cursor:pointer;accent-color:var(--sos)}
 .vop-continue-btn{width:100%;background:var(--sos);color:#fff;border:none;border-radius:12px;padding:15px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:opacity .2s}
 .vop-continue-btn:disabled{opacity:.35;cursor:not-allowed}
+.exclusivity-banner{border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:12px;font-weight:600;display:none}
+.exclusivity-banner.warn{background:#FFF3E0;border:1px solid #FFD090;color:#7A4000;display:block}
+.exclusivity-banner.block{background:#FDECEA;border:1px solid #F9C9C0;color:#C03020;display:block}
 </style>
 </head>
 <body>
@@ -317,6 +320,8 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
       <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px">Địa chỉ</label>
       <input style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;margin-bottom:8px" id="f-address" placeholder="Địa chỉ giao hàng">
     </div>
+    <div id="exclusivityBanner" class="exclusivity-banner"></div>
+    <div id="gpsStatus" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
     <div class="modal-btns">
       <button style="flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:inherit;font-size:13px;cursor:pointer" onclick="closeStoreModal()">Hủy</button>
       <button style="flex:1;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" onclick="saveStore()">Lưu</button>
@@ -536,6 +541,48 @@ function syncStoreToBackend(store) {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(store)
   }).catch(err => console.error('Sync prodejny selhal:', err));
+}
+
+let _gpsCoords = null;
+
+async function getGPS() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 8000 }
+    );
+  });
+}
+
+async function checkExclusivity(lat, lon, city, population, storeId) {
+  try {
+    const res = await fetch('https://agross-sos.onrender.com/api/stores/check-exclusivity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lat, lon, city, population: population || 0, store_id: storeId || '' })
+    });
+    return await res.json();
+  } catch (e) {
+    return { allowed: true, warning: null, conflicts: [] };
+  }
+}
+
+async function onStoreModalOpen() {
+  const statusEl = document.getElementById('gpsStatus');
+  const banner = document.getElementById('exclusivityBanner');
+  _gpsCoords = null;
+  banner.className = 'exclusivity-banner';
+  banner.textContent = '';
+  statusEl.textContent = '📍 Đang xác định vị trí…';
+  const coords = await getGPS();
+  if (coords) {
+    _gpsCoords = coords;
+    statusEl.textContent = '📍 GPS: ' + coords.lat.toFixed(4) + ', ' + coords.lon.toFixed(4);
+  } else {
+    statusEl.textContent = '📍 GPS không khả dụng – không kiểm tra được tính độc quyền';
+  }
 }
 
 async function loadStoresFromBackend() {
@@ -913,21 +960,42 @@ function openAddStore(){
   document.getElementById('f-phone').value = '';
   document.getElementById('f-address').value = '';
   document.getElementById('storeModal').classList.add('open');
+  onStoreModalOpen();
 }
 
 function closeStoreModal(){
   document.getElementById('storeModal').classList.remove('open');
 }
 
-function saveStore(){
+async function saveStore(){
   const name = document.getElementById('f-name').value.trim();
   if(!name){showToast('Nhập tên cửa hàng');return;}
+  if (_gpsCoords) {
+    const cityVal = document.getElementById('f-address').value.split(',').pop()?.trim() || '';
+    const excl = await checkExclusivity(_gpsCoords.lat, _gpsCoords.lon, cityVal, 0, null);
+    const banner = document.getElementById('exclusivityBanner');
+    if (!excl.allowed) {
+      banner.className = 'exclusivity-banner block';
+      banner.textContent = '🚫 ' + (excl.warning || excl.message || 'Khu vực này đã có cửa hàng đối tác.');
+      showToast('⚠ ' + (excl.warning || 'Khu vực đã có đối tác'));
+      return;
+    } else if (excl.warning) {
+      banner.className = 'exclusivity-banner warn';
+      banner.textContent = '⚠ ' + excl.warning;
+    } else {
+      banner.className = 'exclusivity-banner';
+    }
+  }
   const store = {
     id:Date.now(),
     name,
     chain:document.getElementById('f-chain').value,
     manager:document.getElementById('f-manager').value,
     phone:document.getElementById('f-phone').value,
+    lat: _gpsCoords ? _gpsCoords.lat : null,
+    lon: _gpsCoords ? _gpsCoords.lon : null,
+    city: (document.getElementById('f-address').value.split(',').pop()?.trim() || ''),
+    population: 0,
     address:document.getElementById('f-address').value
   };
   stores.push(store);
