@@ -709,6 +709,21 @@ def check_exclusivity():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stores/<store_id>', methods=['DELETE'])
+def delete_store(store_id):
+    try:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('DELETE FROM stores WHERE id = %s', (store_id,))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True, 'message': 'Prodejna smazána'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ═════════════════════════════════════════════════════════════════════
 # HEALTH CHECK
 # ═════════════════════════════════════════════════════════════════════
