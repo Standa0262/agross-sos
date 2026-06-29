@@ -854,6 +854,63 @@ header{
 </div>
 
 <script>
+// ── BRANDOVÁNÍ SÍTÍ ──────────────────────────────────────────────────
+const NETWORKS = {
+  javor: {
+    name: 'Obchodní aliance JAVOR',
+    shortName: 'JAVOR',
+    color: '#2D7A2D',
+    colorLight: '#E8F5E8',
+    logo: null,
+    orderNote: 'Síť: Obchodní aliance JAVOR (ProVektor)'
+  },
+  mopartner: {
+    name: 'MO Partner',
+    shortName: 'MO PARTNER',
+    color: '#C0000E',
+    colorLight: '#FDECEA',
+    logo: 'https://db.mopartner.cz/files/uploads/grafika/mopartner.svg',
+    orderNote: 'Síť: MO Partner a.s., Olomouc'
+  }
+};
+
+function getNetworkFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const sit = params.get('sit');
+  return sit && NETWORKS[sit] ? { key: sit, ...NETWORKS[sit] } : null;
+}
+
+function applyNetworkBranding() {
+  const net = getNetworkFromURL();
+  if (!net) return;
+
+  // Změň barvu SOS elementů na barvu sítě
+  document.documentElement.style.setProperty('--sos', net.color);
+  document.documentElement.style.setProperty('--sos-light', net.colorLight);
+  document.documentElement.style.setProperty('--sos-dark', net.color);
+
+  // Přidej network badge do headeru místo vietnamské vlajky
+  const vnBtn = document.querySelector('.icon-btn[title="Chuyển sang tiếng Việt"]');
+  if (vnBtn) {
+    if (net.logo) {
+      vnBtn.innerHTML = `<img src="${net.logo}" style="height:22px;filter:brightness(10)" alt="${net.shortName}">`;
+    } else {
+      vnBtn.textContent = net.shortName.substring(0, 3);
+      vnBtn.style.fontSize = '9px';
+      vnBtn.style.fontWeight = '700';
+      vnBtn.style.letterSpacing = '0';
+    }
+    vnBtn.onclick = null;
+    vnBtn.title = net.name;
+    vnBtn.style.cursor = 'default';
+    vnBtn.style.background = net.color;
+  }
+
+  // Ulož síť do sessionStorage pro objednávky
+  sessionStorage.setItem('ag_network', net.orderNote);
+  sessionStorage.setItem('ag_network_name', net.name);
+}
+
 const MIN_QTY = 5;
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────────────
@@ -1488,6 +1545,7 @@ let _shareSubject = '';
 function buildOrderText(store, items, nc, marze, moc, delivStr){
   const margeP = moc>0?(marze/moc*100).toFixed(1):0;
   const storeName = store?(store.chain?store.chain+' – ':'')+store.name:'?';
+  const networkNote = sessionStorage.getItem('ag_network') || '';
   const lines = [
     'OBJEDNÁVKA A-GROSS SOS',
     '======================',
@@ -1498,6 +1556,7 @@ function buildOrderText(store, items, nc, marze, moc, delivStr){
     store?.email   ? 'E-mail:   '+store.email   : '',
     store?.manager ? 'Vedoucí:  '+store.manager : '',
     store?.phone   ? 'Tel:      '+store.phone   : '',
+    networkNote ? 'Síť:      '+networkNote : '',
     'Datum:    '+new Date().toLocaleDateString('cs-CZ'),
     'Dodání:   '+delivStr,
     '',
@@ -1790,6 +1849,7 @@ if(_savedNotif){ showNotifBar(_savedNotif); updateNotifPreview(_savedNotif); }
 populateStoreSelect();
 filterProducts();
 updateOrderBar();
+applyNetworkBranding();
 loadStoresFromBackend();
 startRenderKeepAlive();
 loadNotificationFromBackend();
