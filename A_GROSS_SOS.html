@@ -771,58 +771,59 @@ header{
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Název prodejny *</label>
-        <input class="form-input" id="f-name" placeholder="Coop Třinec">
+        <input class="form-input" id="f-name" placeholder="Potraviny Novák">
       </div>
       <div class="form-group">
         <label class="form-label">Řetězec</label>
         <select class="form-input" id="f-chain">
           <option value="">—</option>
           <option>Coop</option><option>Balla</option><option>JIP</option>
-          <option>Jednota</option><option>Norma</option><option>Jiný</option>
+          <option>Jednota</option><option>Norma</option><option>Javor</option>
+          <option>MO Partner</option><option>Jiný</option>
         </select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Vedoucí</label>
-        <input class="form-input" id="f-manager" placeholder="Jana Nováková">
+        <input class="form-input" id="f-manager" placeholder="Jméno a příjmení">
       </div>
       <div class="form-group">
         <label class="form-label">Mobil</label>
-        <input class="form-input" id="f-phone" placeholder="+420 777 123 456" type="tel">
+        <input class="form-input" id="f-phone" placeholder="+420 XXX XXX XXX" type="tel">
       </div>
     </div>
     <div class="form-group">
       <label class="form-label">Adresa / Místo dodání</label>
-      <input class="form-input" id="f-address" placeholder="Nádražní 12, 739 61 Třinec">
+      <input class="form-input" id="f-address" placeholder="Ulice, PSČ, Město">
     </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">IČ</label>
-        <input class="form-input" id="f-ico" placeholder="12345678" inputmode="numeric" maxlength="8">
+        <input class="form-input" id="f-ico" placeholder="IČ (volitelné)" inputmode="numeric" maxlength="8">
       </div>
       <div class="form-group">
         <label class="form-label">DIČ</label>
-        <input class="form-input" id="f-dic" placeholder="CZ12345678">
+        <input class="form-input" id="f-dic" placeholder="DIČ (volitelné)">
       </div>
     </div>
     <div class="form-group">
       <label class="form-label">E-mail prodejny</label>
-      <input class="form-input" id="f-email" placeholder="prodejna@example.cz" type="email" inputmode="email">
+      <input class="form-input" id="f-email" placeholder="email@prodejna.cz" type="email" inputmode="email">
     </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Otevírací doba PO–PÁ</label>
-        <input class="form-input" id="f-hw" placeholder="7:00–19:00">
+        <input class="form-input" id="f-hw" placeholder="např. 7:00–19:00">
       </div>
       <div class="form-group">
         <label class="form-label">SO–NE</label>
-        <input class="form-input" id="f-hwe" placeholder="8:00–12:00">
+        <input class="form-input" id="f-hwe" placeholder="např. 8:00–12:00">
       </div>
     </div>
     <div class="form-group">
       <label class="form-label">Poznámka</label>
-      <input class="form-input" id="f-note" placeholder="Dodávat v úterý ráno…">
+      <input class="form-input" id="f-note" placeholder="Poznámka pro dopravu apod.">
     </div>
     <div id="exclusivityBanner" class="exclusivity-banner"></div>
     <div id="gpsStatus" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
@@ -932,6 +933,9 @@ function applyNetworkBranding() {
     barNetwork.style.display = 'flex';
     document.getElementById('networkStoreLabel').textContent = net.name;
   }
+
+  // Předvyplnit a uzamknout pole Řetězec na aktuální síť
+  window._lockedChain = net.name;
 }
 
 const MIN_QTY = 5;
@@ -1718,6 +1722,19 @@ function openAddStore(){
   document.getElementById('storeModalTitle').textContent='Přidat prodejnu';
   ['name','manager','phone','address','ico','dic','email','hw','hwe','note'].forEach(f=>document.getElementById('f-'+f).value='');
   document.getElementById('f-chain').value='';
+  if (window._lockedChain) {
+    const chainSelect = document.getElementById('f-chain');
+    // Zkontroluj jestli síť je v seznamu, pokud ne přidej ji
+    let opt = Array.from(chainSelect.options).find(o => o.value === window._lockedChain);
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = window._lockedChain;
+      opt.textContent = window._lockedChain;
+      chainSelect.appendChild(opt);
+    }
+    chainSelect.value = window._lockedChain;
+    chainSelect.disabled = true;
+  }
   document.getElementById('storeModal').classList.add('open');
   onStoreModalOpen();
 }
