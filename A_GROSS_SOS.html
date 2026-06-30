@@ -1100,7 +1100,11 @@ function updateOrderBar(){
 function populateStoreSelect(){
   const sel=document.getElementById('storeSelect');
   sel.innerHTML='<option value="">— Vyberte prodejnu —</option>';
-  stores.forEach(s=>{
+  const net = getNetworkFromURL();
+  const filteredStores = net
+    ? stores.filter(s => (s.chain || '').toLowerCase().includes(net.shortName.toLowerCase()) || (s.chain || '').toLowerCase() === net.key.toLowerCase())
+    : stores;
+  filteredStores.forEach(s=>{
     const o=document.createElement('option');
     o.value=s.id; o.textContent=(s.chain?s.chain+' – ':'')+s.name;
     if(s.id===storeId)o.selected=true;
