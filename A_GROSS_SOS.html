@@ -904,21 +904,23 @@ function applyNetworkBranding() {
   document.documentElement.style.setProperty('--sos-light', net.colorLight);
   document.documentElement.style.setProperty('--sos-dark', net.color);
 
-  // Přidej network badge do headeru místo vietnamské vlajky
+  // Přidej network badge VEDLE vietnamské vlajky (zachovat přepínač jazyka)
   const vnBtn = document.querySelector('.icon-btn[title="Chuyển sang tiếng Việt"]');
   if (vnBtn) {
+    const netBadge = document.createElement('button');
+    netBadge.className = 'icon-btn';
+    netBadge.title = net.name;
+    netBadge.style.background = net.color;
+    netBadge.style.cursor = 'default';
     if (net.logo) {
-      vnBtn.innerHTML = `<img src="${net.logo}" style="height:22px;filter:brightness(10)" alt="${net.shortName}">`;
+      netBadge.innerHTML = `<img src="${net.logo}" style="height:22px;filter:brightness(10)" alt="${net.shortName}">`;
     } else {
-      vnBtn.textContent = net.shortName.substring(0, 3);
-      vnBtn.style.fontSize = '9px';
-      vnBtn.style.fontWeight = '700';
-      vnBtn.style.letterSpacing = '0';
+      netBadge.textContent = net.shortName.substring(0, 3);
+      netBadge.style.fontSize = '9px';
+      netBadge.style.fontWeight = '700';
+      netBadge.style.letterSpacing = '0';
     }
-    vnBtn.onclick = null;
-    vnBtn.title = net.name;
-    vnBtn.style.cursor = 'default';
-    vnBtn.style.background = net.color;
+    vnBtn.parentNode.insertBefore(netBadge, vnBtn);
   }
 
   // Ulož síť do sessionStorage pro objednávky

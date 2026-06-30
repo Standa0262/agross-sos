@@ -207,7 +207,7 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
     <span class="logo-sos">SOS</span>
   </div>
   <div class="header-btns">
-    <button class="icon-btn" onclick="location.href='A_GROSS_SOS.html'" title="Přepnout do češtiny">🇨🇿</button>
+    <button class="icon-btn" onclick="goToCzech()" title="Přepnout do češtiny">🇨🇿</button>
     <button class="icon-btn" onclick="openScanner()" title="Quét mã">📷</button>
     <button class="icon-btn" onclick="switchTab('cart')" title="Giỏ hàng">
       🛒<span class="badge" id="cartBadge">0</span>
@@ -356,6 +356,11 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
 </div>
 
 <script>
+function goToCzech() {
+  const params = new URLSearchParams(window.location.search);
+  const sit = params.get('sit');
+  window.location.href = 'A_GROSS_SOS.html' + (sit ? '?sit=' + sit : '');
+}
 // ═══════════════════════════════════════════════════════════════════
 // OFFLINE MODE & INDEXEDDB
 // ═══════════════════════════════════════════════════════════════════
