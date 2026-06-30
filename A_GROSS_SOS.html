@@ -1498,6 +1498,33 @@ async function checkExclusivity(lat, lon, city, population, storeId) {
   }
 }
 
+async function findNearestStore(lat, lon, excludeId) {
+  try {
+    const res = await fetch('https://agross-sos.onrender.com/api/stores');
+    const data = await res.json();
+    if (!data.success || !data.stores?.length) return null;
+
+    function distKm(a, b) {
+      const R = 6371;
+      const dLat = (b.lat - a.lat) * Math.PI / 180;
+      const dLon = (b.lon - a.lon) * Math.PI / 180;
+      const x = Math.sin(dLat/2)**2 + Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+    }
+
+    let nearest = null;
+    let nearestDist = Infinity;
+    data.stores.forEach(s => {
+      if (!s.lat || !s.lon || String(s.id) === String(excludeId)) return;
+      const d = distKm(lat, lon, parseFloat(s.lat), parseFloat(s.lon));
+      if (d < nearestDist) { nearestDist = d; nearest = { ...s, distKm: d }; }
+    });
+    return nearest;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function onStoreModalOpen() {
   const statusEl = document.getElementById('gpsStatus');
   const banner = document.getElementById('exclusivityBanner');
@@ -1509,6 +1536,16 @@ async function onStoreModalOpen() {
   if (coords) {
     _gpsCoords = coords;
     statusEl.textContent = `📍 GPS: ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+
+    // Pro OZ: najít a zobrazit nejbližší existující prodejnu
+    const nearest = await findNearestStore(coords.lat, coords.lon, null);
+    if (nearest && nearest.distKm < 50) {
+      const distText = nearest.distKm < 1
+        ? Math.round(nearest.distKm * 1000) + ' m'
+        : nearest.distKm.toFixed(1) + ' km';
+      banner.className = 'exclusivity-banner warn';
+      banner.textContent = `📍 Nejbližší existující prodejna A-GROSS SOS: ${nearest.name}${nearest.chain ? ' (' + nearest.chain + ')' : ''} — ${distText} odsud. Můžete ji zmínit jako referenci.`;
+    }
   } else {
     statusEl.textContent = '📍 GPS nedostupné – exkluzivita nebude kontrolována';
   }
