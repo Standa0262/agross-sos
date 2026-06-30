@@ -492,11 +492,16 @@ header{
 
 <!-- ── PRODUCTS PAGE ── -->
 <div class="page active" id="page-products">
-  <div class="store-bar">
+  <div class="store-bar" id="storeBarNormal">
     <div class="store-dot" id="storeDot"></div>
     <select id="storeSelect" onchange="onStoreChange()">
       <option value="">— Vyberte prodejnu —</option>
     </select>
+  </div>
+  <div class="store-bar" id="storeBarNetwork" style="display:none">
+    <div class="store-dot" id="storeDotNet"></div>
+    <span id="networkStoreLabel" style="flex:1;font-weight:600"></span>
+    <button onclick="openAddStore()" style="background:var(--dark);color:var(--cream);border:none;border-radius:6px;padding:6px 12px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">+ Přidat prodejnu</button>
   </div>
   <div class="search-row">
     <input class="search-input" type="text" placeholder="Hledat produkt, kód, EAN…" id="searchInput" oninput="filterProducts()">
@@ -918,6 +923,15 @@ function applyNetworkBranding() {
   // Ulož síť do sessionStorage pro objednávky
   sessionStorage.setItem('ag_network', net.orderNote);
   sessionStorage.setItem('ag_network_name', net.name);
+
+  // Skryj běžný výběr prodejny, zobraz síťový režim
+  const barNormal = document.getElementById('storeBarNormal');
+  const barNetwork = document.getElementById('storeBarNetwork');
+  if (barNormal && barNetwork) {
+    barNormal.style.display = 'none';
+    barNetwork.style.display = 'flex';
+    document.getElementById('networkStoreLabel').textContent = net.name;
+  }
 }
 
 const MIN_QTY = 5;
@@ -1111,6 +1125,8 @@ function populateStoreSelect(){
     sel.appendChild(o);
   });
   document.getElementById('storeDot').className='store-dot'+(storeId?' ok':'');
+  const dotNet = document.getElementById('storeDotNet');
+  if (dotNet) dotNet.className = 'store-dot' + (storeId ? ' ok' : '');
 }
 
 function onStoreChange(){
