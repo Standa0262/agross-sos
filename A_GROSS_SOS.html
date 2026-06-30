@@ -1684,14 +1684,9 @@ async function saveStore(){
     const cityVal2 = document.getElementById('f-address').value.split(',').pop()?.trim() || '';
     const excl = await checkExclusivity(_gpsCoords.lat, _gpsCoords.lon, cityVal2, 0, editStoreId);
     const banner = document.getElementById('exclusivityBanner');
-    if (!excl.allowed) {
-      banner.className = 'exclusivity-banner block';
-      banner.textContent = '🚫 ' + (excl.warning || 'Prodejna v této oblasti již existuje.');
-      showToast('⚠ Exkluzivita: ' + excl.warning);
-      return; // Zablokuj uložení
-    } else if (excl.warning) {
+    if (excl.warning) {
       banner.className = 'exclusivity-banner warn';
-      banner.textContent = '⚠ ' + (excl.warning || '');
+      banner.textContent = 'ℹ️ ' + excl.warning;
     } else {
       banner.className = 'exclusivity-banner';
     }

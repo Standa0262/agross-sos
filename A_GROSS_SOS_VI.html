@@ -974,14 +974,9 @@ async function saveStore(){
     const cityVal = document.getElementById('f-address').value.split(',').pop()?.trim() || '';
     const excl = await checkExclusivity(_gpsCoords.lat, _gpsCoords.lon, cityVal, 0, null);
     const banner = document.getElementById('exclusivityBanner');
-    if (!excl.allowed) {
-      banner.className = 'exclusivity-banner block';
-      banner.textContent = '🚫 ' + (excl.warning || excl.message || 'Khu vực này đã có cửa hàng đối tác.');
-      showToast('⚠ ' + (excl.warning || 'Khu vực đã có đối tác'));
-      return;
-    } else if (excl.warning) {
+    if (excl.warning) {
       banner.className = 'exclusivity-banner warn';
-      banner.textContent = '⚠ ' + excl.warning;
+      banner.textContent = 'ℹ️ ' + excl.warning;
     } else {
       banner.className = 'exclusivity-banner';
     }
