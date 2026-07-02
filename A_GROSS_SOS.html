@@ -1167,7 +1167,7 @@ function renderProducts(list){
     return`<div class="${cardCls}" id="card-${p.kod}">
       <div class="${dotCls}" onclick="onDotClick('${p.kod}')" title="${st==='sos'?'SOS – klikni pro výměnu':st==='ok'?'Pravidelně objednávané':'Bez dat'}"></div>
       <div class="product-img-wrap">
-        <img src="img/1_${p.kod}.jpg" class="product-img" alt="" onclick="openImgZoom('${p.kod}')" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <img src="obrázek/1_${p.kod}.jpg" class="product-img" alt="" onclick="openImgZoom('${p.kod}')" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div class="product-img-placeholder"></div>
       </div>
       <div class="product-info">
@@ -1355,7 +1355,7 @@ function renderCart(){
         const isExchange = window.exchangeRequests&&window.exchangeRequests[p.kod];
         return`<div class="cart-item" style="${isExchange?'border-left:3px solid var(--sos)':''}">
           <div class="product-img-wrap">
-            <img src="img/1_${p.kod}.jpg" class="product-img" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+            <img src="obrázek/1_${p.kod}.jpg" class="product-img" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
             <div class="product-img-placeholder"></div>
           </div>
           <div class="ci-info">
@@ -1415,7 +1415,7 @@ function openOrderConfirm(){
     <div style="font-size:11px;margin-bottom:10px;max-height:35vh;overflow-y:auto">
       ${items.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)">
         <div class="product-img-wrap" style="width:32px;height:32px">
-          <img src="img/1_${p.kod}.jpg" class="product-img" style="width:32px;height:32px" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <img src="obrázek/1_${p.kod}.jpg" class="product-img" style="width:32px;height:32px" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
           <div class="product-img-placeholder" style="width:32px;height:32px"></div>
         </div>
         <span style="flex:1;margin-right:8px">${p.nazev} × ${cart[p.kod]}</span>
