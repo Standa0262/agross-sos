@@ -737,7 +737,7 @@ function renderProducts(list){
     return `<div class="product-card">
       <div class="status-dot ok"></div>
       <div class="product-img-wrap">
-        <img src="obrázek/1_${p.kod}.jpg" class="product-img" alt="" onclick="openImgZoom('${p.kod}')" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <img src="img/1_${p.kod}.jpg" class="product-img" alt="" onclick="openImgZoom('${p.kod}')" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div class="product-img-placeholder"></div>
       </div>
       <div class="product-info">
@@ -847,7 +847,7 @@ function renderCart(){
         const m = (p.moc-p.nc)*q;
         return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px">
           <div class="product-img-wrap">
-            <img src="obrázek/1_${p.kod}.jpg" class="product-img" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+            <img src="img/1_${p.kod}.jpg" class="product-img" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
             <div class="product-img-placeholder"></div>
           </div>
           <div style="flex:1">
@@ -897,7 +897,7 @@ function openOrderConfirm(){
     <div style="font-size:11px;max-height:35vh;overflow-y:auto;margin-bottom:12px">
       ${items.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)">
         <div class="product-img-wrap" style="width:32px;height:32px">
-          <img src="obrázek/1_${p.kod}.jpg" class="product-img" style="width:32px;height:32px" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <img src="img/1_${p.kod}.jpg" class="product-img" style="width:32px;height:32px" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
           <div class="product-img-placeholder" style="width:32px;height:32px"></div>
         </div>
         <span style="flex:1">${p.nazev} ×${cart[p.kod]}</span>
