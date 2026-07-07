@@ -356,6 +356,11 @@ header{background:var(--dark);color:#fff;padding:12px 16px 10px;display:flex;ali
 </div>
 
 <script>
+// Sdílený identifikační klíč appky prodejen – NENÍ to skutečné tajemství
+// (appka nemá login), jen clona proti masovému/náhodnému scanování backendu.
+const STORE_APP_KEY = '9dfaf0ac61fc572bf676a7c52f51356ba3476a6a74708c290741a79403d67f7e';
+function storeAuthHeaders(){ return {'Authorization': 'Bearer ' + STORE_APP_KEY}; }
+
 function goToCzech() {
   const params = new URLSearchParams(window.location.search);
   const sit = params.get('sit');
@@ -552,7 +557,7 @@ function save(){
 function syncStoreToBackend(store) {
   fetch('https://agross-sos.onrender.com/api/stores/sync', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', ...storeAuthHeaders()},
     body: JSON.stringify(store)
   }).catch(err => console.error('Sync prodejny selhal:', err));
 }
@@ -574,7 +579,7 @@ async function checkExclusivity(lat, lon, city, population, storeId) {
   try {
     const res = await fetch('https://agross-sos.onrender.com/api/stores/check-exclusivity', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...storeAuthHeaders() },
       body: JSON.stringify({ lat, lon, city, population: population || 0, store_id: storeId || '' })
     });
     return await res.json();
@@ -601,13 +606,19 @@ async function onStoreModalOpen() {
 
 async function loadStoresFromBackend() {
   try {
-    const res = await fetch('https://agross-sos.onrender.com/api/stores');
+    const res = await fetch('https://agross-sos.onrender.com/api/stores/public');
     if (!res.ok) return;
     const data = await res.json();
     if (!data.success || !data.stores?.length) return;
     const backendIds = data.stores.map(s => s.id);
     const localOnly = stores.filter(s => !backendIds.includes(s.id));
-    stores = [...data.stores, ...localOnly];
+    // /api/stores/public vrací jen id/name/chain/lat/lon/city (bez PII).
+    // Merge se zachováním lokálně známých polí, aby se nesmazala PII vlastní prodejny.
+    const merged = data.stores.map(bs => {
+      const local = stores.find(s => s.id === bs.id);
+      return local ? { ...local, ...bs } : bs;
+    });
+    stores = [...merged, ...localOnly];
     save();
     populateStoreSelect();
     renderStores();
@@ -635,18 +646,6 @@ async function loadNotificationFromBackend() {
     }
   } catch (e) {
     // offline – ignoruj
-  }
-}
-
-async function publishNotifToBackend(text) {
-  try {
-    await fetch('https://agross-sos.onrender.com/api/notifications', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({text})
-    });
-  } catch (e) {
-    console.error('Sync oznámení selhal:', e.message);
   }
 }
 

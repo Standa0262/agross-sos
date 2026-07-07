@@ -4,3 +4,9 @@ __pycache__/
 firebase-key.json
 *.pptx
 *.pdf
+
+# Stará testovací data – produkce běží na backend_admin.py + Postgres,
+# tyto soubory se nesmí znovu začít plnit reálnými daty.
+orders_db.json
+notifications.json
+test_order.json

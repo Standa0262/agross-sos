@@ -169,6 +169,22 @@ header{background:var(--dark);color:#fff;padding:12px 20px;display:flex;align-it
   </div>
 </div>
 
+<!-- API KEY SCREEN -->
+<div class="pin-screen hidden" id="keyScreen">
+  <div class="pin-logo">
+    <div class="pin-logo-a">A-GROSS <span class="pin-logo-s" style="display:inline">SOS</span></div>
+    <div class="pin-logo-admin">Admin Panel</div>
+  </div>
+  <div class="pin-box" style="width:320px">
+    <div class="pin-label">API klíč</div>
+    <input type="password" id="adminKeyInput" placeholder="Vložte ADMIN_API_KEY" autocomplete="off"
+      style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:13px;margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')submitAdminKey()">
+    <button class="pin-btn" style="width:100%;background:var(--sos)" onclick="submitAdminKey()">Přihlásit</button>
+    <div class="pin-error" id="keyError"></div>
+  </div>
+</div>
+
 <header>
   <div class="logo">
     <span class="logo-a">A-GROSS</span>
@@ -280,7 +296,12 @@ async function checkPin(){
   if(hash===PIN_HASH){
     sessionStorage.setItem('ag_admin_auth','1');
     document.getElementById('pinScreen').classList.add('hidden');
-    loadAll();
+    if(sessionStorage.getItem('ag_admin_key')){
+      loadAll();
+    } else {
+      document.getElementById('keyScreen').classList.remove('hidden');
+      document.getElementById('adminKeyInput').focus();
+    }
   } else {
     document.getElementById('pinError').textContent='Nesprávný PIN';
     pinBuffer='';
@@ -289,8 +310,36 @@ async function checkPin(){
   }
 }
 
+function submitAdminKey(){
+  const key = document.getElementById('adminKeyInput').value.trim();
+  if(!key){
+    document.getElementById('keyError').textContent='Zadejte API klíč';
+    return;
+  }
+  sessionStorage.setItem('ag_admin_key', key);
+  document.getElementById('keyScreen').classList.add('hidden');
+  loadAll();
+}
+
+// Hlavička s admin API klíčem – klíč se NIKDY neukládá do souboru/gitu,
+// zadává se ručně a žije jen v sessionStorage (mizí se zavřením karty).
+function authHeaders(){
+  return {'Authorization': 'Bearer ' + (sessionStorage.getItem('ag_admin_key') || '')};
+}
+
+function handleAuthError(res){
+  if(res.status===401){
+    sessionStorage.removeItem('ag_admin_key');
+    document.getElementById('keyScreen').classList.remove('hidden');
+    document.getElementById('keyError').textContent='Neplatný API klíč';
+    return true;
+  }
+  return false;
+}
+
 function logout(){
   sessionStorage.removeItem('ag_admin_auth');
+  sessionStorage.removeItem('ag_admin_key');
   location.reload();
 }
 
@@ -309,9 +358,13 @@ async function loadAll(){
   setSyncStatus('loading');
   try {
     const [ordRes, storeRes] = await Promise.all([
-      fetch(API+'/api/orders'),
-      fetch(API+'/api/stores')
+      fetch(API+'/api/orders',{headers:authHeaders()}),
+      fetch(API+'/api/stores',{headers:authHeaders()})
     ]);
+    if(handleAuthError(ordRes) || handleAuthError(storeRes)){
+      setSyncStatus('err');
+      return;
+    }
     const ordData = await ordRes.json();
     const storeData = await storeRes.json();
     allOrders = ordData.orders || [];
@@ -349,9 +402,10 @@ async function sendNotif(){
   try {
     const res = await fetch(API+'/api/notifications',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json', ...authHeaders()},
       body:JSON.stringify({text})
     });
+    if(handleAuthError(res)) return;
     const data = await res.json();
     if(data.success){
       showToast('✓ Oznámení odesláno');
@@ -363,7 +417,7 @@ async function sendNotif(){
 
 async function clearNotif(){
   try {
-    await fetch(API+'/api/notifications/clear',{method:'POST'});
+    await fetch(API+'/api/notifications/clear',{method:'POST',headers:authHeaders()});
     showToast('Oznámení smazáno');
     loadNotif();
   } catch(e){}

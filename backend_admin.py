@@ -8,28 +8,43 @@ Instalace:
     pip install flask flask-cors psycopg2-binary python-dateutil
 
 Spuštění:
-    DATABASE_URL=postgresql://... python backend_admin.py
+    DATABASE_URL=postgresql://... ADMIN_API_KEY=... STORE_APP_KEY=... python backend_admin.py
+
+Autentizace (hlavička Authorization: Bearer <klíč>):
+    ADMIN_API_KEY – admin panel (GET /api/orders, GET /api/stores, reporty, mazání, notifikace)
+    STORE_APP_KEY – appka prodejen (orders/sync, stores/sync, check-exclusivity)
+    bez klíče     – /health, /api/health, /api/catalogs/sync, /api/stores/public,
+                    /api/notifications/active
 
 API Endpoints:
-    POST /api/db/init – Vytvoří databázové tabulky (pokud neexistují)
-    POST /api/orders/sync – Příjem offline objednávek (ukládá do DB)
-    GET /api/orders – Objednávky (filtr store_id, from_date, to_date, network)
-    POST /api/stores/sync – Uložení/aktualizace prodejny
-    GET /api/stores – Všechny prodejny
-    GET /api/reports/monthly – Měsíční report pro síť
+    POST /api/db/init – Vytvoří databázové tabulky (pokud neexistují) [admin]
+    POST /api/orders/sync – Příjem offline objednávek (ukládá do DB) [store]
+    GET /api/orders – Objednávky (filtr store_id, from_date, to_date, network) [admin]
+    POST /api/stores/sync – Uložení/aktualizace prodejny [store]
+    GET /api/stores – Všechny prodejny, včetně PII [admin]
+    GET /api/stores/public – Prodejny bez PII (jméno/řetězec/GPS/město) [public]
+    GET /api/reports/monthly – Měsíční report pro síť [admin]
 """
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import os
+import hmac
+from functools import wraps
 from datetime import datetime, timedelta
 from collections import defaultdict
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 
 app = Flask(__name__)
-CORS(app)
+
+ALLOWED_ORIGINS = [
+    o.strip() for o in os.environ.get(
+        'ALLOWED_ORIGINS', 'https://standa0262.github.io'
+    ).split(',') if o.strip()
+]
+CORS(app, origins=ALLOWED_ORIGINS)
 
 # ═════════════════════════════════════════════════════════════════════
 # KONFIGURACE
@@ -40,6 +55,46 @@ COMMISSION_RATES = {
     'MO Partner': 0.05, # 5%
     # Přidat další sítě dle dohody
 }
+
+# ═════════════════════════════════════════════════════════════════════
+# AUTENTIZACE (Bearer token v hlavičce Authorization)
+# ═════════════════════════════════════════════════════════════════════
+# ADMIN_API_KEY – admin panel (AGROSS_SOS_ADMIN.html), zadává se ručně
+#                 do prohlížeče, NIKDY není součástí zdrojáku ani gitu.
+# STORE_APP_KEY – appka pro prodejny (A_GROSS_SOS.html / _VI.html), je
+#                 natvrdo v klientském JS – nejde o skutečné tajemství,
+#                 jen o clonu proti masovému/náhodnému scanování.
+# Obě se nastavují VÝHRADNĚ jako env proměnné (Render → Settings → Environment).
+
+ADMIN_API_KEY = os.environ.get('ADMIN_API_KEY')
+STORE_APP_KEY = os.environ.get('STORE_APP_KEY')
+
+
+def _key_matches(expected):
+    if not expected:
+        return False
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+        return False
+    return hmac.compare_digest(auth[7:], expected)
+
+
+def require_admin_key(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not _key_matches(ADMIN_API_KEY):
+            return jsonify({'error': 'Unauthorized'}), 401
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def require_store_key(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not _key_matches(STORE_APP_KEY):
+            return jsonify({'error': 'Unauthorized'}), 401
+        return f(*args, **kwargs)
+    return wrapper
 
 # ═════════════════════════════════════════════════════════════════════
 # DATABÁZE (PostgreSQL – Neon.tech)
@@ -86,6 +141,7 @@ def load_orders():
 # ═════════════════════════════════════════════════════════════════════
 
 @app.route('/api/db/init', methods=['POST'])
+@require_admin_key
 def db_init():
     """Vytvoří databázové tabulky (pokud ještě neexistují)."""
     try:
@@ -161,6 +217,7 @@ def db_init():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/orders/sync', methods=['POST'])
+@require_store_key
 def sync_order():
     """
     Příjem objednávky z offline režimu.
@@ -240,6 +297,7 @@ def sync_order():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/orders', methods=['GET'])
+@require_admin_key
 def get_orders():
     """
     Všechny objednávky v období.
@@ -281,6 +339,7 @@ def get_orders():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/stores/sync', methods=['POST'])
+@require_store_key
 def sync_store():
     """
     Uložení/aktualizace prodejny.
@@ -354,8 +413,9 @@ def sync_store():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/stores', methods=['GET'])
+@require_admin_key
 def get_stores():
-    """Vrátí všechny prodejny."""
+    """Vrátí všechny prodejny se všemi údaji (PII) – jen pro admin panel."""
     try:
         conn = get_db()
         try:
@@ -393,7 +453,42 @@ def get_stores():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stores/public', methods=['GET'])
+def get_stores_public():
+    """Vrátí prodejny bez PII (jméno/řetězec/GPS/město) – appky prodejen."""
+    try:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('SELECT id, name, chain, lat, lon, city FROM stores ORDER BY created_at DESC')
+            rows = cur.fetchall()
+            cur.close()
+        finally:
+            conn.close()
+
+        stores = [
+            {
+                'id': r['id'],
+                'name': r['name'],
+                'chain': r['chain'],
+                'lat': r['lat'],
+                'lon': r['lon'],
+                'city': r['city'],
+            }
+            for r in rows
+        ]
+
+        return jsonify({
+            'success': True,
+            'count': len(stores),
+            'stores': stores
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/reports/monthly', methods=['GET'])
+@require_admin_key
 def monthly_report():
     """
     Měsíční report pro síť – podklady pro vyplacení komisí.
@@ -492,6 +587,7 @@ def monthly_report():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reports/monthly/export', methods=['GET'])
+@require_admin_key
 def export_monthly_report():
     """
     Exportovat měsíční report jako PDF/CSV pro emailing sítím.
@@ -572,6 +668,7 @@ def sync_catalog():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/notifications', methods=['POST'])
+@require_admin_key
 def create_notification():
     try:
         data = request.json
@@ -609,6 +706,7 @@ def get_active_notification():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/notifications/clear', methods=['POST'])
+@require_admin_key
 def clear_notification():
     try:
         conn = get_db()
@@ -633,6 +731,7 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
 @app.route('/api/stores/check-exclusivity', methods=['POST'])
+@require_store_key
 def check_exclusivity():
     """
     Zkontroluje GPS exkluzivitu pro novou prodejnu.
@@ -710,6 +809,7 @@ def check_exclusivity():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/stores/<store_id>', methods=['DELETE'])
+@require_admin_key
 def delete_store(store_id):
     try:
         conn = get_db()
