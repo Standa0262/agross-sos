@@ -169,6 +169,13 @@ def db_init():
                     created_at TIMESTAMPTZ DEFAULT now()
                 )
             ''')
+            # CREATE TABLE IF NOT EXISTS nedoplní sloupce do už existující
+            # tabulky – starší nasazení mohly vzniknout před přidáním
+            # lat/lon/city/population, proto je doplníme explicitně.
+            cur.execute('ALTER TABLE stores ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION')
+            cur.execute('ALTER TABLE stores ADD COLUMN IF NOT EXISTS lon DOUBLE PRECISION')
+            cur.execute('ALTER TABLE stores ADD COLUMN IF NOT EXISTS city TEXT')
+            cur.execute('ALTER TABLE stores ADD COLUMN IF NOT EXISTS population INTEGER')
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS orders (
                     id TEXT PRIMARY KEY,
