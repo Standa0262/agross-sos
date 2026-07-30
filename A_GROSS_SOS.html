@@ -973,48 +973,53 @@ const ORDER_EMAIL = 'objednavky@a-gross.cz';
 const DPH = 0.21;             // 21 % DPH
 
 const PRODUCTS = [
-  {kod:"276921",nazev:"JEHLY ORGAN UNIVERSAL 10ks",nc:39.44,moc:95.9,ean:"8590580899993"},
-  {kod:"276922",nazev:"JEHLY ORGAN JEANS MIX 5ks",nc:31.03,moc:74.9,ean:"8590580899986"},
-  {kod:"80415",nazev:"JEHLY ORGAN Super Stretch 75,5ks",nc:35.78,moc:86.9,ean:"8590580899979"},
-  {kod:"80398",nazev:"JEHLY RUČNÍ KOŠÍČEK ORIGINÁL",nc:21.49,moc:51.9,ean:"8590580899962"},
-  {kod:"660085",nazev:"ŠPENDLÍK SKLENĚNÁ HLAVIČKA 10g",nc:28.49,moc:69.0,ean:"8590580899955"},
-  {kod:"80412",nazev:"ŠPENDLÍK PLAST.HLAV.BÍLÁ 80ks",nc:23.32,moc:56.9,ean:"8590580899948"},
-  {kod:"235",nazev:"ŠPENDLÍK ZAVÍRACÍ MIX 1-3, NIKL+LAK",nc:21.63,moc:52.9,ean:"8590580899931"},
-  {kod:"199",nazev:"SUCHÝ ZIP 2 cm, ODSTŘIH 20 CM, ČERNÁ+BÍLÁ",nc:10.4,moc:25.9,ean:"8590580899924"},
-  {kod:"830040",nazev:"KNOFLÍK PROPÍNACÍ LOŽNÍ PRÁDLO 14 kusů",nc:27.48,moc:59.0,ean:"8590580899887"},
-  {kod:"830462",nazev:"KNOFLÍK MANDLOVACÍ 18 mm, 20 kusů",nc:32.5,moc:78.9,ean:"8590580899870"},
-  {kod:"830095",nazev:"KNOFLÍK MANDLOVACÍ 15 mm, 20 kusů",nc:32.5,moc:78.9,ean:"8590580899863"},
-  {kod:"700808",nazev:"KREJČOVSKÝ METR 150 cm",nc:14.4,moc:34.9,ean:"8590580899856"},
-  {kod:"224004_1",nazev:"NIT UNIPOLY 100 m, bílá,černá, modrá",nc:18.76,moc:45.9,ean:"8590580899849"},
-  {kod:"224004_2",nazev:"NIT UNIPOLY 100 m, bílá",nc:18.76,moc:45.9,ean:"8590580899832"},
-  {kod:"224004_3",nazev:"NIT UNIPOLY 100 m, černá",nc:18.76,moc:45.4,ean:"8590580899825"},
-  {kod:"314",nazev:"NIT LNĚNÁ KNOFLÍKOVÁ 50 m MIX",nc:28.18,moc:68.2,ean:"8590580899818"},
-  {kod:"661620",nazev:"ZIP JEANS 20 cm, černý + tmavě modrý",nc:31.06,moc:74.9,ean:"8590580899801"},
-  {kod:"76",nazev:"ZIP SPIRÁLA 3 mm, 20 cm, černá, bílá",nc:13.86,moc:33.9,ean:"8590580899795"},
-  {kod:"100",nazev:"ZIP SPIRÁLA 3 mm, 40 cm, černá, bílá",nc:18.34,moc:44.9,ean:"8590580899788"},
-  {kod:"1020",nazev:"ZIP SPIRÁLA NEDĚLITELNÝ 5 mm, 2 x 20 cm",nc:10.4,moc:25.2,ean:"8590580899771"},
-  {kod:"1075",nazev:"ZIP SPIRÁLA DĚLITELNÝ 5 mm, 75 cm",nc:18.96,moc:45.9,ean:"8590580899764"},
-  {kod:"5080",nazev:"ZIP KOSTĚNÝ DĚLITELNÝ 5 mm, 80 cm",nc:19.8,moc:47.9,ean:"8590580899757"},
-  {kod:"342_1",nazev:"GUMA NA KARTĚ 8 mm, bílá",nc:12.9,moc:31.2,ean:"8590580989977"},
-  {kod:"342_2",nazev:"GUMA NA KARTĚ 8 mm, černá",nc:12.9,moc:31.2,ean:"8590580989984"},
-  {kod:"311",nazev:"GUMA NA KARTĚ 10 mm, bílá",nc:13.9,moc:33.6,ean:"8590580899511"},
-  {kod:"312",nazev:"GUMA NA KARTĚ 10 mm, černá",nc:13.9,moc:33.6,ean:"8590580989472"},
-  {kod:"668_1",nazev:"GUMA NA KARTĚ 12 mm, bílá",nc:14.9,moc:36.1,ean:"8590580989946"},
-  {kod:"668_2",nazev:"GUMA NA KARTĚ 12 mm, černá",nc:14.9,moc:36.1,ean:"8590580898939"},
-  {kod:"559",nazev:"KEPROVKA NA KARTĚ 6 mm, bílá",nc:7.05,moc:17.1,ean:"8590580899917"},
-  {kod:"344_1",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm černá",nc:19.6,moc:47.9,ean:"8590580989809"},
-  {kod:"344_2",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm modrá",nc:19.6,moc:47.9,ean:"8590580989793"},
-  {kod:"344_3",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm bílá",nc:19.6,moc:47.9,ean:"8590580989786"},
-  {kod:"9901",nazev:"TKANIČKY KULATÉ 4 mm, 100% PES, 90 cm, MIX BAREV",nc:16.4,moc:39.9,ean:"8590580899894"},
-  {kod:"9902",nazev:"TKANIČKY KULATÉ 6 mm, 100% PES, 130 cm, MIX BAREV",nc:17.5,moc:42.9,ean:"8590580899740"},
-  {kod:"9903",nazev:"TKANIČKY PLOCHÉ 6 mm, 100% PES, 90 cm, MIX BAREV",nc:16.4,moc:39.9,ean:"8590580899603"},
-  {kod:"9904",nazev:"TKANIČKY PLOCHÉ 7 mm, 100% PES, 130 cm, MIX BAREV",nc:17.5,moc:42.9,ean:"8590580899597"},
-  {kod:"9905",nazev:"TKANIČKY KULATÉ 3 mm, 100% BA, 90 cm, MIX BAREV",nc:17.4,moc:42.2,ean:"8590580899580"},
-  {kod:"9906",nazev:"TKANIČKY PLOCHÉ 7 mm, 100% BA, 130 cm, MIX BAREV",nc:18.5,moc:44.9,ean:"8590580899573"},
-  {kod:"80394",nazev:"RUČNÍ JEHLY 20 kusů + NAVLÉKAČ",nc:17.67,moc:42.9,ean:"8590580899566"},
-  {kod:"80399",nazev:"RUČNÍ JEHLY NA PLACHTY",nc:22.08,moc:53.9,ean:"8590580899559"},
-  {kod:"80400",nazev:"RUČNÍ JEHLY NA KOBERCE",nc:19.58,moc:47.9,ean:"8590580899542"},
+  {kod:"S276921",nazev:"JEHLY ORGAN UNIVERSAL 10ks",nc:39.44,moc:95.9,ean:"8590580899993"},
+  {kod:"S276922",nazev:"JEHLY ORGAN JEANS MIX 5ks",nc:31.03,moc:74.9,ean:"8590580899986"},
+  {kod:"S80415",nazev:"JEHLY ORGAN Super Stretch 75,5ks",nc:35.78,moc:86.9,ean:"8590580899979"},
+  {kod:"S80398",nazev:"JEHLY RUČNÍ KOŠÍČEK ORIGINÁL",nc:21.49,moc:51.9,ean:"8590580899962"},
+  {kod:"S660085",nazev:"ŠPENDLÍK SKLENĚNÁ HLAVIČKA 10g",nc:28.49,moc:69.0,ean:"8590580899955"},
+  {kod:"S80412",nazev:"ŠPENDLÍK PLAST.HLAV.BÍLÁ 80ks",nc:23.32,moc:56.9,ean:"8590580899948"},
+  {kod:"S235",nazev:"ŠPENDLÍK ZAVÍRACÍ MIX 1-3, NIKL+LAK",nc:21.63,moc:52.9,ean:"8590580899931"},
+  {kod:"S199",nazev:"SUCHÝ ZIP 2 cm, ODSTŘIH 20 CM, ČERNÁ+BÍLÁ",nc:10.4,moc:25.9,ean:"8590580899924"},
+  {kod:"S830040",nazev:"KNOFLÍK PROPÍNACÍ LOŽNÍ PRÁDLO 14 kusů",nc:27.48,moc:59.0,ean:"8590580899887"},
+  {kod:"S830462",nazev:"KNOFLÍK MANDLOVACÍ 18 mm, 20 kusů",nc:32.5,moc:78.9,ean:"8590580899870"},
+  {kod:"S830095",nazev:"KNOFLÍK MANDLOVACÍ 15 mm, 20 kusů",nc:32.5,moc:78.9,ean:"8590580899863"},
+  {kod:"S700808",nazev:"KREJČOVSKÝ METR 150 cm",nc:14.4,moc:34.9,ean:"8590580899856"},
+  {kod:"S224004-1",nazev:"NIT UNIPOLY 100 m, bílá,černá, modrá",nc:18.76,moc:45.9,ean:"8590580899849"},
+  {kod:"S224004-2",nazev:"NIT UNIPOLY 100 m, bílá",nc:18.76,moc:45.9,ean:"8590580899832"},
+  {kod:"S224004-3",nazev:"NIT UNIPOLY 100 m, černá",nc:18.76,moc:45.4,ean:"8590580899825"},
+  {kod:"S314",nazev:"NIT LNĚNÁ KNOFLÍKOVÁ 50 m MIX",nc:28.18,moc:68.2,ean:"8590580899818"},
+  {kod:"S661620",nazev:"ZIP JEANS 20 cm, černý + tmavě modrý",nc:31.06,moc:74.9,ean:"8590580899801"},
+  {kod:"S76",nazev:"ZIP SPIRÁLA 3 mm, 20 cm, černá, bílá",nc:13.86,moc:33.9,ean:"8590580899795"},
+  {kod:"S100",nazev:"ZIP SPIRÁLA 3 mm, 40 cm, černá, bílá",nc:18.34,moc:44.9,ean:"8590580899788"},
+  {kod:"S1020",nazev:"ZIP SPIRÁLA NEDĚLITELNÝ 5 mm, 2 x 20 cm",nc:10.4,moc:25.2,ean:"8590580899771"},
+  {kod:"S1075",nazev:"ZIP SPIRÁLA DĚLITELNÝ 5 mm, 75 cm",nc:18.96,moc:45.9,ean:"8590580899764"},
+  {kod:"S5080",nazev:"ZIP KOSTĚNÝ DĚLITELNÝ 5 mm, 80 cm",nc:19.8,moc:47.9,ean:"8590580899757"},
+  {kod:"S342-1",nazev:"GUMA NA KARTĚ 8 mm, bílá",nc:12.9,moc:31.2,ean:"8590580989977"},
+  {kod:"S342-2",nazev:"GUMA NA KARTĚ 8 mm, černá",nc:12.9,moc:31.2,ean:"8590580989984"},
+  {kod:"S304-3",nazev:"GUMA NA KARTĚ 10 mm, bílá",nc:13.9,moc:33.6,ean:"8590580899511"},
+  {kod:"S304-1",nazev:"GUMA NA KARTĚ 10 mm, černá",nc:13.9,moc:33.6,ean:"8590580989472"},
+  {kod:"S668-1",nazev:"GUMA NA KARTĚ 12 mm, bílá",nc:14.9,moc:36.1,ean:"8590580989946"},
+  {kod:"S668-2",nazev:"GUMA NA KARTĚ 12 mm, černá",nc:14.9,moc:36.1,ean:"8590580898939"},
+  {kod:"S559",nazev:"KEPROVKA NA KARTĚ 6 mm, bílá",nc:7.05,moc:17.1,ean:"8590580899917"},
+  {kod:"S344-1",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm černá",nc:19.6,moc:47.9,ean:"8590580989809"},
+  {kod:"S344-2",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm modrá",nc:19.6,moc:47.9,ean:"8590580989793"},
+  {kod:"S344-3",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm bílá",nc:19.6,moc:47.9,ean:"8590580989786"},
+  {kod:"S9901",nazev:"TKANIČKY KULATÉ 4 mm, 100% PES, 90 cm, MIX BAREV",nc:16.4,moc:39.9,ean:"8590580899894"},
+  {kod:"S9902",nazev:"TKANIČKY KULATÉ 6 mm, 100% PES, 130 cm, MIX BAREV",nc:17.5,moc:42.9,ean:"8590580899740"},
+  {kod:"S9903",nazev:"TKANIČKY PLOCHÉ 6 mm, 100% PES, 90 cm, MIX BAREV",nc:16.4,moc:39.9,ean:"8590580899603"},
+  {kod:"S9904",nazev:"TKANIČKY PLOCHÉ 7 mm, 100% PES, 130 cm, MIX BAREV",nc:17.5,moc:42.9,ean:"8590580899597"},
+  {kod:"S9905",nazev:"TKANIČKY KULATÉ 3 mm, 100% BA, 90 cm, MIX BAREV",nc:17.4,moc:42.2,ean:"8590580899580"},
+  {kod:"S9906",nazev:"TKANIČKY PLOCHÉ 7 mm, 100% BA, 130 cm, MIX BAREV",nc:18.5,moc:44.9,ean:"8590580899573"},
+  {kod:"S80394",nazev:"RUČNÍ JEHLY 20 kusů + NAVLÉKAČ",nc:17.67,moc:42.9,ean:"8590580899566"},
+  {kod:"S80399",nazev:"RUČNÍ JEHLY NA PLACHTY",nc:22.08,moc:53.9,ean:"8590580899559"},
+  {kod:"S80400",nazev:"RUČNÍ JEHLY NA KOBERCE",nc:19.58,moc:47.9,ean:"8590580899542"},
 ];
+
+function imgSrcFor(kod){
+  const imgKod = kod.replace(/^S/, '1_').replace(/-/g, '_');
+  return `img/${imgKod}.jpg`;
+}
 
 const EAN_MAP = {};
 PRODUCTS.forEach(p=>{ if(p.ean) EAN_MAP[p.ean]=p; });
@@ -1155,7 +1160,7 @@ function renderProducts(list){
     return`<div class="${cardCls}" id="card-${p.kod}">
       <div class="${dotCls}" onclick="onDotClick('${p.kod}')" title="${st==='sos'?'SOS – klikni pro výměnu':st==='ok'?'Pravidelně objednávané':'Bez dat'}"></div>
       <div class="product-img-wrap">
-        <img src="img/1_${p.kod}.jpg" class="product-img" alt="" onclick="openImgZoom('${p.kod}')" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <img src="${imgSrcFor(p.kod)}" class="product-img" alt="" onclick="openImgZoom('${p.kod}')" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div class="product-img-placeholder"></div>
       </div>
       <div class="product-info">
@@ -1204,7 +1209,7 @@ function onDotClick(kod){
 function openImgZoom(kod){
   const p=PRODUCTS.find(x=>x.kod===kod);
   if(!p)return;
-  document.getElementById('imgZoomImg').src='img/1_'+kod+'.jpg';
+  document.getElementById('imgZoomImg').src=imgSrcFor(kod);
   document.getElementById('imgZoomName').textContent=p.nazev;
   document.getElementById('imgZoomMeta').textContent='Kód: '+p.kod+' · MOC '+fmt(p.moc);
   document.getElementById('imgZoomOverlay').classList.add('open');
@@ -1343,7 +1348,7 @@ function renderCart(){
         const isExchange = window.exchangeRequests&&window.exchangeRequests[p.kod];
         return`<div class="cart-item" style="${isExchange?'border-left:3px solid var(--sos)':''}">
           <div class="product-img-wrap">
-            <img src="img/1_${p.kod}.jpg" class="product-img" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+            <img src="${imgSrcFor(p.kod)}" class="product-img" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
             <div class="product-img-placeholder"></div>
           </div>
           <div class="ci-info">
@@ -1403,7 +1408,7 @@ function openOrderConfirm(){
     <div style="font-size:11px;margin-bottom:10px;max-height:35vh;overflow-y:auto">
       ${items.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)">
         <div class="product-img-wrap" style="width:32px;height:32px">
-          <img src="img/1_${p.kod}.jpg" class="product-img" style="width:32px;height:32px" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <img src="${imgSrcFor(p.kod)}" class="product-img" style="width:32px;height:32px" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
           <div class="product-img-placeholder" style="width:32px;height:32px"></div>
         </div>
         <span style="flex:1;margin-right:8px">${p.nazev} × ${cart[p.kod]}</span>
