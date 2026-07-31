@@ -449,6 +449,62 @@ header{
 .exclusivity-banner.warn{background:#FFF3E0;border:1px solid #FFD090;color:#7A4000;display:block}
 .exclusivity-banner.block{background:var(--sos-light);border:1px solid #F9C9C0;color:var(--sos-dark);display:block}
 
+.welcome-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1A1A1A;
+  border-top: 3px solid #E8533A;
+  padding: 14px 16px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+  animation: slideUp 0.4s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.welcome-bar-text {
+  font-size: 13px;
+  color: #F5F0E8;
+  line-height: 1.5;
+}
+.welcome-bar-text .vi {
+  color: #888888;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.welcome-bar-btns {
+  display: flex;
+  gap: 8px;
+}
+.welcome-bar-login {
+  flex: 1;
+  background: #E8533A;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.welcome-bar-close {
+  background: transparent;
+  color: #666;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 </style>
 </head>
 <body>
@@ -1810,6 +1866,24 @@ function editStore(id){
 
 function closeStoreModal(){ document.getElementById('storeModal').classList.remove('open'); }
 
+// ── WELCOME BAR ──────────────────────────────────────────────────────
+function showWelcomeBar() {
+  const approved = localStorage.getItem('ag_store_approved') === '1';
+  const pending = localStorage.getItem('ag_store_pending') === '1';
+  const dismissed = localStorage.getItem('ag_welcome_dismissed') === '1';
+  if (approved || pending || dismissed) return;
+  setTimeout(() => {
+    const bar = document.getElementById('welcomeBar');
+    if (bar) bar.style.display = 'flex';
+  }, 2000);
+}
+
+function closeWelcomeBar() {
+  const bar = document.getElementById('welcomeBar');
+  if (bar) bar.style.display = 'none';
+  localStorage.setItem('ag_welcome_dismissed', '1');
+}
+
 // ── STORE REGISTRATION ───────────────────────────────────────────────
 function openRegistrationModal(){
   document.getElementById('registrationModal').classList.add('open');
@@ -2052,6 +2126,7 @@ filterProducts();
 updateOrderBar();
 applyNetworkBranding();
 loadStoresFromBackend();
+showWelcomeBar();
 startRenderKeepAlive();
 loadNotificationFromBackend();
 
@@ -2092,6 +2167,20 @@ if('serviceWorker' in navigator){
       <div style="text-align:left"><div style="font-size:13px;font-weight:600;color:var(--dark)">Kopírovat do schránky</div><div style="font-size:11px;color:var(--muted)">Vložit kdekoliv ručně</div></div>
     </button>
     <button class="share-close" onclick="closeShareSheet()">Zavřít</button>
+  </div>
+</div>
+
+<div class="welcome-bar" id="welcomeBar" style="display:none">
+  <div class="welcome-bar-text">
+    <strong style="color:#E8533A">Jste majitel prodejny?</strong>
+    Přihlaste se pro velkoobchodní ceny a objednávání.
+    <div class="vi">Bạn là chủ cửa hàng? Đăng nhập để xem giá sỉ và đặt hàng.</div>
+  </div>
+  <div class="welcome-bar-btns">
+    <button class="welcome-bar-login" onclick="closeWelcomeBar(); openRegistrationModal();">
+      Přihlásit se / Đăng nhập
+    </button>
+    <button class="welcome-bar-close" onclick="closeWelcomeBar()">✕</button>
   </div>
 </div>
 
