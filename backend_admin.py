@@ -831,6 +831,105 @@ def delete_store(store_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/registrations', methods=['POST'])
+def create_registration():
+    try:
+        data = request.json
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS registrations (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    ico TEXT NOT NULL,
+                    phone TEXT NOT NULL,
+                    is_vietnamese BOOLEAN DEFAULT FALSE,
+                    pin TEXT,
+                    approved BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            """)
+            cur.execute("""
+                INSERT INTO registrations (name, ico, phone, is_vietnamese)
+                VALUES (%s, %s, %s, %s)
+            """, (data['name'], data['ico'], data['phone'],
+                  data.get('isVietnamese', False)))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/registrations/verify', methods=['POST'])
+def verify_registration():
+    try:
+        data = request.json
+        pin = data.get('pin', '').strip()
+        name = data.get('name', '').strip()
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id FROM registrations
+                WHERE pin = %s AND name = %s AND approved = TRUE
+            """, (pin, name))
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            conn.close()
+        if row:
+            return jsonify({'success': True}), 200
+        return jsonify({'success': False}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/registrations/list', methods=['GET'])
+@require_admin_key
+def list_registrations():
+    try:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, name, ico, phone, is_vietnamese,
+                       pin, approved, created_at
+                FROM registrations
+                ORDER BY created_at DESC
+            """)
+            rows = cur.fetchall()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True, 'registrations': rows}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/registrations/approve', methods=['POST'])
+@require_admin_key
+def approve_registration():
+    try:
+        data = request.json
+        reg_id = data.get('id')
+        pin = data.get('pin', '').strip()
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE registrations
+                SET approved = TRUE, pin = %s
+                WHERE id = %s
+            """, (pin, reg_id))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ═════════════════════════════════════════════════════════════════════
 # HEALTH CHECK
 # ═════════════════════════════════════════════════════════════════════

@@ -830,6 +830,36 @@ header{
   </div>
 </div>
 
+<!-- ── STORE REGISTRATION MODAL ── -->
+<div class="modal-overlay" id="registrationModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Přihlášení prodejny</div>
+    <div class="form-group">
+      <label class="form-label">Název prodejny *</label>
+      <input class="form-input" id="reg-name" placeholder="Potraviny Novák">
+    </div>
+    <div class="form-group">
+      <label class="form-label">IČO *</label>
+      <input class="form-input" id="reg-ico" placeholder="IČO" inputmode="numeric" maxlength="8">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefon *</label>
+      <input class="form-input" id="reg-phone" placeholder="+420 XXX XXX XXX" type="tel">
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="reg-vietnamese" style="width:auto">
+        Vietnamsky mluvící prodejna / Cửa hàng nói tiếng Việt
+      </label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-s" onclick="closeRegistrationModal()">Zrušit</button>
+      <button class="btn-p" onclick="submitRegistration()">Odeslat žádost o přístup</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── ORDER CONFIRM MODAL ── -->
 <div class="modal-overlay" id="orderModal">
   <div class="modal-sheet">
@@ -1049,6 +1079,16 @@ function save(){
 // ── HELPERS ──────────────────────────────────────────────────────────
 function fmt(n){ return n.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})+' Kč'; }
 
+function isApproved(){ return localStorage.getItem('ag_store_approved') === '1'; }
+
+function updateApprovalUI(){
+  const approved = isApproved();
+  const stTab = document.getElementById('tab-stores');
+  const ordTab = document.getElementById('tab-orders');
+  if(stTab)  stTab.style.display  = approved ? '' : 'none';
+  if(ordTab) ordTab.style.display = approved ? '' : 'none';
+}
+
 function cartTotals(){
   let nc=0,marze=0,moc=0,count=0,items=0;
   PRODUCTS.filter(p=>cart[p.kod]).forEach(p=>{
@@ -1102,17 +1142,24 @@ function acceptVop(){
 // ── ORDER BAR ────────────────────────────────────────────────────────
 function updateOrderBar(){
   const {nc,marze,moc,count,items}=cartTotals();
-  document.getElementById('barItems').textContent = items?items+' artl. / '+count+' ks':'Košík prázdný';
-  document.getElementById('barNc').textContent    = 'NC: '+fmt(nc);
-  document.getElementById('barMarze').textContent = 'Marže: '+fmt(marze);
-  const minEl = document.getElementById('barMin');
-  if(moc>=MIN_ORDER_MOC){
-    minEl.textContent='✓ min. splněno';
-    minEl.className='bar-min ok';
+  const barRight = document.querySelector('.order-bar .bar-right');
+  if(!isApproved()){
+    document.getElementById('barItems').textContent = 'Košík prázdný';
+    if(barRight) barRight.style.display = 'none';
   } else {
-    const diff=MIN_ORDER_MOC-moc;
-    minEl.textContent='min. '+fmt(diff)+' chybí';
-    minEl.className='bar-min';
+    if(barRight) barRight.style.display = '';
+    document.getElementById('barItems').textContent = items?items+' artl. / '+count+' ks':'Košík prázdný';
+    document.getElementById('barNc').textContent    = 'NC: '+fmt(nc);
+    document.getElementById('barMarze').textContent = 'Marže: '+fmt(marze);
+    const minEl = document.getElementById('barMin');
+    if(moc>=MIN_ORDER_MOC){
+      minEl.textContent='✓ min. splněno';
+      minEl.className='bar-min ok';
+    } else {
+      const diff=MIN_ORDER_MOC-moc;
+      minEl.textContent='min. '+fmt(diff)+' chybí';
+      minEl.className='bar-min';
+    }
   }
   const b=document.getElementById('cartBadge');
   if(items>0){b.style.display='flex';b.textContent=items;}else b.style.display='none';
@@ -1168,10 +1215,10 @@ function renderProducts(list){
         <div class="product-meta">
           <span class="p-code">${p.kod}</span>
           <span class="p-moc">${fmt(p.moc)}</span>
-          <span class="p-nc">NC ${fmt(p.nc)}</span>
+          ${isApproved()?`<span class="p-nc">NC ${fmt(p.nc)}</span>`:''}
           <span class="p-min">min.${MIN_QTY}ks</span>
         </div>
-        ${qty>0?`<div class="p-subtotal">∑ NC ${fmt(p.nc*qty)} · marže ${fmt(marze)}</div>`:''}
+        ${qty>0&&isApproved()?`<div class="p-subtotal">∑ NC ${fmt(p.nc*qty)} · marže ${fmt(marze)}</div>`:''}
       </div>
       <div class="qty-control">
         <div class="qty-row">
@@ -1363,10 +1410,15 @@ function renderCart(){
         </div>`;
       }).join('')}
     </div>
+    ${isApproved()?`
     <button class="order-btn" onclick="openOrderConfirm()" ${(!storeId||!minOk)?'disabled':''}>
       ${!storeId?'⚠ Nejprve vyberte prodejnu':!minOk?`⚠ Min. objednávka nesplněna`:'✓ Odeslat objednávku'}
     </button>
-    ${!minOk?`<p style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px">Minimum: ${fmt(MIN_ORDER_MOC)} vč. DPH</p>`:''}`;
+    ${!minOk?`<p style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px">Minimum: ${fmt(MIN_ORDER_MOC)} vč. DPH</p>`:''}
+    `:`
+    <button class="order-btn" onclick="openRegistrationModal()">🔑 Přihlásit se jako prodejna</button>
+    ${localStorage.getItem('ag_store_pending')==='1'?`<button class="btn-s" style="width:100%;margin-top:8px" onclick="enterPin()">Mám PIN kód</button>`:''}
+    `}`;
 }
 
 function setDeliv(mode,btn){
@@ -1758,6 +1810,77 @@ function editStore(id){
 
 function closeStoreModal(){ document.getElementById('storeModal').classList.remove('open'); }
 
+// ── STORE REGISTRATION ───────────────────────────────────────────────
+function openRegistrationModal(){
+  document.getElementById('registrationModal').classList.add('open');
+}
+
+function closeRegistrationModal(){
+  document.getElementById('registrationModal').classList.remove('open');
+}
+
+function submitRegistration() {
+  const name = document.getElementById('reg-name').value.trim();
+  const ico = document.getElementById('reg-ico').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const isVietnamese = document.getElementById('reg-vietnamese').checked;
+
+  if (!name || !ico || !phone) {
+    showToast('Vyplňte prosím všechna povinná pole');
+    return;
+  }
+
+  // Uložit žádost do Neon.tech
+  fetch('https://agross-sos.onrender.com/api/registrations', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name, ico, phone, isVietnamese,
+      timestamp: new Date().toISOString()})
+  }).catch(e => console.error('Registrace:', e));
+
+  // Otevřít WhatsApp se zprávou pro Standu
+  const msg = isVietnamese
+    ? `Nová žádost o přístup A-GROSS SOS:%0ANázev: ${name}%0AIČO: ${ico}%0ATelefon: ${phone}%0A🇻🇳 Vietnamská prodejna`
+    : `Nová žádost o přístup A-GROSS SOS:%0ANázev: ${name}%0AIČO: ${ico}%0ATelefon: ${phone}`;
+
+  window.open(`https://wa.me/420608889487?text=${msg}`, '_blank');
+
+  // Zobrazit instrukce
+  closeRegistrationModal();
+  showToast('✓ Žádost odeslána! Brzy vás budeme kontaktovat s PIN kódem.');
+
+  // Uložit čekající stav
+  localStorage.setItem('ag_store_pending', '1');
+  localStorage.setItem('ag_store_name_pending', name);
+}
+
+function enterPin(){
+  const pin = prompt('Zadejte PIN kód který jste obdrželi:');
+  if (pin && pin.length >= 4) {
+    // Ověřit PIN přes backend
+    fetch('https://agross-sos.onrender.com/api/registrations/verify', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        pin,
+        name: localStorage.getItem('ag_store_name_pending')
+      })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        localStorage.setItem('ag_store_approved', '1');
+        localStorage.setItem('ag_store_pin', pin);
+        localStorage.removeItem('ag_store_pending');
+        showToast('✓ Přístup potvrzen! Vítejte v A-GROSS SOS.');
+        location.reload();
+      } else {
+        showToast('❌ Nesprávný PIN. Zkuste znovu nebo kontaktujte 608 889 487.');
+      }
+    });
+  }
+}
+
 async function saveStore(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){showToast('Zadejte název prodejny');return;}
@@ -1905,7 +2028,7 @@ function showToast(msg){
 // ── CLOSE MODALS ON OVERLAY ──────────────────────────────────────────
 document.querySelectorAll('.modal-overlay').forEach(m=>{
   m.addEventListener('click',e=>{
-    if(e.target===m){closeScanner();closeStoreModal();closeOrderModal();closeExchangeModal();}
+    if(e.target===m){closeScanner();closeStoreModal();closeOrderModal();closeExchangeModal();closeRegistrationModal();}
   });
 });
 
@@ -1924,6 +2047,7 @@ if(localStorage.getItem('ag_vop_souhlas')==='1'){
 const _savedNotif = localStorage.getItem('ag_notif');
 if(_savedNotif){ showNotifBar(_savedNotif); updateNotifPreview(_savedNotif); }
 populateStoreSelect();
+updateApprovalUI();
 filterProducts();
 updateOrderBar();
 applyNetworkBranding();

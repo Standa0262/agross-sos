@@ -204,6 +204,7 @@ header{background:var(--dark);color:#fff;padding:12px 20px;display:flex;align-it
 <div class="tabs">
   <div class="tab active" onclick="switchTab('orders')" id="tab-orders">📋 Objednávky</div>
   <div class="tab" onclick="switchTab('stores')" id="tab-stores">🏪 Prodejny</div>
+  <div class="tab" onclick="switchTab('reg')" id="tab-reg">📋 Registrace</div>
   <div class="tab" onclick="switchTab('map')" id="tab-map">🗺 Mapa</div>
   <div class="tab" onclick="switchTab('notif')" id="tab-notif">📢 Oznámení</div>
 </div>
@@ -229,6 +230,15 @@ header{background:var(--dark);color:#fff;padding:12px 20px;display:flex;align-it
 <div class="page" id="page-stores">
   <div class="sh"><span class="sh-title">Prodejny</span><button class="sh-btn" onclick="loadAll()">↻ Obnovit</button></div>
   <div id="storeList"><div class="loading"><div class="spinner"></div><br>Načítám…</div></div>
+</div>
+
+<!-- REGISTRATIONS PAGE -->
+<div class="page" id="page-reg">
+  <div class="sh">
+    <span class="sh-title">Žádosti o přístup</span>
+    <button class="sh-btn" onclick="loadRegistrations()">↻ Obnovit</button>
+  </div>
+  <div id="regList"><div class="loading"><div class="spinner"></div><br>Načítám…</div></div>
 </div>
 
 <div class="page" id="page-map">
@@ -351,6 +361,7 @@ function switchTab(tab){
   document.getElementById('page-'+tab).classList.add('active');
   if(tab==='notif') loadNotif();
   if(tab==='map') initMap();
+  if(tab==='reg') loadRegistrations();
 }
 
 // ── API ───────────────────────────────────────────────────────────────
@@ -421,6 +432,57 @@ async function clearNotif(){
     showToast('Oznámení smazáno');
     loadNotif();
   } catch(e){}
+}
+
+// ── REGISTRATIONS ────────────────────────────────────────────────────
+async function loadRegistrations() {
+  try {
+    const res = await fetch(API + '/api/registrations/list', {headers: authHeaders()});
+    if (handleAuthError(res)) return;
+    const data = await res.json();
+    const el = document.getElementById('regList');
+    if (!data.registrations?.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Žádné žádosti</div>';
+      return;
+    }
+    el.innerHTML = data.registrations.map(r => `
+      <div class="store-card">
+        <div class="sc-name">${r.name} ${r.is_vietnamese ? '🇻🇳' : ''}</div>
+        <div class="sc-field"><strong>IČO:</strong><span>${r.ico}</span></div>
+        <div class="sc-field"><strong>Telefon:</strong><a href="tel:${r.phone}" style="color:var(--sos)">${r.phone}</a></div>
+        <div class="sc-field"><strong>Datum:</strong><span>${new Date(r.created_at).toLocaleDateString('cs-CZ')}</span></div>
+        <div class="sc-field"><strong>Stav:</strong><span style="color:${r.approved ? 'var(--ok)' : 'var(--sos)'}">${r.approved ? '✓ Schváleno (PIN: ' + r.pin + ')' : '⏳ Čeká na schválení'}</span></div>
+        ${!r.approved ? `
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <input id="pin-${r.id}" placeholder="Zadej PIN (např. 1234)" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit">
+          <button class="sh-btn" onclick="approveRegistration(${r.id}, '${r.phone}', ${r.is_vietnamese})" style="background:var(--ok);color:#fff">✓ Schválit</button>
+        </div>` : ''}
+      </div>`).join('');
+  } catch(e) { showToast('Chyba při načítání'); }
+}
+
+async function approveRegistration(id, phone, isVietnamese) {
+  const pin = document.getElementById('pin-' + id).value.trim();
+  if (!pin || pin.length < 4) { showToast('Zadej PIN (min. 4 znaky)'); return; }
+
+  try {
+    const res = await fetch(API + '/api/registrations/approve', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', ...authHeaders()},
+      body: JSON.stringify({id, pin})
+    });
+    if (handleAuthError(res)) return;
+    const data = await res.json();
+    if (data.success) {
+      // Otevřít WhatsApp s PIN kódem pro majitele
+      const msg = isVietnamese
+        ? `Chào bạn! Žádost o přístup A-GROSS SOS byla schválena.%0APIN kód: ${pin}%0ANaskenujte QR kód a zadejte PIN.`
+        : `Dobrý den! Vaše žádost o přístup do A-GROSS SOS byla schválena.%0APIN kód: ${pin}%0ANaskenujte QR kód a zadejte PIN pro přihlášení.`;
+      window.open('https://wa.me/' + phone.replace(/[^0-9]/g,'') + '?text=' + msg, '_blank');
+      showToast('✓ Schváleno! Odesílám PIN přes WhatsApp.');
+      loadRegistrations();
+    }
+  } catch(e) { showToast('Chyba při schvalování'); }
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────
