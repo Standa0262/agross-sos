@@ -41,7 +41,7 @@ app = Flask(__name__)
 
 ALLOWED_ORIGINS = [
     o.strip() for o in os.environ.get(
-        'ALLOWED_ORIGINS', 'https://standa0262.github.io'
+        'ALLOWED_ORIGINS', 'https://standa0262.github.io,null'
     ).split(',') if o.strip()
 ]
 CORS(app, origins=ALLOWED_ORIGINS)
