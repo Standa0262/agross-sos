@@ -31,6 +31,9 @@ from flask_cors import CORS
 import json
 import os
 import hmac
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from functools import wraps
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -859,6 +862,40 @@ def create_registration():
             cur.close()
         finally:
             conn.close()
+
+        try:
+            is_viet = data.get('isVietnamese', False)
+            viet_label = ' 🇻🇳 VIETNAMSKÁ PRODEJNA' if is_viet else ''
+
+            msg = MIMEMultipart()
+            msg['Subject'] = f"A-GROSS SOS – nová žádost o přístup: {data['name']}"
+            msg['From'] = 'objednavky@a-gross.cz'
+            msg['To'] = 'objednavky@a-gross.cz, litvin@a-gross.cz'
+
+            body = f"""Nová žádost o přístup do A-GROSS SOS{viet_label}
+
+Název prodejny: {data['name']}
+IČO: {data['ico']}
+Telefon: {data['phone']}
+Datum: {data.get('timestamp', 'neuvedeno')}
+
+Pro schválení otevřete admin panel:
+https://standa0262.github.io/agross-sos/AGROSS_SOS_ADMIN.html
+
+Po schválení odešlete PIN přes WhatsApp na: {data['phone']}
+"""
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+
+            with smtplib.SMTP('smtp.a-gross.cz', 587) as server:
+                server.starttls()
+                server.login(
+                    os.environ.get('SMTP_USER', 'objednavky@a-gross.cz'),
+                    os.environ.get('SMTP_PASS', '')
+                )
+                server.send_message(msg)
+        except Exception as mail_err:
+            print(f'Email notifikace selhal: {mail_err}')
+
         return jsonify({'success': True}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
