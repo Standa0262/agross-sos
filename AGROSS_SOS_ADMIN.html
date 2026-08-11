@@ -698,5 +698,10 @@ if(sessionStorage.getItem('ag_admin_auth')==='1'){
   loadAll();
 }
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/agross-sos/admin_sw.js');
+}
+</script>
 </body>
 </html>
