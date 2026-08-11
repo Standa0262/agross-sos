@@ -332,6 +332,7 @@ function submitAdminKey(){
     return;
   }
   sessionStorage.setItem('ag_admin_key', key);
+  localStorage.setItem('ag_admin_key', key);
   document.getElementById('keyScreen').classList.add('hidden');
   loadAll();
 }
@@ -355,6 +356,7 @@ function handleAuthError(res){
 function logout(){
   sessionStorage.removeItem('ag_admin_auth');
   sessionStorage.removeItem('ag_admin_key');
+  localStorage.removeItem('ag_admin_key');
   location.reload();
 }
 
@@ -693,7 +695,13 @@ function showToast(msg){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-if(sessionStorage.getItem('ag_admin_auth')==='1'){
+const savedKey = localStorage.getItem('ag_admin_key');
+if(savedKey){
+  sessionStorage.setItem('ag_admin_key', savedKey);
+  sessionStorage.setItem('ag_admin_auth', '1');
+  document.getElementById('pinScreen').classList.add('hidden');
+  loadAll();
+} else if(sessionStorage.getItem('ag_admin_auth')==='1'){
   document.getElementById('pinScreen').classList.add('hidden');
   loadAll();
 }
