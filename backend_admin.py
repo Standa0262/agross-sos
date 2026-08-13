@@ -967,6 +967,48 @@ def approve_registration():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stores/update', methods=['POST'])
+@require_admin_key
+def update_store():
+    try:
+        data = request.json
+        store_id = data.get('id')
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE stores SET
+                  name=%s, manager=%s, phone=%s, address=%s,
+                  ico=%s, email=%s, hours_week=%s, hours_weekend=%s, note=%s
+                WHERE id=%s
+            """, (data.get('name'), data.get('manager'), data.get('phone'),
+                  data.get('address'), data.get('ico'), data.get('email'),
+                  data.get('hoursWeek'), data.get('hoursWeekend'),
+                  data.get('note'), store_id))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/registrations/<int:reg_id>', methods=['DELETE'])
+@require_admin_key
+def delete_registration(reg_id):
+    try:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('DELETE FROM registrations WHERE id=%s', (reg_id,))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ═════════════════════════════════════════════════════════════════════
 # HEALTH CHECK
 # ═════════════════════════════════════════════════════════════════════

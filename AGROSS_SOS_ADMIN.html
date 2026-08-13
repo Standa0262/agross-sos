@@ -463,9 +463,42 @@ async function loadRegistrations() {
         <div style="margin-top:10px;display:flex;gap:8px">
           <input id="pin-${r.id}" placeholder="Zadej PIN (např. 1234)" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit">
           <button class="sh-btn" onclick="approveRegistration(${r.id}, '${r.phone}', ${r.is_vietnamese})" style="background:var(--ok);color:#fff">✓ Schválit</button>
-        </div>` : ''}
+        </div>` : `
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="sh-btn" onclick="changeRegPin(${r.id})"
+            style="background:var(--dark);color:var(--cream)">🔑 Změnit PIN</button>
+          <button class="sh-btn" onclick="deleteReg(${r.id},'${r.name}')"
+            style="background:#C03020;color:#fff">🗑 Smazat</button>
+        </div>`}
       </div>`).join('');
   } catch(e) { showToast('Chyba při načítání'); }
+}
+
+async function changeRegPin(id) {
+  const newPin = prompt('Zadejte nový PIN (min. 4 znaky):');
+  if (!newPin || newPin.length < 4) { showToast('PIN musí mít min. 4 znaky'); return; }
+  try {
+    const res = await fetch(API + '/api/registrations/approve', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', ...authHeaders()},
+      body: JSON.stringify({id, pin: newPin})
+    });
+    const d = await res.json();
+    if (d.success) { showToast('✓ PIN změněn'); loadRegistrations(); }
+    else showToast('Chyba při změně PIN');
+  } catch(e) { showToast('Chyba'); }
+}
+
+async function deleteReg(id, name) {
+  if (!confirm(`Smazat registraci "${name}"?`)) return;
+  try {
+    const res = await fetch(API + '/api/registrations/' + id, {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    if (res.ok) { showToast('✓ Registrace smazána'); loadRegistrations(); }
+    else showToast('Chyba při mazání');
+  } catch(e) { showToast('Chyba při mazání'); }
 }
 
 async function approveRegistration(id, phone, isVietnamese) {
@@ -570,7 +603,88 @@ function renderStores(){
       ${s.email?`<div class="sc-field"><strong>E-mail:</strong><a href="mailto:${s.email}" style="color:var(--sos)">${s.email}</a></div>`:''}
       ${s.hoursWeek?`<div class="sc-field"><strong>PO–PÁ:</strong><span>${s.hoursWeek}</span></div>`:''}
       ${s.note?`<div class="sc-field"><strong>Poznámka:</strong><span>${s.note}</span></div>`:''}
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="sh-btn" onclick="editStore('${s.id}')"
+          style="background:var(--dark);color:var(--cream)">✏️ Upravit</button>
+        <button class="sh-btn" onclick="deleteStore('${s.id}','${s.name}')"
+          style="background:#C03020;color:#fff">🗑 Smazat</button>
+      </div>
     </div>`).join('');
+}
+
+async function editStore(id) {
+  const store = allStores.find(s => String(s.id) === String(id));
+  if (!store) return;
+  const fields = [
+    ['Název', 'name', store.name || ''],
+    ['Vedoucí', 'manager', store.manager || ''],
+    ['Telefon', 'phone', store.phone || ''],
+    ['Adresa', 'address', store.address || ''],
+    ['IČO', 'ico', store.ico || ''],
+    ['Email', 'email', store.email || ''],
+    ['Otevírací doba PO-PÁ', 'hoursWeek', store.hoursWeek || ''],
+    ['Otevírací doba SO-NE', 'hoursWeekend', store.hoursWeekend || ''],
+    ['Poznámka', 'note', store.note || ''],
+  ];
+
+  // Vytvoř editační modal
+  let html = `<div id="editModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px">
+    <div style="background:var(--surface);border-radius:12px;padding:20px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto">
+      <h3 style="margin-bottom:16px;color:var(--text-primary)">Upravit prodejnu</h3>`;
+
+  fields.forEach(([label, key, val]) => {
+    html += `<div style="margin-bottom:10px">
+      <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px">${label}</label>
+      <input id="edit_${key}" value="${val}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;background:var(--surface-2);color:var(--text-primary)">
+    </div>`;
+  });
+
+  html += `<div style="display:flex;gap:8px;margin-top:16px">
+    <button onclick="saveEditStore('${id}')" style="flex:1;background:var(--sos);color:#fff;border:none;border-radius:8px;padding:10px;font-family:inherit;font-weight:600;cursor:pointer">Uložit</button>
+    <button onclick="document.getElementById('editModal').remove()" style="flex:1;background:var(--surface-2);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:inherit;cursor:pointer">Zrušit</button>
+  </div></div></div>`;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function saveEditStore(id) {
+  const data = {
+    name: document.getElementById('edit_name').value,
+    manager: document.getElementById('edit_manager').value,
+    phone: document.getElementById('edit_phone').value,
+    address: document.getElementById('edit_address').value,
+    ico: document.getElementById('edit_ico').value,
+    email: document.getElementById('edit_email').value,
+    hoursWeek: document.getElementById('edit_hoursWeek').value,
+    hoursWeekend: document.getElementById('edit_hoursWeekend').value,
+    note: document.getElementById('edit_note').value,
+    id: id
+  };
+  try {
+    const res = await fetch(API + '/api/stores/update', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', ...authHeaders()},
+      body: JSON.stringify(data)
+    });
+    const d = await res.json();
+    if (d.success) {
+      showToast('✓ Prodejna aktualizována');
+      document.getElementById('editModal').remove();
+      loadAll();
+    } else showToast('Chyba: ' + (d.error || 'neznámá'));
+  } catch(e) { showToast('Chyba při ukládání'); }
+}
+
+async function deleteStore(id, name) {
+  if (!confirm(`Smazat prodejnu "${name}"?`)) return;
+  try {
+    const res = await fetch(API + '/api/stores/' + id, {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    if (res.ok) { showToast('✓ Prodejna smazána'); loadAll(); }
+    else showToast('Chyba při mazání');
+  } catch(e) { showToast('Chyba při mazání'); }
 }
 
 let _map = null;
