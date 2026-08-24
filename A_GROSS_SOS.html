@@ -516,7 +516,7 @@ header{
     <span class="logo-sos">SOS</span>
   </div>
   <div class="header-btns">
-    <button class="icon-btn" onclick="location.href='A_GROSS_SOS_VI.html'" title="Chuyển sang tiếng Việt">🇻🇳</button>
+    <button class="icon-btn" id="vnFlagBtn" onclick="location.href='A_GROSS_SOS_VI.html'" title="Chuyển sang tiếng Việt">🇻🇳</button>
     <button class="icon-btn" onclick="openScanner()" title="Skenovat EAN">📷</button>
     <button class="icon-btn cart-badge" onclick="switchTab('cart')" title="Košík">
       🛒<span class="badge" id="cartBadge">0</span>
@@ -905,7 +905,7 @@ header{
       <label class="form-label">Telefon *</label>
       <input class="form-input" id="reg-phone" placeholder="+420 XXX XXX XXX" type="tel">
     </div>
-    <div class="form-group">
+    <div class="form-group" id="regVietnameseGroup">
       <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
         <input type="checkbox" id="reg-vietnamese" style="width:auto">
         Vietnamsky mluvící prodejna / Cửa hàng nói tiếng Việt
@@ -1045,6 +1045,29 @@ function applyNetworkBranding() {
 
   // Předvyplnit a uzamknout pole Řetězec na aktuální síť
   window._lockedChain = net.name;
+}
+
+// Zjednodušené UI pro sítě s NETWORKS[key].simplifiedUI = true
+// (starší vedoucí, appka nahraná IT oddělením – bez jazykového přepínače)
+function applySimplifiedUI() {
+  const net = getNetworkFromURL();
+  if (!(net && net.simplifiedUI)) return;
+
+  const vnBtn = document.getElementById('vnFlagBtn');
+  if (vnBtn) vnBtn.style.display = 'none';
+
+  const infoTab = document.getElementById('tab-info');
+  if (infoTab) {
+    infoTab.style.display = 'none';
+    if (infoTab.classList.contains('active')) switchTab('products');
+  }
+
+  const regGroup = document.getElementById('regVietnameseGroup');
+  if (regGroup) regGroup.style.display = 'none';
+
+  // Onboarding jazykové volby je zbytečný (zůstala by jen čeština) – přeskočit
+  localStorage.setItem('ag_ob', '1');
+  document.getElementById('onboarding')?.classList.add('hidden');
 }
 
 const MIN_QTY = 5;
@@ -2142,6 +2165,8 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 if(!stores.length){
   stores=[];
 }
+
+applySimplifiedUI();
 
 if(localStorage.getItem('ag_vop_souhlas')==='1'){
   document.getElementById('vopScreen').classList.add('hidden');
