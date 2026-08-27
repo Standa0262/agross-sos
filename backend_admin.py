@@ -60,6 +60,125 @@ COMMISSION_RATES = {
 }
 
 # ═════════════════════════════════════════════════════════════════════
+# AUTORITATIVNÍ CENÍK (server-side zdroj pravdy pro ceny)
+# ═════════════════════════════════════════════════════════════════════
+# MUSÍ SE RUČNĚ SYNCHRONIZOVAT S PRODUCTS V A_GROSS_SOS.html PŘI KAŽDÉ
+# ZMĚNĚ CENÍKU! Klient (appka prodejen) posílá jen kód a množství - nc/moc
+# se VŽDY dopočítávají odsud, hodnoty poslané klientem se ignorují (viz
+# recompute_order_pricing / endpoint /api/catalog/prices).
+#
+# ncCelofan: None = produkt v celofánovém balení není, použije se ncKrabicka
+# i pro sítě s packaging:'celofan'.
+PRICE_TABLE = {
+    'S276921':   {'ncKrabicka': 39.44, 'ncCelofan': 37.44, 'moc': 95.9},
+    'S276922':   {'ncKrabicka': 31.03, 'ncCelofan': 29.03, 'moc': 74.9},
+    'S80415':    {'ncKrabicka': 35.78, 'ncCelofan': 33.78, 'moc': 86.9},
+    'S80398':    {'ncKrabicka': 22.9,  'ncCelofan': 26.40, 'moc': 51.9},
+    'S660085':   {'ncKrabicka': 28.49, 'ncCelofan': 26.49, 'moc': 69.0},
+    'S80412':    {'ncKrabicka': 23.32, 'ncCelofan': 21.32, 'moc': 56.9},
+    'S235':      {'ncKrabicka': 21.63, 'ncCelofan': 19.63, 'moc': 54.9},
+    'S199':      {'ncKrabicka': 10.4,  'ncCelofan': 8.40,  'moc': 25.9},
+    'S830040':   {'ncKrabicka': 27.48, 'ncCelofan': 25.48, 'moc': 59.0},
+    'S830462':   {'ncKrabicka': 32.5,  'ncCelofan': 30.50, 'moc': 78.9},
+    'S830095':   {'ncKrabicka': 32.5,  'ncCelofan': 30.50, 'moc': 78.9},
+    'S700808':   {'ncKrabicka': 14.4,  'ncCelofan': 12.40, 'moc': 34.9},
+    'S224004-1': {'ncKrabicka': 18.76, 'ncCelofan': 16.76, 'moc': 45.9},
+    'S224004-2': {'ncKrabicka': 18.76, 'ncCelofan': 16.76, 'moc': 45.9},
+    'S224004-3': {'ncKrabicka': 18.76, 'ncCelofan': 16.76, 'moc': 45.4},
+    'S314':      {'ncKrabicka': 28.18, 'ncCelofan': 26.18, 'moc': 68.2},
+    'S661620':   {'ncKrabicka': 31.06, 'ncCelofan': 29.06, 'moc': 74.9},
+    'S76':       {'ncKrabicka': 13.86, 'ncCelofan': 11.86, 'moc': 33.9},
+    'S100':      {'ncKrabicka': 18.34, 'ncCelofan': 16.34, 'moc': 44.9},
+    'S1020':     {'ncKrabicka': 10.4,  'ncCelofan': 8.40,  'moc': 25.17},
+    'S1075':     {'ncKrabicka': 18.96, 'ncCelofan': 16.96, 'moc': 45.9},
+    'S5080':     {'ncKrabicka': 19.8,  'ncCelofan': 17.80, 'moc': 47.9},
+    'S342-1':    {'ncKrabicka': 12.9,  'ncCelofan': None,  'moc': 31.22},
+    'S342-2':    {'ncKrabicka': 12.9,  'ncCelofan': None,  'moc': 31.22},
+    'S304-1':    {'ncKrabicka': 13.9,  'ncCelofan': None,  'moc': 33.64},
+    'S304-2':    {'ncKrabicka': 13.9,  'ncCelofan': None,  'moc': 33.64},
+    'S668-1':    {'ncKrabicka': 14.9,  'ncCelofan': None,  'moc': 36.06},
+    'S668-2':    {'ncKrabicka': 14.9,  'ncCelofan': None,  'moc': 36.06},
+    'S559':      {'ncKrabicka': 7.05,  'ncCelofan': None,  'moc': 17.06},
+    'S344-1':    {'ncKrabicka': 19.6,  'ncCelofan': 23.10, 'moc': 47.9},
+    'S344-2':    {'ncKrabicka': 19.6,  'ncCelofan': 23.10, 'moc': 47.9},
+    'S344-3':    {'ncKrabicka': 19.6,  'ncCelofan': 23.10, 'moc': 47.9},
+    'S9901':     {'ncKrabicka': 16.4,  'ncCelofan': 14.40, 'moc': 39.9},
+    'S9902':     {'ncKrabicka': 17.5,  'ncCelofan': 15.50, 'moc': 42.9},
+    'S9903':     {'ncKrabicka': 16.4,  'ncCelofan': 14.40, 'moc': 39.9},
+    'S9904':     {'ncKrabicka': 17.5,  'ncCelofan': 15.50, 'moc': 42.9},
+    'S9905':     {'ncKrabicka': 17.4,  'ncCelofan': 15.40, 'moc': 42.2},
+    'S9906':     {'ncKrabicka': 18.5,  'ncCelofan': 16.50, 'moc': 44.9},
+    'S80394':    {'ncKrabicka': 17.67, 'ncCelofan': 21.17, 'moc': 42.9},
+    'S80399':    {'ncKrabicka': 22.08, 'ncCelofan': 25.58, 'moc': 53.9},
+    'S80400':    {'ncKrabicka': 19.58, 'ncCelofan': 23.08, 'moc': 47.9},
+}
+
+# MUSÍ SE RUČNĚ SYNCHRONIZOVAT S NETWORKS V A_GROSS_SOS.html PŘI KAŽDÉ
+# ZMĚNĚ! Zrcadlí jen pole packaging (typ balení určuje, jestli se použije
+# ncKrabicka nebo ncCelofan). key = klíč sítě, name/shortName = stejnojmenná
+# pole NETWORKS[key] - používají se k dohledání sítě podle textového pole
+# stores.chain (viz get_packaging_for_chain).
+#
+# DŮLEŽITÉ: appka při registraci pod síťovým odkazem (?sit=...) ukládá do
+# stores.chain rovnou celé NETWORKS[key].name (window._lockedChain = net.name
+# v A_GROSS_SOS.html), ne shortName - proto se matchuje primárně na name.
+NETWORKS_PACKAGING = {
+    'javor':         {'name': 'Obchodní aliance JAVOR',        'shortName': 'JAVOR',          'packaging': None},
+    'mopartner':     {'name': 'MO Partner',                    'shortName': 'MO PARTNER',     'packaging': None},
+    'bala':          {'name': 'BALA',                          'shortName': 'BALA',           'packaging': None},
+    'coophb':        {'name': 'COOP Havlíčkův Brod',           'shortName': 'COOP HB',        'packaging': None},
+    'jednotaostroh': {'name': 'COOP Jednota Uherský Ostroh',   'shortName': 'JEDNOTA OSTROH', 'packaging': 'celofan'},
+}
+
+
+def get_packaging_for_chain(chain):
+    """
+    Dohledá typ balení (celofán/krabička) podle textového pole stores.chain
+    (resp. u registrací obdobného zdroje). Zkouší postupně: klíč sítě, přesnou
+    shodu s name (to appka reálně ukládá u síťově uzamčených prodejen), a jako
+    fallback podřetězec shortName (pro ručně vyplněný chain). Když se síť
+    nedá určit, výchozí je krabička (None) - stejné chování jako appka bez
+    ?sit= parametru.
+    """
+    if not chain:
+        return None
+    chain_lower = chain.strip().lower()
+    for key, cfg in NETWORKS_PACKAGING.items():
+        if chain_lower == key.lower() or chain_lower == cfg['name'].lower():
+            return cfg['packaging']
+    for key, cfg in NETWORKS_PACKAGING.items():
+        if cfg['shortName'].lower() in chain_lower:
+            return cfg['packaging']
+    return None
+
+
+def recompute_order_pricing(items, packaging):
+    """
+    Autoritativní přepočet nc/marze/moc z PRICE_TABLE - hodnoty poslané
+    klientem se IGNORUJÍ (appka je posílá jen pro čitelnost JSONu, ne jako
+    zdroj pravdy). Vrací (přepočtené položky, nc, marze, moc).
+    Raises ValueError(kod) když položka odkazuje na neexistující kód.
+    """
+    total_nc = 0.0
+    total_moc = 0.0
+    recomputed = []
+    for it in (items or []):
+        kod = str(it.get('kod', '')).strip()
+        price = PRICE_TABLE.get(kod)
+        if not price:
+            raise ValueError(kod)
+        try:
+            qty = float(it.get('qty', 0) or 0)
+        except (TypeError, ValueError):
+            qty = 0
+        unit_nc = price['ncCelofan'] if (packaging == 'celofan' and price['ncCelofan'] is not None) else price['ncKrabicka']
+        unit_moc = price['moc']
+        total_nc += unit_nc * qty
+        total_moc += unit_moc * qty
+        recomputed.append({**it, 'nc': unit_nc, 'moc': unit_moc})
+    return recomputed, round(total_nc, 2), round(total_moc - total_nc, 2), round(total_moc, 2)
+
+# ═════════════════════════════════════════════════════════════════════
 # AUTENTIZACE (Bearer token v hlavičce Authorization)
 # ═════════════════════════════════════════════════════════════════════
 # ADMIN_API_KEY – admin panel (AGROSS_SOS_ADMIN.html), zadává se ručně
@@ -238,7 +357,9 @@ def sync_order():
     3. Označit jako "synced"
     4. Odeslat potvrzení
     
-    JSON struktura:
+    JSON struktura (nc/marze/moc jsou zde jen pro čitelnost - server je VŽDY
+    přepočítá z PRICE_TABLE podle kódu položky a sítě prodejny; hodnoty
+    poslané klientem se ignorují, aby nešlo objednávku podvrhnout cenou):
     {
         "storeId": "123",
         "storeName": "Coopmark – HCM",
@@ -259,6 +380,26 @@ def sync_order():
         # Validace
         if not order.get('storeId') or not order.get('items'):
             return jsonify({'error': 'Chybí storeId nebo items'}), 400
+
+        # Zjisti typ balení podle sítě prodejny uložené v DB (sloupec chain) -
+        # NE podle toho, co pošle appka, appka posílá jen storeId.
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('SELECT chain FROM stores WHERE id = %s', (str(order.get('storeId')),))
+            store_row = cur.fetchone()
+            cur.close()
+        finally:
+            conn.close()
+        packaging = get_packaging_for_chain(store_row['chain'] if store_row else None)
+
+        # Autoritativní přepočet cen ze serverového PRICE_TABLE. Hodnoty
+        # nc/marze/moc poslané klientem se IGNORUJÍ - objednávku jinak šlo
+        # podvrhnout libovolnou cenou, protože STORE_APP_KEY je veřejný.
+        try:
+            items, nc, marze, moc = recompute_order_pricing(order.get('items'), packaging)
+        except ValueError as bad_kod:
+            return jsonify({'error': f'Neznámý kód produktu v objednávce: {bad_kod}'}), 400
 
         order_id = str(order.get('id') or f"ORD-{int(datetime.now().timestamp()*1000)}")
 
@@ -284,10 +425,10 @@ def sync_order():
                 order.get('storeId'),
                 order.get('storeName'),
                 order.get('date') or datetime.now().isoformat(),
-                Json(order.get('items')),
-                order.get('nc'),
-                order.get('marze'),
-                order.get('moc'),
+                Json(items),
+                nc,
+                marze,
+                moc,
                 order.get('delivery'),
                 order.get('status', 'new'),
                 bool(order.get('hasExchange', False)),
