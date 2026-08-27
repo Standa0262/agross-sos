@@ -279,7 +279,16 @@ const PIN_HASH = '9bc7757cecd26b77ee84dd3f85bc3872502f421dd6007c71514aa3ff6a9e2c
 
 let allOrders = [];
 let allStores = [];
+let allRegistrations = [];
 let pinBuffer = '';
+
+// Escapuje uživatelský text před vložením do innerHTML – ochrana proti stored
+// XSS. Zdrojem dat (registrace, prodejny, objednávky) jsou veřejné endpointy
+// chráněné jen sdíleným STORE_APP_KEY, takže obsah polí NENÍ důvěryhodný.
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 // ── PIN ──────────────────────────────────────────────────────────────
 async function sha256(str){
@@ -447,27 +456,28 @@ async function loadRegistrations() {
     const res = await fetch(API + '/api/registrations/list', {headers: authHeaders()});
     if (handleAuthError(res)) return;
     const data = await res.json();
+    allRegistrations = data.registrations || [];
     const el = document.getElementById('regList');
-    if (!data.registrations?.length) {
+    if (!allRegistrations.length) {
       el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Žádné žádosti</div>';
       return;
     }
-    el.innerHTML = data.registrations.map(r => `
+    el.innerHTML = allRegistrations.map(r => `
       <div class="store-card">
-        <div class="sc-name">${r.name} ${r.is_vietnamese ? '🇻🇳' : ''}</div>
-        <div class="sc-field"><strong>IČO:</strong><span>${r.ico}</span></div>
-        <div class="sc-field"><strong>Telefon:</strong><a href="tel:${r.phone}" style="color:var(--sos)">${r.phone}</a></div>
+        <div class="sc-name">${esc(r.name)} ${r.is_vietnamese ? '🇻🇳' : ''}</div>
+        <div class="sc-field"><strong>IČO:</strong><span>${esc(r.ico)}</span></div>
+        <div class="sc-field"><strong>Telefon:</strong><a href="tel:${esc(r.phone)}" style="color:var(--sos)">${esc(r.phone)}</a></div>
         <div class="sc-field"><strong>Datum:</strong><span>${new Date(r.created_at).toLocaleDateString('cs-CZ')}</span></div>
-        <div class="sc-field"><strong>Stav:</strong><span style="color:${r.approved ? 'var(--ok)' : 'var(--sos)'}">${r.approved ? '✓ Schváleno (PIN: ' + r.pin + ')' : '⏳ Čeká na schválení'}</span></div>
+        <div class="sc-field"><strong>Stav:</strong><span style="color:${r.approved ? 'var(--ok)' : 'var(--sos)'}">${r.approved ? '✓ Schváleno (PIN: ' + esc(r.pin) + ')' : '⏳ Čeká na schválení'}</span></div>
         ${!r.approved ? `
         <div style="margin-top:10px;display:flex;gap:8px">
           <input id="pin-${r.id}" placeholder="Zadej PIN (např. 1234)" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit">
-          <button class="sh-btn" onclick="approveRegistration(${r.id}, '${r.phone}', ${r.is_vietnamese})" style="background:var(--ok);color:#fff">✓ Schválit</button>
+          <button class="sh-btn" onclick="approveRegistration(${r.id})" style="background:var(--ok);color:#fff">✓ Schválit</button>
         </div>` : `
         <div style="margin-top:10px;display:flex;gap:8px">
           <button class="sh-btn" onclick="changeRegPin(${r.id})"
             style="background:var(--dark);color:var(--cream)">🔑 Změnit PIN</button>
-          <button class="sh-btn" onclick="deleteReg(${r.id},'${r.name}')"
+          <button class="sh-btn" onclick="deleteReg(${r.id})"
             style="background:#C03020;color:#fff">🗑 Smazat</button>
         </div>`}
       </div>`).join('');
@@ -489,8 +499,9 @@ async function changeRegPin(id) {
   } catch(e) { showToast('Chyba'); }
 }
 
-async function deleteReg(id, name) {
-  if (!confirm(`Smazat registraci "${name}"?`)) return;
+async function deleteReg(id) {
+  const reg = allRegistrations.find(r => String(r.id) === String(id));
+  if (!confirm(`Smazat registraci "${reg ? reg.name : id}"?`)) return;
   try {
     const res = await fetch(API + '/api/registrations/' + id, {
       method: 'DELETE',
@@ -501,7 +512,10 @@ async function deleteReg(id, name) {
   } catch(e) { showToast('Chyba při mazání'); }
 }
 
-async function approveRegistration(id, phone, isVietnamese) {
+async function approveRegistration(id) {
+  const reg = allRegistrations.find(r => String(r.id) === String(id));
+  const phone = reg ? reg.phone : '';
+  const isVietnamese = reg ? reg.is_vietnamese : false;
   const pin = document.getElementById('pin-' + id).value.trim();
   if (!pin || pin.length < 4) { showToast('Zadej PIN (min. 4 znaky)'); return; }
 
@@ -562,7 +576,7 @@ function renderOrders(){
     const items = o.items||[];
     return `<div class="order-card">
       <div class="oc-header">
-        <div class="oc-store">${o.storeName||'?'}</div>
+        <div class="oc-store">${esc(o.storeName||'?')}</div>
         <div class="oc-date">${ds}</div>
       </div>
       <span class="oc-status ${o.status==='sent'?'s-sent':'s-new'}">${o.status==='sent'?'Odesláno':'Nová'}</span>
@@ -574,7 +588,7 @@ function renderOrders(){
       </div>
       ${items.length?`<button class="expand-btn" onclick="toggleItems(this)">▸ Zobrazit ${items.length} artiklů</button>
       <div class="oc-items">
-        ${items.map(i=>`<div class="oc-item-row"><strong>${i.nazev||i.kod}</strong><span>${i.qty||i.qty} ks · ${fmt((i.nc||0)*(i.qty||0))}</span></div>`).join('')}
+        ${items.map(i=>`<div class="oc-item-row"><strong>${esc(i.nazev||i.kod)}</strong><span>${i.qty||i.qty} ks · ${fmt((i.nc||0)*(i.qty||0))}</span></div>`).join('')}
       </div>`:''}
     </div>`;
   }).join('');
@@ -595,18 +609,18 @@ function renderStores(){
   }
   el.innerHTML = allStores.map(s=>`
     <div class="store-card">
-      <div class="sc-name">${s.chain?`<span style="font-size:11px;background:#F0EDE6;padding:1px 7px;border-radius:4px;margin-right:6px;font-weight:500">${s.chain}</span>`:''  }${s.name}</div>
-      ${s.manager?`<div class="sc-field"><strong>Vedoucí:</strong><span>${s.manager}</span></div>`:''}
-      ${s.phone?`<div class="sc-field"><strong>Mobil:</strong><a href="tel:${s.phone}" style="color:var(--sos)">${s.phone}</a></div>`:''}
-      ${s.address?`<div class="sc-field"><strong>Adresa:</strong><span>${s.address}</span></div>`:''}
-      ${s.ico?`<div class="sc-field"><strong>IČ:</strong><span>${s.ico}${s.dic?' · DIČ: '+s.dic:''}</span></div>`:''}
-      ${s.email?`<div class="sc-field"><strong>E-mail:</strong><a href="mailto:${s.email}" style="color:var(--sos)">${s.email}</a></div>`:''}
-      ${s.hoursWeek?`<div class="sc-field"><strong>PO–PÁ:</strong><span>${s.hoursWeek}</span></div>`:''}
-      ${s.note?`<div class="sc-field"><strong>Poznámka:</strong><span>${s.note}</span></div>`:''}
+      <div class="sc-name">${s.chain?`<span style="font-size:11px;background:#F0EDE6;padding:1px 7px;border-radius:4px;margin-right:6px;font-weight:500">${esc(s.chain)}</span>`:''  }${esc(s.name)}</div>
+      ${s.manager?`<div class="sc-field"><strong>Vedoucí:</strong><span>${esc(s.manager)}</span></div>`:''}
+      ${s.phone?`<div class="sc-field"><strong>Mobil:</strong><a href="tel:${esc(s.phone)}" style="color:var(--sos)">${esc(s.phone)}</a></div>`:''}
+      ${s.address?`<div class="sc-field"><strong>Adresa:</strong><span>${esc(s.address)}</span></div>`:''}
+      ${s.ico?`<div class="sc-field"><strong>IČ:</strong><span>${esc(s.ico)}${s.dic?' · DIČ: '+esc(s.dic):''}</span></div>`:''}
+      ${s.email?`<div class="sc-field"><strong>E-mail:</strong><a href="mailto:${esc(s.email)}" style="color:var(--sos)">${esc(s.email)}</a></div>`:''}
+      ${s.hoursWeek?`<div class="sc-field"><strong>PO–PÁ:</strong><span>${esc(s.hoursWeek)}</span></div>`:''}
+      ${s.note?`<div class="sc-field"><strong>Poznámka:</strong><span>${esc(s.note)}</span></div>`:''}
       <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="sh-btn" onclick="editStore('${s.id}')"
+        <button class="sh-btn" onclick="editStore(${esc(JSON.stringify(String(s.id)))})"
           style="background:var(--dark);color:var(--cream)">✏️ Upravit</button>
-        <button class="sh-btn" onclick="deleteStore('${s.id}','${s.name}')"
+        <button class="sh-btn" onclick="deleteStore(${esc(JSON.stringify(String(s.id)))})"
           style="background:#C03020;color:#fff">🗑 Smazat</button>
       </div>
     </div>`).join('');
@@ -635,12 +649,12 @@ async function editStore(id) {
   fields.forEach(([label, key, val]) => {
     html += `<div style="margin-bottom:10px">
       <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px">${label}</label>
-      <input id="edit_${key}" value="${val}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;background:var(--surface-2);color:var(--text-primary)">
+      <input id="edit_${key}" value="${esc(val)}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;background:var(--surface-2);color:var(--text-primary)">
     </div>`;
   });
 
   html += `<div style="display:flex;gap:8px;margin-top:16px">
-    <button onclick="saveEditStore('${id}')" style="flex:1;background:var(--sos);color:#fff;border:none;border-radius:8px;padding:10px;font-family:inherit;font-weight:600;cursor:pointer">Uložit</button>
+    <button onclick="saveEditStore(${esc(JSON.stringify(String(id)))})" style="flex:1;background:var(--sos);color:#fff;border:none;border-radius:8px;padding:10px;font-family:inherit;font-weight:600;cursor:pointer">Uložit</button>
     <button onclick="document.getElementById('editModal').remove()" style="flex:1;background:var(--surface-2);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:inherit;cursor:pointer">Zrušit</button>
   </div></div></div>`;
 
@@ -675,8 +689,9 @@ async function saveEditStore(id) {
   } catch(e) { showToast('Chyba při ukládání'); }
 }
 
-async function deleteStore(id, name) {
-  if (!confirm(`Smazat prodejnu "${name}"?`)) return;
+async function deleteStore(id) {
+  const store = allStores.find(s => String(s.id) === String(id));
+  if (!confirm(`Smazat prodejnu "${store ? store.name : id}"?`)) return;
   try {
     const res = await fetch(API + '/api/stores/' + id, {
       method: 'DELETE',
@@ -757,14 +772,14 @@ function initMap() {
     });
 
     const conflictHtml = hasConflict
-      ? `<div class="popup-conflict">⚠ Konflikt s: ${conflicts[s.id].map(c=>c.name+(c.dist?` (${c.dist} m)`:'')).join(', ')}</div>`
+      ? `<div class="popup-conflict">⚠ Konflikt s: ${conflicts[s.id].map(c=>esc(c.name)+(c.dist?` (${c.dist} m)`:'')).join(', ')}</div>`
       : '';
 
-    const popup = `<div class="popup-name">${s.name}</div>
-      ${s.chain ? `<span class="popup-chain">${s.chain}</span>` : ''}
-      ${s.address ? `<div style="color:#7A7468;margin-bottom:2px">📍 ${s.address}</div>` : ''}
-      ${s.manager ? `<div style="color:#7A7468">👤 ${s.manager}</div>` : ''}
-      ${s.phone ? `<div><a href="tel:${s.phone}" style="color:#E8533A">${s.phone}</a></div>` : ''}
+    const popup = `<div class="popup-name">${esc(s.name)}</div>
+      ${s.chain ? `<span class="popup-chain">${esc(s.chain)}</span>` : ''}
+      ${s.address ? `<div style="color:#7A7468;margin-bottom:2px">📍 ${esc(s.address)}</div>` : ''}
+      ${s.manager ? `<div style="color:#7A7468">👤 ${esc(s.manager)}</div>` : ''}
+      ${s.phone ? `<div><a href="tel:${esc(s.phone)}" style="color:#E8533A">${esc(s.phone)}</a></div>` : ''}
       ${conflictHtml}`;
 
     const marker = L.marker([s.lat, s.lon], { icon }).addTo(_map).bindPopup(popup);
