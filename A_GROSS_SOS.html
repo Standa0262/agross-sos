@@ -799,7 +799,7 @@ header{
     <div id="camHint" style="display:none;font-size:11px;color:var(--sos-dark);background:var(--sos-light);border:1px solid #F9C9C0;border-radius:8px;padding:8px 10px;margin-bottom:10px">📷 Nemáte kameru? Zadejte kód ručně níže.</div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Nebo zadejte EAN ručně:</div>
     <div class="barcode-manual">
-      <input type="text" id="manualEan" placeholder="8590580899993" inputmode="numeric">
+      <input type="text" id="manualEan" placeholder="8590580899993" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupEan();}">
       <button onclick="lookupEan()">Hledat</button>
     </div>
     <div class="scan-result" id="scanResult">
@@ -1956,6 +1956,13 @@ function showWelcomeBar() {
   setTimeout(() => {
     const bar = document.getElementById('welcomeBar');
     if (bar) bar.style.display = 'flex';
+    const net = getNetworkFromURL();
+    if (net && net.simplifiedUI) {
+      const vi = document.getElementById('welcomeBarVi');
+      if (vi) vi.style.display = 'none';
+      const btnVi = document.getElementById('welcomeBarLoginBtnVi');
+      if (btnVi) btnVi.style.display = 'none';
+    }
   }, 2000);
 }
 
@@ -2269,11 +2276,11 @@ if('serviceWorker' in navigator){
   <div class="welcome-bar-text">
     <strong style="color:#E8533A">Jste majitel prodejny?</strong>
     Přihlaste se pro velkoobchodní ceny a objednávání.
-    <div class="vi">Bạn là chủ cửa hàng? Đăng nhập để xem giá sỉ và đặt hàng.</div>
+    <div class="vi" id="welcomeBarVi">Bạn là chủ cửa hàng? Đăng nhập để xem giá sỉ và đặt hàng.</div>
   </div>
   <div class="welcome-bar-btns">
     <button class="welcome-bar-login" onclick="closeWelcomeBar(); openRegistrationModal();">
-      Přihlásit se / Đăng nhập
+      Přihlásit se <span id="welcomeBarLoginBtnVi">/ Đăng nhập</span>
     </button>
     <button class="welcome-bar-close" onclick="closeWelcomeBar()">✕</button>
   </div>
