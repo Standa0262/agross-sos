@@ -31,6 +31,7 @@ from flask_cors import CORS
 import json
 import os
 import hmac
+import time
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -217,6 +218,45 @@ def require_store_key(f):
             return jsonify({'error': 'Unauthorized'}), 401
         return f(*args, **kwargs)
     return wrapper
+
+# ═════════════════════════════════════════════════════════════════════
+# RATE LIMITING (ochrana ověřování jméno+PIN proti brute-force)
+# ═════════════════════════════════════════════════════════════════════
+# Jednoduchý in-memory limiter klíčovaný podle (name, IP) - pro tuhle appku
+# (jeden Render web dyno, malý provoz) dostatečné. POZOR: stav se ztrácí při
+# restartu procesu a nesdílí se mezi více workery/instancemi - pokud by appka
+# časem běžela na více instancích, je potřeba přejít na sdílené úložiště
+# (Redis, nebo tabulka v Postgresu).
+#
+# Sdílí ji /api/registrations/verify i /api/catalog/prices - obě ověřují
+# stejnou dvojici name+pin, takže mají sdílet i limit pokusů.
+_rate_limit_attempts = defaultdict(list)  # (name, ip) -> [timestamp, ...]
+RATE_LIMIT_MAX_ATTEMPTS = 5
+RATE_LIMIT_WINDOW_SECONDS = 300  # 5 minut
+
+
+def _client_ip():
+    forwarded = request.headers.get('X-Forwarded-For', '')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.remote_addr or ''
+
+
+def check_rate_limit(name):
+    """
+    Zaznamená pokus o ověření pro (name, IP) volajícího a vrátí True, pokud
+    je v posledních RATE_LIMIT_WINDOW_SECONDS pod limitem RATE_LIMIT_MAX_ATTEMPTS
+    pokusů (požadavek je povolen). Vrátí False, pokud byl limit překročen -
+    volající by měl odpovědět 429 a pokus dál neověřovat.
+    """
+    key = ((name or '').strip().lower(), _client_ip())
+    now = time.time()
+    attempts = _rate_limit_attempts[key]
+    attempts[:] = [t for t in attempts if now - t < RATE_LIMIT_WINDOW_SECONDS]
+    if len(attempts) >= RATE_LIMIT_MAX_ATTEMPTS:
+        return False
+    attempts.append(now)
+    return True
 
 # ═════════════════════════════════════════════════════════════════════
 # DATABÁZE (PostgreSQL – Neon.tech)
@@ -1047,6 +1087,10 @@ def verify_registration():
         data = request.json
         pin = data.get('pin', '').strip()
         name = data.get('name', '').strip()
+
+        if not check_rate_limit(name):
+            return jsonify({'success': False, 'error': 'Příliš mnoho pokusů, zkuste to znovu za pár minut.'}), 429
+
         conn = get_db()
         try:
             cur = conn.cursor()
