@@ -754,7 +754,7 @@ header{
       <p>4.4. Termín dodání je zpravidla do 24 hodin od potvrzení objednávky v pracovní dny. Konkrétní čas doručení však závisí na hodině, kdy objednávka do systému Dodavatele v daný den dorazí.</p>
 
       <h4>5. Garance rotace zboží (Výměna ležáků – SOS bod)</h4>
-      <p>5.1. Pokud Aplikace na základě historie nákupů označí konkrétní artikl jako neprodejný ležák („červený SOS bod" – zboží nebylo na prodejně objednáno po dobu 3 měsíců a více), vzniká Odběrateli právo na jeho vrácení a výměnu za prodejné bestsellery.</p>
+      <p>5.1. Pokud Aplikace na základě historie nákupů označí konkrétní artikl jako neprodejný ležák („červený SOS bod" – zboží nebylo na prodejně objednáno po dobu <span id="vopLezakMesicu">3</span> měsíců a více), vzniká Odběrateli právo na jeho vrácení a výměnu za prodejné bestsellery.</p>
       <p>5.2. Vracené SOS zboží musí být nepoškozené, kompletní a schopné dalšího prodeje v původním obalu.</p>
       <p>5.3. Logistický postup vrácení: Zboží na prodejně fyzicky vyzvedne obchodní zástupce (OZ) Dodavatele, nebo na základě předchozí dohody s Dodavatelem bude pro zboží na prodejnu vyslán kurýr GLS, který zásilku převezme.</p>
       <p>5.4. Finanční vypořádání: Hodnota vráceného SOS zboží bude Dodavatelem odečtena v následující doplňovací faktuře Odběratele.</p>
@@ -1026,9 +1026,11 @@ function applyNetworkBranding() {
   const net = getNetworkFromURL();
   if (!net) return;
 
-  // Dynamická lhůta ležáků v legendě nad katalogem (SOS – Xm bez objednávky)
+  // Dynamická lhůta ležáků v legendě nad katalogem (SOS – Xm bez objednávky) a ve VOP textu (bod 5.1)
   const sosLegendEl = document.getElementById('sosLegendMesicu');
   if (sosLegendEl) sosLegendEl.textContent = getLezakMesicu();
+  const vopLezakEl = document.getElementById('vopLezakMesicu');
+  if (vopLezakEl) vopLezakEl.textContent = getLezakMesicu();
 
   // Změň barvu SOS elementů na barvu sítě
   document.documentElement.style.setProperty('--sos', net.color);
