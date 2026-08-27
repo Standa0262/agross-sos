@@ -505,6 +505,18 @@ header{
   cursor: pointer;
 }
 
+/* ── DESKTOP LAYOUT (appka se nahrává i do počítačů bez telefonu) ── */
+@media (min-width:900px){
+  body{font-size:15px}
+  .page{max-width:760px;margin:0 auto}
+  header,.tabs,.order-bar{
+    padding-left:max(16px,calc((100% - 760px)/2));
+    padding-right:max(16px,calc((100% - 760px)/2));
+  }
+  .product-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .product-list .empty-state{grid-column:1/-1}
+}
+
 </style>
 </head>
 <body>
@@ -784,6 +796,7 @@ header{
       <video id="reader" style="width:100%;border-radius:8px" autoplay muted playsinline></video>
     </div>
     <button class="btn-p" id="startCamBtn" onclick="startCamera()" style="margin-bottom:10px">▶ Spustit kameru</button>
+    <div id="camHint" style="display:none;font-size:11px;color:var(--sos-dark);background:var(--sos-light);border:1px solid #F9C9C0;border-radius:8px;padding:8px 10px;margin-bottom:10px">📷 Nemáte kameru? Zadejte kód ručně níže.</div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Nebo zadejte EAN ručně:</div>
     <div class="barcode-manual">
       <input type="text" id="manualEan" placeholder="8590580899993" inputmode="numeric">
@@ -2099,23 +2112,34 @@ function openScanner(){
   scannedProd=null;
   document.getElementById('scanResult').className='scan-result';
   document.getElementById('manualEan').value='';
+  document.getElementById('camHint').style.display='none';
   document.getElementById('scannerModal').classList.add('open');
 }
 function closeScanner(){stopCamera();document.getElementById('scannerModal').classList.remove('open');}
 
 function startCamera() {
-  const codeReader = new window.ZXingBrowser.BrowserMultiFormatReader();
-  window._zxingReader = codeReader;
-  document.getElementById('startCamBtn').textContent = '■ Zastavit';
-  document.getElementById('startCamBtn').onclick = stopCamera;
+  try {
+    const codeReader = new window.ZXingBrowser.BrowserMultiFormatReader();
+    window._zxingReader = codeReader;
+    document.getElementById('startCamBtn').textContent = '■ Zastavit';
+    document.getElementById('startCamBtn').onclick = stopCamera;
 
-  codeReader.decodeFromVideoDevice(null, 'reader', (result, err) => {
-    if (result) {
-      document.getElementById('manualEan').value = result.getText();
-      lookupEan();
+    codeReader.decodeFromVideoDevice(null, 'reader', (result, err) => {
+      if (result) {
+        document.getElementById('manualEan').value = result.getText();
+        lookupEan();
+        stopCamera();
+      }
+    }).catch(err => {
       stopCamera();
-    }
-  }).catch(err => showToast('Kamera nedostupná: ' + err.message));
+      document.getElementById('camHint').style.display='block';
+      showToast('Kamera nedostupná – zadejte EAN ručně');
+    });
+  } catch(err) {
+    stopCamera();
+    document.getElementById('camHint').style.display='block';
+    showToast('Kamera nedostupná – zadejte EAN ručně');
+  }
 }
 function stopCamera() {
   document.getElementById('startCamBtn').textContent = '▶ Spustit kameru';
