@@ -24,6 +24,9 @@ API Endpoints:
     GET /api/stores – Všechny prodejny, včetně PII [admin]
     GET /api/stores/public – Prodejny bez PII (jméno/řetězec/GPS/město) [public]
     GET /api/reports/monthly – Měsíční report pro síť [admin]
+    POST /api/registrations/verify – Ověření jméno+PIN, rate limited [public]
+    POST /api/catalog/prices – NC ceny katalogu pro přihlášenou prodejnu
+        (jméno+PIN, stejné ověření a rate limit jako verify) [public]
 """
 
 from flask import Flask, request, jsonify
@@ -1107,6 +1110,83 @@ def verify_registration():
         return jsonify({'success': False}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+def get_packaging_for_registration(name):
+    """
+    Dohledá typ balení pro přihlášenou prodejnu podle jejího jména z registrace.
+
+    POZOR - řešení kompromisu: tabulka `registrations` (jméno+PIN, přihlašovací
+    údaje) síť vůbec neeviduje - appka ji při odeslání žádosti o přístup
+    neposílá a nikde se needituje ani v admin panelu. Jediné místo, kde je síť
+    (chain) uložená, je tabulka `stores` (vyplní se, až majitel založí profil
+    prodejny v appce). Proto zkoušíme dohledat prodejnu se stejným názvem
+    (case-insensitive) a použít její chain.
+
+    Když se prodejna se stejným jménem v `stores` nenajde (typicky: přihlásil
+    se, ale profil prodejny ještě nevyplnil), vrátí se výchozí krabička
+    (None) - stejné chování jako appka bez ?sit= parametru.
+
+    Robustnější dlouhodobé řešení by bylo přidat sloupec chain přímo do
+    registrations (vyplňovaný adminem při schvalování) - to by ale znamenalo
+    i úpravu admin panelu, což jsem v rámci tohoto zadání neimplementoval.
+    """
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute('SELECT chain FROM stores WHERE LOWER(name) = LOWER(%s) LIMIT 1', (name,))
+        row = cur.fetchone()
+        cur.close()
+    finally:
+        conn.close()
+    return get_packaging_for_chain(row['chain'] if row else None)
+
+
+@app.route('/api/catalog/prices', methods=['POST'])
+def catalog_prices():
+    """
+    Vrátí nákupní ceny (NC) katalogu pro přihlášenou prodejnu - appka je
+    dřív držela natvrdo v A_GROSS_SOS.html, kde je viděl kdokoli přes
+    "zobrazit zdroj stránky" i bez přihlášení. Ověření stejné jako
+    /api/registrations/verify (jméno+PIN, sdílí i rate limiting).
+
+    Vstup: { "name": "...", "pin": "1234" }
+    Odpověď (úspěch): { "success": true, "prices": {"S276921": 37.44, ...} }
+    Odpověď (chyba):  { "success": false }, 401
+    """
+    try:
+        data = request.json or {}
+        pin = (data.get('pin') or '').strip()
+        name = (data.get('name') or '').strip()
+
+        if not check_rate_limit(name):
+            return jsonify({'success': False, 'error': 'Příliš mnoho pokusů, zkuste to znovu za pár minut.'}), 429
+
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id FROM registrations
+                WHERE pin = %s AND name = %s AND approved = TRUE
+            """, (pin, name))
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            conn.close()
+
+        if not row:
+            return jsonify({'success': False}), 401
+
+        packaging = get_packaging_for_registration(name)
+        prices = {
+            kod: (p['ncCelofan'] if (packaging == 'celofan' and p['ncCelofan'] is not None) else p['ncKrabicka'])
+            for kod, p in PRICE_TABLE.items()
+        }
+
+        return jsonify({'success': True, 'prices': prices}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/registrations/list', methods=['GET'])
 @require_admin_key
