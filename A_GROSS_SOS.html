@@ -577,7 +577,7 @@ header{
   </div>
   <div class="legend-row">
     <span><span class="legend-dot" style="background:var(--ok)"></span>Pravidelně objednávané</span>
-    <span><span class="legend-dot" style="background:var(--sos)"></span>SOS – 3m bez objednávky</span>
+    <span><span class="legend-dot" style="background:var(--sos)"></span>SOS – <span id="sosLegendMesicu">3</span>m bez objednávky</span>
     <span><span class="legend-dot" style="background:#CCC"></span>Nové/nesledované</span>
   </div>
   <div class="sh"><span class="sh-title">Katalog</span><span style="font-size:11px;color:var(--muted)">min. 5 ks / artikl · min. objednávka 1 200 Kč</span></div>
@@ -1005,7 +1005,8 @@ const NETWORKS = {
     logo: null,
     orderNote: 'Síť: COOP Jednota, spotřební družstvo v Uherském Ostrohu',
     packaging: 'celofan',
-    simplifiedUI: true
+    simplifiedUI: true,
+    lezakMesicu: 6
   }
 };
 
@@ -1015,9 +1016,19 @@ function getNetworkFromURL() {
   return sit && NETWORKS[sit] ? { key: sit, ...NETWORKS[sit] } : null;
 }
 
+// Počet měsíců bez objednávky, po kterém artikl dostane červený SOS bod (výchozí 3)
+function getLezakMesicu() {
+  const net = getNetworkFromURL();
+  return (net && net.lezakMesicu) || 3;
+}
+
 function applyNetworkBranding() {
   const net = getNetworkFromURL();
   if (!net) return;
+
+  // Dynamická lhůta ležáků v legendě nad katalogem (SOS – Xm bez objednávky)
+  const sosLegendEl = document.getElementById('sosLegendMesicu');
+  if (sosLegendEl) sosLegendEl.textContent = getLezakMesicu();
 
   // Změň barvu SOS elementů na barvu sítě
   document.documentElement.style.setProperty('--sos', net.color);
@@ -1229,7 +1240,7 @@ function getStatus(kod){
   const last = lastOrdered[key];
   if(!last) return 'neutral';
   const diffDays = (Date.now() - new Date(last).getTime()) / 86400000;
-  if(diffDays > 90) return 'sos';
+  if(diffDays > getLezakMesicu()*30) return 'sos';
   return 'ok';
 }
 
