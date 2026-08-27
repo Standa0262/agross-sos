@@ -1726,10 +1726,18 @@ function confirmOrder(){
 }
 
 function syncOrderToBackend(order){
+  // name+pin (stejná dvojice jako u /api/catalog/prices) - server si podle
+  // nich ověří, že objednávka skutečně přichází od přihlášené prodejny, ne
+  // jen od kohokoli, kdo zná veřejný STORE_APP_KEY.
+  const payload = {
+    ...order,
+    name: localStorage.getItem('ag_store_name'),
+    pin: localStorage.getItem('ag_store_pin'),
+  };
   fetch('https://agross-sos.onrender.com/api/orders/sync',{
     method:'POST',
     headers:{'Content-Type':'application/json', ...storeAuthHeaders()},
-    body:JSON.stringify(order)
+    body:JSON.stringify(payload)
   }).catch(err=>console.error('Sync objednavky na backend selhal:',err));
 }
 

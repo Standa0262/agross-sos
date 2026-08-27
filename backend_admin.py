@@ -402,7 +402,9 @@ def sync_order():
     
     JSON struktura (nc/marze/moc jsou zde jen pro čitelnost - server je VŽDY
     přepočítá z PRICE_TABLE podle kódu položky a sítě prodejny; hodnoty
-    poslané klientem se ignorují, aby nešlo objednávku podvrhnout cenou):
+    poslané klientem se ignorují, aby nešlo objednávku podvrhnout cenou;
+    storeId/storeName jsou taky jen orientační - server dohledá autoritativní
+    prodejnu podle name+pin, viz níž):
     {
         "storeId": "123",
         "storeName": "Coopmark – HCM",
@@ -414,27 +416,54 @@ def sync_order():
         "marze": 281.80,
         "moc": 479.00,
         "date": "2026-06-18T10:30:00Z",
-        "status": "new"
+        "status": "new",
+        "name": "Koloniál Novák",
+        "pin": "1234"
     }
     """
     try:
         order = request.json
 
-        # Validace
-        if not order.get('storeId') or not order.get('items'):
-            return jsonify({'error': 'Chybí storeId nebo items'}), 400
+        # STORE_APP_KEY (@require_store_key) je záměrně veřejný - je natvrdo
+        # v klientském JS appky, takže sám o sobě neprokazuje, že objednávka
+        # přišla od konkrétní přihlášené prodejny. Ověř proto navíc name+pin
+        # stejně jako /api/registrations/verify a /api/catalog/prices - a se
+        # STEJNÝM rate limitem (jinak by šlo tuhle trojici endpointů zkoušet
+        # dohromady 3x rychleji než jeden).
+        name = (order.get('name') or '').strip()
+        pin = (order.get('pin') or '').strip()
 
-        # Zjisti typ balení podle sítě prodejny uložené v DB (sloupec chain) -
-        # NE podle toho, co pošle appka, appka posílá jen storeId.
+        if not check_rate_limit(name):
+            return jsonify({'error': 'Příliš mnoho pokusů, zkuste to znovu za pár minut.'}), 429
+
         conn = get_db()
         try:
             cur = conn.cursor()
-            cur.execute('SELECT chain FROM stores WHERE id = %s', (str(order.get('storeId')),))
-            store_row = cur.fetchone()
+            cur.execute("""
+                SELECT id FROM registrations
+                WHERE pin = %s AND name = %s AND approved = TRUE
+            """, (pin, name))
+            reg_row = cur.fetchone()
             cur.close()
         finally:
             conn.close()
-        packaging = get_packaging_for_chain(store_row['chain'] if store_row else None)
+        if not reg_row:
+            return jsonify({'error': 'Neplatné přihlášení prodejny'}), 401
+
+        # Validace
+        if not order.get('items'):
+            return jsonify({'error': 'Chybí items'}), 400
+
+        # Nedůvěřuj storeId/storeName, které pošle appka, pro určení, čí je
+        # to objednávka - dohledej "pravou" prodejnu server-side podle
+        # ověřeného jména (stejný princip jako get_packaging_for_registration).
+        store_id, store_name, chain = resolve_authoritative_store(
+            name, order.get('storeId'), order.get('storeName')
+        )
+        if not store_id:
+            return jsonify({'error': 'Chybí storeId nebo items'}), 400
+
+        packaging = get_packaging_for_chain(chain)
 
         # Autoritativní přepočet cen ze serverového PRICE_TABLE. Hodnoty
         # nc/marze/moc poslané klientem se IGNORUJÍ - objednávku jinak šlo
@@ -465,8 +494,8 @@ def sync_order():
                     has_exchange = EXCLUDED.has_exchange
             ''', (
                 order_id,
-                order.get('storeId'),
-                order.get('storeName'),
+                store_id,
+                store_name,
                 order.get('date') or datetime.now().isoformat(),
                 Json(items),
                 nc,
@@ -1112,6 +1141,24 @@ def verify_registration():
         return jsonify({'error': str(e)}), 500
 
 
+def find_store_by_registration_name(name):
+    """
+    Dohledá záznam ve `stores` podle jména z registrace (case-insensitive
+    shoda) - viz get_packaging_for_registration a resolve_authoritative_store
+    níž pro vysvětlení kompromisu (registrations síť/store vůbec needeviduje).
+    Vrací dict se sloupci id/name/chain, nebo None.
+    """
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute('SELECT id, name, chain FROM stores WHERE LOWER(name) = LOWER(%s) LIMIT 1', (name,))
+        row = cur.fetchone()
+        cur.close()
+    finally:
+        conn.close()
+    return row
+
+
 def get_packaging_for_registration(name):
     """
     Dohledá typ balení pro přihlášenou prodejnu podle jejího jména z registrace.
@@ -1131,15 +1178,32 @@ def get_packaging_for_registration(name):
     registrations (vyplňovaný adminem při schvalování) - to by ale znamenalo
     i úpravu admin panelu, což jsem v rámci tohoto zadání neimplementoval.
     """
-    conn = get_db()
-    try:
-        cur = conn.cursor()
-        cur.execute('SELECT chain FROM stores WHERE LOWER(name) = LOWER(%s) LIMIT 1', (name,))
-        row = cur.fetchone()
-        cur.close()
-    finally:
-        conn.close()
+    row = find_store_by_registration_name(name)
     return get_packaging_for_chain(row['chain'] if row else None)
+
+
+def resolve_authoritative_store(name, client_store_id, client_store_name):
+    """
+    Server-side dohledání "pravé" prodejny pro objednávku (sync_order) -
+    stejná fuzzy shoda jména jako get_packaging_for_registration, NE
+    storeId/storeName, které pošle appka (to jde snadno podvrhnout, protože
+    STORE_APP_KEY je veřejný - viz komentář u sync_order).
+
+    Když se podle jména žádná prodejna v `stores` nenajde (typicky:
+    přihlášený, ale profil prodejny ještě nevyplnil), spadneme zpět na
+    storeId/storeName z požadavku - je to kompromis, ne ideální stav, ale
+    bez něj by appka přestala fungovat pro legitimní prodejny bez
+    vyplněného profilu. V tomhle fallbacku packaging defaultuje na
+    krabičku (žádný ověřený zdroj chain) - stejné chování jako appka bez
+    ?sit= parametru.
+
+    Vrací (store_id, store_name, chain).
+    """
+    row = find_store_by_registration_name(name)
+    if row:
+        store_name = (row['chain'] + ' – ' + row['name']) if row['chain'] else row['name']
+        return str(row['id']), store_name, row['chain']
+    return client_store_id, client_store_name, None
 
 
 @app.route('/api/catalog/prices', methods=['POST'])
