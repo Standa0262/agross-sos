@@ -580,6 +580,7 @@ header{
     <span><span class="legend-dot" style="background:var(--sos)"></span>SOS – <span id="sosLegendMesicu">3</span>m bez objednávky</span>
     <span><span class="legend-dot" style="background:#CCC"></span>Nové/nesledované</span>
   </div>
+  <div id="pricesStaleNote" style="display:none;font-size:11px;color:var(--sos-dark);background:var(--sos-light);border:1px solid #F9C9C0;border-radius:8px;padding:6px 10px;margin-bottom:10px"></div>
   <div class="sh"><span class="sh-title">Katalog</span><span style="font-size:11px;color:var(--muted)">min. 5 ks / artikl · min. objednávka 1 200 Kč</span></div>
   <div class="product-list" id="productList"></div>
 </div>
@@ -1127,61 +1128,53 @@ const MIN_ORDER_MOC = 1200;   // Kč vč. DPH (MOC = vč. DPH)
 const ORDER_EMAIL = 'objednavky@a-gross.cz';
 const DPH = 0.21;             // 21 % DPH
 
+// NC/ncCelofan (nákupní ceny) se sem NEDÁVAJÍ natvrdo - byly by veřejně
+// vidět přes "zobrazit zdroj stránky" i bez přihlášení. Ceny se po
+// přihlášení dotahují ze serveru (POST /api/catalog/prices) a doplňují
+// do p.nc, viz applyServerPrices().
 const PRODUCTS = [
-  {kod:"S276921",nazev:"JEHLY ORGAN UNIVERSAL 10ks",nc:39.44,ncCelofan:37.44,moc:95.9,ean:"8590580899993"},
-  {kod:"S276922",nazev:"JEHLY ORGAN JEANS MIX 5ks",nc:31.03,ncCelofan:29.03,moc:74.9,ean:"8590580899986"},
-  {kod:"S80415",nazev:"JEHLY ORGAN Super Stretch 75, 5ks",nc:35.78,ncCelofan:33.78,moc:86.9,ean:"8590580899979"},
-  {kod:"S80398",nazev:"JEHLY RUČNÍ KOŠÍČEK ORIGINÁL",nc:22.9,ncCelofan:26.40,moc:51.9,ean:"8590580899962"},
-  {kod:"S660085",nazev:"ŠPENDLÍK SKLENĚNÁ HLAVIČKA 10g",nc:28.49,ncCelofan:26.49,moc:69.0,ean:"8590580899955"},
-  {kod:"S80412",nazev:"ŠPENDLÍK PLAST.HLAV.BÍLÁ 80ks",nc:23.32,ncCelofan:21.32,moc:56.9,ean:"8590580899948"},
-  {kod:"S235",nazev:"ŠPENDLÍK ZAVÍRACÍ MIX 1-3, NIKL+LAK",nc:21.63,ncCelofan:19.63,moc:54.9,ean:"8590580899931"},
-  {kod:"S199",nazev:"SUCHÝ ZIP 2 cm, ODSTŘIH 20 CM, ČERNÁ+BÍLÁ",nc:10.4,ncCelofan:8.40,moc:25.9,ean:"8590580899924"},
-  {kod:"S830040",nazev:"KNOFLÍK PROPÍNACÍ LOŽNÍ PRÁDLO 14 kusů",nc:27.48,ncCelofan:25.48,moc:59.0,ean:"8590580899887"},
-  {kod:"S830462",nazev:"KNOFLÍK MANDLOVACÍ 18 mm, 20 kusů",nc:32.5,ncCelofan:30.50,moc:78.9,ean:"8590580899870"},
-  {kod:"S830095",nazev:"KNOFLÍK MANDLOVACÍ 15 mm, 20 kusů",nc:32.5,ncCelofan:30.50,moc:78.9,ean:"8590580899863"},
-  {kod:"S700808",nazev:"KREJČOVSKÝ METR 150 cm",nc:14.4,ncCelofan:12.40,moc:34.9,ean:"8590580899856"},
-  {kod:"S224004-1",nazev:"NIT UNIPOLY 100 m, bílá,černá, modrá",nc:18.76,ncCelofan:16.76,moc:45.9,ean:"8590580899849"},
-  {kod:"S224004-2",nazev:"NIT UNIPOLY 100 m, bílá",nc:18.76,ncCelofan:16.76,moc:45.9,ean:"8590580899832"},
-  {kod:"S224004-3",nazev:"NIT UNIPOLY 100 m, černá",nc:18.76,ncCelofan:16.76,moc:45.4,ean:"8590580899825"},
-  {kod:"S314",nazev:"NIT LNĚNÁ KNOFLÍKOVÁ 50 m MIX",nc:28.18,ncCelofan:26.18,moc:68.2,ean:"8590580899818"},
-  {kod:"S661620",nazev:"ZIP JEANS 20 cm, černý + tmavě modrý",nc:31.06,ncCelofan:29.06,moc:74.9,ean:"8590580899801"},
-  {kod:"S76",nazev:"ZIP SPIRÁLA 3 mm, 20 cm, černá, bílá",nc:13.86,ncCelofan:11.86,moc:33.9,ean:"8590580899795"},
-  {kod:"S100",nazev:"ZIP SPIRÁLA 3 mm, 40 cm, černá, bílá",nc:18.34,ncCelofan:16.34,moc:44.9,ean:"8590580899788"},
-  {kod:"S1020",nazev:"ZIP SPIRÁLA NEDĚLITELNÝ 5 mm, 2 černý x 20 cm",nc:10.4,ncCelofan:8.40,moc:25.17,ean:"8590580899771"},
-  {kod:"S1075",nazev:"ZIP SPIRÁLA DĚLITELNÝ 5 mm, 75 cm",nc:18.96,ncCelofan:16.96,moc:45.9,ean:"8590580899764"},
-  {kod:"S5080",nazev:"ZIP KOSTĚNÝ DĚLITELNÝ 5 mm, 80 cm",nc:19.8,ncCelofan:17.80,moc:47.9,ean:"8590580899757"},
-  {kod:"S342-1",nazev:"GUMA NA KARTĚ 8 mm, bílá",nc:12.9,moc:31.22,ean:"8590580989977"},
-  {kod:"S342-2",nazev:"GUMA NA KARTĚ 8 mm, černá",nc:12.9,moc:31.22,ean:"8590580989984"},
-  {kod:"S304-1",nazev:"GUMA NA KARTĚ 10 mm, bílá",nc:13.9,moc:33.64,ean:"8590580899511"},
-  {kod:"S304-2",nazev:"GUMA NA KARTĚ 10 mm, černá",nc:13.9,moc:33.64,ean:"8590580989472"},
-  {kod:"S668-1",nazev:"GUMA NA KARTĚ 12 mm, bílá",nc:14.9,moc:36.06,ean:"8590580989946"},
-  {kod:"S668-2",nazev:"GUMA NA KARTĚ 12 mm, černá",nc:14.9,moc:36.06,ean:"8590580898939"},
-  {kod:"S559",nazev:"KEPROVKA NA KARTĚ 6 mm, bílá",nc:7.05,moc:17.06,ean:"8590580899917"},
-  {kod:"S344-1",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm černá",nc:19.6,ncCelofan:23.10,moc:47.9,ean:"8590580989809"},
-  {kod:"S344-2",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm modrá",nc:19.6,ncCelofan:23.10,moc:47.9,ean:"8590580989793"},
-  {kod:"S344-3",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm bílá",nc:19.6,ncCelofan:23.10,moc:47.9,ean:"8590580989786"},
-  {kod:"S9901",nazev:"TKANIČKY KULATÉ, 100% PES, 90 cm, MIX BAREV",nc:16.4,ncCelofan:14.40,moc:39.9,ean:"8590580899894"},
-  {kod:"S9902",nazev:"TKANIČKY KULATÉ, 100% PES, 120 cm, MIX BAREV",nc:17.5,ncCelofan:15.50,moc:42.9,ean:"8590580899740"},
-  {kod:"S9903",nazev:"TKANIČKY PLOCHÉ, 100% PES, 90 cm, MIX BAREV",nc:16.4,ncCelofan:14.40,moc:39.9,ean:"8590580899603"},
-  {kod:"S9904",nazev:"TKANIČKY PLOCHÉ, 100% PES, 120 cm, MIX BAREV",nc:17.5,ncCelofan:15.50,moc:42.9,ean:"8590580899597"},
-  {kod:"S9905",nazev:"TKANIČKY KULATÉ 3 mm, 100% BA, 80 cm, MIX BAREV",nc:17.4,ncCelofan:15.40,moc:42.2,ean:"8590580899580"},
-  {kod:"S9906",nazev:"TKANIČKY PLOCHÉ 7 mm, 100% BA, 120 cm, MIX BAREV",nc:18.5,ncCelofan:16.50,moc:44.9,ean:"8590580899573"},
-  {kod:"S80394",nazev:"RUČNÍ JEHLY 20 kusů + NAVLÉKAČ",nc:17.67,ncCelofan:21.17,moc:42.9,ean:"8590580899566"},
-  {kod:"S80399",nazev:"RUČNÍ JEHLY NA PLACHTY",nc:22.08,ncCelofan:25.58,moc:53.9,ean:"8590580899559"},
-  {kod:"S80400",nazev:"RUČNÍ JEHLY NA KOBERCE",nc:19.58,ncCelofan:23.08,moc:47.9,ean:"8590580899542"},
+  {kod:"S276921",nazev:"JEHLY ORGAN UNIVERSAL 10ks",moc:95.9,ean:"8590580899993"},
+  {kod:"S276922",nazev:"JEHLY ORGAN JEANS MIX 5ks",moc:74.9,ean:"8590580899986"},
+  {kod:"S80415",nazev:"JEHLY ORGAN Super Stretch 75, 5ks",moc:86.9,ean:"8590580899979"},
+  {kod:"S80398",nazev:"JEHLY RUČNÍ KOŠÍČEK ORIGINÁL",moc:51.9,ean:"8590580899962"},
+  {kod:"S660085",nazev:"ŠPENDLÍK SKLENĚNÁ HLAVIČKA 10g",moc:69.0,ean:"8590580899955"},
+  {kod:"S80412",nazev:"ŠPENDLÍK PLAST.HLAV.BÍLÁ 80ks",moc:56.9,ean:"8590580899948"},
+  {kod:"S235",nazev:"ŠPENDLÍK ZAVÍRACÍ MIX 1-3, NIKL+LAK",moc:54.9,ean:"8590580899931"},
+  {kod:"S199",nazev:"SUCHÝ ZIP 2 cm, ODSTŘIH 20 CM, ČERNÁ+BÍLÁ",moc:25.9,ean:"8590580899924"},
+  {kod:"S830040",nazev:"KNOFLÍK PROPÍNACÍ LOŽNÍ PRÁDLO 14 kusů",moc:59.0,ean:"8590580899887"},
+  {kod:"S830462",nazev:"KNOFLÍK MANDLOVACÍ 18 mm, 20 kusů",moc:78.9,ean:"8590580899870"},
+  {kod:"S830095",nazev:"KNOFLÍK MANDLOVACÍ 15 mm, 20 kusů",moc:78.9,ean:"8590580899863"},
+  {kod:"S700808",nazev:"KREJČOVSKÝ METR 150 cm",moc:34.9,ean:"8590580899856"},
+  {kod:"S224004-1",nazev:"NIT UNIPOLY 100 m, bílá,černá, modrá",moc:45.9,ean:"8590580899849"},
+  {kod:"S224004-2",nazev:"NIT UNIPOLY 100 m, bílá",moc:45.9,ean:"8590580899832"},
+  {kod:"S224004-3",nazev:"NIT UNIPOLY 100 m, černá",moc:45.4,ean:"8590580899825"},
+  {kod:"S314",nazev:"NIT LNĚNÁ KNOFLÍKOVÁ 50 m MIX",moc:68.2,ean:"8590580899818"},
+  {kod:"S661620",nazev:"ZIP JEANS 20 cm, černý + tmavě modrý",moc:74.9,ean:"8590580899801"},
+  {kod:"S76",nazev:"ZIP SPIRÁLA 3 mm, 20 cm, černá, bílá",moc:33.9,ean:"8590580899795"},
+  {kod:"S100",nazev:"ZIP SPIRÁLA 3 mm, 40 cm, černá, bílá",moc:44.9,ean:"8590580899788"},
+  {kod:"S1020",nazev:"ZIP SPIRÁLA NEDĚLITELNÝ 5 mm, 2 černý x 20 cm",moc:25.17,ean:"8590580899771"},
+  {kod:"S1075",nazev:"ZIP SPIRÁLA DĚLITELNÝ 5 mm, 75 cm",moc:45.9,ean:"8590580899764"},
+  {kod:"S5080",nazev:"ZIP KOSTĚNÝ DĚLITELNÝ 5 mm, 80 cm",moc:47.9,ean:"8590580899757"},
+  {kod:"S342-1",nazev:"GUMA NA KARTĚ 8 mm, bílá",moc:31.22,ean:"8590580989977"},
+  {kod:"S342-2",nazev:"GUMA NA KARTĚ 8 mm, černá",moc:31.22,ean:"8590580989984"},
+  {kod:"S304-1",nazev:"GUMA NA KARTĚ 10 mm, bílá",moc:33.64,ean:"8590580899511"},
+  {kod:"S304-2",nazev:"GUMA NA KARTĚ 10 mm, černá",moc:33.64,ean:"8590580989472"},
+  {kod:"S668-1",nazev:"GUMA NA KARTĚ 12 mm, bílá",moc:36.06,ean:"8590580989946"},
+  {kod:"S668-2",nazev:"GUMA NA KARTĚ 12 mm, černá",moc:36.06,ean:"8590580898939"},
+  {kod:"S559",nazev:"KEPROVKA NA KARTĚ 6 mm, bílá",moc:17.06,ean:"8590580899917"},
+  {kod:"S344-1",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm černá",moc:47.9,ean:"8590580989809"},
+  {kod:"S344-2",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm modrá",moc:47.9,ean:"8590580989793"},
+  {kod:"S344-3",nazev:"ZÁPLATA ZAŽEHLOVACÍ VELKÁ 43 x 20 cm bílá",moc:47.9,ean:"8590580989786"},
+  {kod:"S9901",nazev:"TKANIČKY KULATÉ, 100% PES, 90 cm, MIX BAREV",moc:39.9,ean:"8590580899894"},
+  {kod:"S9902",nazev:"TKANIČKY KULATÉ, 100% PES, 120 cm, MIX BAREV",moc:42.9,ean:"8590580899740"},
+  {kod:"S9903",nazev:"TKANIČKY PLOCHÉ, 100% PES, 90 cm, MIX BAREV",moc:39.9,ean:"8590580899603"},
+  {kod:"S9904",nazev:"TKANIČKY PLOCHÉ, 100% PES, 120 cm, MIX BAREV",moc:42.9,ean:"8590580899597"},
+  {kod:"S9905",nazev:"TKANIČKY KULATÉ 3 mm, 100% BA, 80 cm, MIX BAREV",moc:42.2,ean:"8590580899580"},
+  {kod:"S9906",nazev:"TKANIČKY PLOCHÉ 7 mm, 100% BA, 120 cm, MIX BAREV",moc:44.9,ean:"8590580899573"},
+  {kod:"S80394",nazev:"RUČNÍ JEHLY 20 kusů + NAVLÉKAČ",moc:42.9,ean:"8590580899566"},
+  {kod:"S80399",nazev:"RUČNÍ JEHLY NA PLACHTY",moc:53.9,ean:"8590580899559"},
+  {kod:"S80400",nazev:"RUČNÍ JEHLY NA KOBERCE",moc:47.9,ean:"8590580899542"},
 ];
-
-// ── PER-SÍŤ BALENÍ (celofán vs krabička) ────────────────────────────
-// U sítí s balením 'celofan' (viz NETWORKS[key].packaging) přepiš NC
-// na cenu za celofánové balení tam, kde je definována.
-(function applyPackagingPricing(){
-  const net = getNetworkFromURL();
-  if(net && net.packaging === 'celofan'){
-    PRODUCTS.forEach(p=>{
-      if(p.ncCelofan !== undefined) p.nc = p.ncCelofan;
-    });
-  }
-})();
 
 function imgSrcFor(kod){
   const imgKod = kod.replace(/^S/, '1_').replace(/-/g, '_');
@@ -1190,6 +1183,82 @@ function imgSrcFor(kod){
 
 const EAN_MAP = {};
 PRODUCTS.forEach(p=>{ if(p.ean) EAN_MAP[p.ean]=p; });
+
+// ── SERVEROVÉ NC CENY ────────────────────────────────────────────────
+// PRODUCTS už nc/ncCelofan neobsahuje natvrdo (byly by veřejně čitelné ze
+// zdroje appky bez přihlášení). Přihlášená prodejna (name+pin uložené po
+// úspěšném ověření PINu, viz enterPin()) si je jednou za relaci tiše
+// dotáhne ze serveru; poslední známá odpověď se kešuje pro offline
+// zobrazení. Appka potřebuje internet aspoň jednou, jinak (bez cache)
+// zůstane p.nc u všech produktů undefined - NC/marže se v UI jednoduše
+// nezobrazí, appka ale nespadne (viz guardy v render funkcích).
+let pricesLoaded = false;
+
+function applyPricesToProducts(priceMap){
+  if(!priceMap) return;
+  PRODUCTS.forEach(p=>{
+    if(priceMap[p.kod] !== undefined) p.nc = priceMap[p.kod];
+  });
+}
+
+function showPricesStaleness(cacheTimeIso){
+  const el = document.getElementById('pricesStaleNote');
+  if(!el) return;
+  if(cacheTimeIso){
+    const d = new Date(cacheTimeIso);
+    el.textContent = `⚠ Nákupní ceny naposledy aktualizovány ${d.toLocaleDateString('cs-CZ')} ${d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'})} (offline)`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function refreshPriceDependentUI(){
+  filterProducts();
+  renderCart();
+  updateOrderBar();
+}
+
+async function loadServerPrices(){
+  const name = localStorage.getItem('ag_store_name');
+  const pin = localStorage.getItem('ag_store_pin');
+  if(!name || !pin) return; // nepřihlášená appka nákupní ceny nezobrazuje
+
+  // Cache aplikuj hned (offline-first) - appka nečeká na síť, jen se
+  // případně po doběhnutí fetch() dole tiše přepíše čerstvými daty.
+  const cached = localStorage.getItem('ag_prices_cache');
+  const cachedTime = localStorage.getItem('ag_prices_cache_time');
+  if(cached){
+    try {
+      applyPricesToProducts(JSON.parse(cached));
+      pricesLoaded = true;
+      showPricesStaleness(cachedTime);
+      refreshPriceDependentUI();
+    } catch(e){}
+  }
+
+  try {
+    const res = await fetch('https://agross-sos.onrender.com/api/catalog/prices', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, pin})
+    });
+    const data = await res.json();
+    if(data.success && data.prices){
+      applyPricesToProducts(data.prices);
+      localStorage.setItem('ag_prices_cache', JSON.stringify(data.prices));
+      localStorage.setItem('ag_prices_cache_time', new Date().toISOString());
+      pricesLoaded = true;
+      showPricesStaleness(null);
+      refreshPriceDependentUI();
+    }
+    // data.success===false (špatný PIN/rate limit) - necháme cache/žádná
+    // data beze změny, appka dál funguje s tím, co má.
+  } catch(e){
+    // Offline/chyba sítě - cache (pokud byla) už je aplikovaná výše,
+    // jinak p.nc zůstává undefined a NC/marže se v UI prostě nezobrazí.
+  }
+}
 
 // ── STATE ────────────────────────────────────────────────────────────
 let stores   = JSON.parse(localStorage.getItem('ag_stores') || '[]');
@@ -1227,12 +1296,13 @@ function updateApprovalUI(){
 }
 
 function cartTotals(){
-  let nc=0,marze=0,moc=0,count=0,items=0;
+  let nc=0,marze=0,moc=0,count=0,items=0,ncAvailable=true;
   PRODUCTS.filter(p=>cart[p.kod]).forEach(p=>{
     const q=cart[p.kod];
-    nc+=p.nc*q; moc+=p.moc*q; marze+=(p.moc-p.nc)*q; count+=q; items++;
+    if(p.nc===undefined){ ncAvailable=false; } else { nc+=p.nc*q; marze+=(p.moc-p.nc)*q; }
+    moc+=p.moc*q; count+=q; items++;
   });
-  return{nc,marze,moc,count,items};
+  return{nc,marze,moc,count,items,ncAvailable};
 }
 
 // Determine SOS status for a product code (relative to current store)
@@ -1278,7 +1348,7 @@ function acceptVop(){
 
 // ── ORDER BAR ────────────────────────────────────────────────────────
 function updateOrderBar(){
-  const {nc,marze,moc,count,items}=cartTotals();
+  const {nc,marze,moc,count,items,ncAvailable}=cartTotals();
   const barRight = document.querySelector('.order-bar .bar-right');
   if(!isApproved()){
     document.getElementById('barItems').textContent = 'Košík prázdný';
@@ -1286,8 +1356,8 @@ function updateOrderBar(){
   } else {
     if(barRight) barRight.style.display = '';
     document.getElementById('barItems').textContent = items?items+' artl. / '+count+' ks':'Košík prázdný';
-    document.getElementById('barNc').textContent    = 'NC: '+fmt(nc);
-    document.getElementById('barMarze').textContent = 'Marže: '+fmt(marze);
+    document.getElementById('barNc').textContent    = ncAvailable ? 'NC: '+fmt(nc) : 'NC: načítám…';
+    document.getElementById('barMarze').textContent = ncAvailable ? 'Marže: '+fmt(marze) : '';
     const minEl = document.getElementById('barMin');
     if(moc>=MIN_ORDER_MOC){
       minEl.textContent='✓ min. splněno';
@@ -1352,10 +1422,10 @@ function renderProducts(list){
         <div class="product-meta">
           <span class="p-code">${p.kod}</span>
           <span class="p-moc">${fmt(p.moc)}</span>
-          ${isApproved()?`<span class="p-nc">NC ${fmt(p.nc)}</span>`:''}
+          ${isApproved()?(p.nc!==undefined?`<span class="p-nc">NC ${fmt(p.nc)}</span>`:`<span class="p-nc">NC načítám…</span>`):''}
           <span class="p-min">min.${MIN_QTY}ks</span>
         </div>
-        ${qty>0&&isApproved()?`<div class="p-subtotal">∑ NC ${fmt(p.nc*qty)} · marže ${fmt(marze)}</div>`:''}
+        ${qty>0&&isApproved()&&p.nc!==undefined?`<div class="p-subtotal">∑ NC ${fmt(p.nc*qty)} · marže ${fmt(marze)}</div>`:''}
       </div>
       <div class="qty-control">
         <div class="qty-row">
@@ -1481,7 +1551,7 @@ function closeExchangeModal(){
 // ── CART ─────────────────────────────────────────────────────────────
 function renderCart(){
   const items=PRODUCTS.filter(p=>cart[p.kod]);
-  const{nc,marze,moc,count}=cartTotals();
+  const{nc,marze,moc,count,ncAvailable}=cartTotals();
   const store=stores.find(s=>s.id===storeId);
   const margeP=moc>0?(marze/moc*100).toFixed(1):0;
   const minOk=moc>=MIN_ORDER_MOC;
@@ -1503,10 +1573,10 @@ function renderCart(){
         ?`<div style="font-size:12px;opacity:.7;margin-bottom:10px">${store.chain?store.chain+' – ':''}${store.name}</div>`
         :'<div style="font-size:12px;color:#F9A090;margin-bottom:10px">⚠ Prodejna nevybrána</div>'}
       <div class="totals-grid">
-        <div class="total-cell"><div class="total-label">Nákupní cena (NC)</div><div class="total-value nc">${fmt(nc)}</div></div>
+        <div class="total-cell"><div class="total-label">Nákupní cena (NC)</div><div class="total-value nc">${ncAvailable?fmt(nc):'načítám…'}</div></div>
         <div class="total-cell"><div class="total-label">Prodejní cena (MOC vč. DPH)</div><div class="total-value moc">${fmt(moc)}</div></div>
-        <div class="total-cell"><div class="total-label">Marže celkem</div><div class="total-value marze">${fmt(marze)}</div></div>
-        <div class="total-cell"><div class="total-label">Marže %</div><div class="total-value marze">${margeP} %</div></div>
+        <div class="total-cell"><div class="total-label">Marže celkem</div><div class="total-value marze">${ncAvailable?fmt(marze):'—'}</div></div>
+        <div class="total-cell"><div class="total-label">Marže %</div><div class="total-value marze">${ncAvailable?margeP+' %':'—'}</div></div>
       </div>
     </div>
 
@@ -1528,7 +1598,9 @@ function renderCart(){
 
     <div class="cart-items">
       ${items.map(p=>{
-        const q=cart[p.kod]; const m=(p.moc-p.nc)*q;
+        const q=cart[p.kod];
+        const ncKnown=p.nc!==undefined;
+        const m=ncKnown?(p.moc-p.nc)*q:0;
         const isExchange = window.exchangeRequests&&window.exchangeRequests[p.kod];
         return`<div class="cart-item" style="${isExchange?'border-left:3px solid var(--sos)':''}">
           <div class="product-img-wrap">
@@ -1537,11 +1609,11 @@ function renderCart(){
           </div>
           <div class="ci-info">
             <div class="ci-name">${p.nazev}${isExchange?` <span style="font-size:10px;background:var(--sos-light);color:var(--sos-dark);padding:1px 5px;border-radius:4px">🔄 výměna</span>`:''}</div>
-            <div class="ci-sub">${q} ks × NC ${fmt(p.nc)}</div>
+            <div class="ci-sub">${q} ks × NC ${ncKnown?fmt(p.nc):'načítám…'}</div>
           </div>
           <div class="ci-right">
-            <div class="ci-nc">${fmt(p.nc*q)}</div>
-            <div class="ci-marze">marže ${fmt(m)}</div>
+            <div class="ci-nc">${ncKnown?fmt(p.nc*q):'—'}</div>
+            <div class="ci-marze">${ncKnown?'marže '+fmt(m):''}</div>
           </div>
           <button class="remove-btn" onclick="removeFromCart('${p.kod}')">✕</button>
         </div>`;
@@ -1577,7 +1649,8 @@ function openOrderConfirm(){
   const store=stores.find(s=>s.id===storeId);
   if(!store){showToast('Vyberte prodejnu!');return;}
   const items=PRODUCTS.filter(p=>cart[p.kod]);
-  const{nc,marze,moc}=cartTotals();
+  const{nc,marze,moc,ncAvailable}=cartTotals();
+  if(!ncAvailable){showToast('Nákupní ceny se ještě načítají, zkuste to prosím za chvíli');return;}
   const margeP=moc>0?(marze/moc*100).toFixed(1):0;
   const dv=document.getElementById('delivDate')?.value;
   const delivStr=delivMode==='ihned'?'Ihned / do 24 hodin':(dv?new Date(dv).toLocaleDateString('cs-CZ'):'datum nezadáno');
@@ -2019,20 +2092,22 @@ function submitRegistration() {
 function enterPin(){
   const pin = prompt('Zadejte PIN kód který jste obdrželi:');
   if (pin && pin.length >= 4) {
+    const name = localStorage.getItem('ag_store_name_pending');
     // Ověřit PIN přes backend
     fetch('https://agross-sos.onrender.com/api/registrations/verify', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        pin,
-        name: localStorage.getItem('ag_store_name_pending')
-      })
+      body: JSON.stringify({pin, name})
     })
     .then(r => r.json())
     .then(d => {
       if (d.success) {
         localStorage.setItem('ag_store_approved', '1');
         localStorage.setItem('ag_store_pin', pin);
+        // name+pin se ukládají trvale (ne jen "_pending") - appka je na
+        // každém dalším spuštění potřebuje k tichému dotažení NC cen ze
+        // serveru (viz applyServerPrices), aby se nemusely držet v HTML.
+        localStorage.setItem('ag_store_name', name);
         localStorage.removeItem('ag_store_pending');
         showToast('✓ Přístup potvrzen! Vítejte v A-GROSS SOS.');
         location.reload();
@@ -2231,6 +2306,7 @@ loadStoresFromBackend();
 showWelcomeBar();
 startRenderKeepAlive();
 loadNotificationFromBackend();
+loadServerPrices();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
