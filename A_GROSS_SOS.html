@@ -18,8 +18,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script type="module">
-import { BrowserMultiFormatReader, NotFoundException } from 'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.4/esm/index.js';
-window.ZXingBrowser = { BrowserMultiFormatReader, NotFoundException };
+import { BrowserMultiFormatReader } from 'https://esm.sh/@zxing/browser@0.1.4';
+window.ZXingBrowser = { BrowserMultiFormatReader };
 </script>
 <style>
 :root{
@@ -2120,7 +2120,6 @@ function closeScanner(){stopCamera();document.getElementById('scannerModal').cla
 function startCamera() {
   try {
     const codeReader = new window.ZXingBrowser.BrowserMultiFormatReader();
-    window._zxingReader = codeReader;
     document.getElementById('startCamBtn').textContent = '■ Zastavit';
     document.getElementById('startCamBtn').onclick = stopCamera;
 
@@ -2130,6 +2129,8 @@ function startCamera() {
         lookupEan();
         stopCamera();
       }
+    }).then(controls => {
+      window._zxingControls = controls;
     }).catch(err => {
       stopCamera();
       document.getElementById('camHint').style.display='block';
@@ -2144,9 +2145,9 @@ function startCamera() {
 function stopCamera() {
   document.getElementById('startCamBtn').textContent = '▶ Spustit kameru';
   document.getElementById('startCamBtn').onclick = startCamera;
-  if (window._zxingReader) {
-    window._zxingReader.reset();
-    window._zxingReader = null;
+  if (window._zxingControls) {
+    window._zxingControls.stop();
+    window._zxingControls = null;
   }
 }
 function lookupEan(){
