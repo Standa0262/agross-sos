@@ -130,7 +130,7 @@ NETWORKS_PACKAGING = {
     'javor':         {'name': 'Obchodní aliance JAVOR',        'shortName': 'JAVOR',          'packaging': None},
     'mopartner':     {'name': 'MO Partner',                    'shortName': 'MO PARTNER',     'packaging': None},
     'bala':          {'name': 'BALA',                          'shortName': 'BALA',           'packaging': None},
-    'coophb':        {'name': 'COOP Havlíčkův Brod',           'shortName': 'COOP HB',        'packaging': None},
+    'coophb':        {'name': 'COOP Havlíčkův Brod',           'shortName': 'COOP HB',        'packaging': 'celofan'},
     'jednotaostroh': {'name': 'COOP Jednota Uherský Ostroh',   'shortName': 'JEDNOTA OSTROH', 'packaging': 'celofan'},
 }
 
