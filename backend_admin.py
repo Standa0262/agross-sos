@@ -1296,6 +1296,35 @@ def approve_registration():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/registrations/update', methods=['POST'])
+@require_admin_key
+def update_registration():
+    """
+    Přejmenování registrace (sloupec name) - analogie /api/stores/update.
+    Používá se např. při přečíslování/přejmenování prodejen po hromadném
+    importu. POZOR: name musí zůstat shodné s odpovídajícím záznamem ve
+    `stores` (viz find_store_by_registration_name) - při přejmenování
+    registrace přejmenuj i store profil, jinak appka přestane dohledávat
+    síť/packaging podle jména.
+    """
+    try:
+        data = request.json
+        reg_id = data.get('id')
+        name = data.get('name')
+        if not reg_id or not name:
+            return jsonify({'error': 'Chybí id nebo name'}), 400
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute('UPDATE registrations SET name=%s WHERE id=%s', (name, reg_id))
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/stores/update', methods=['POST'])
 @require_admin_key
 def update_store():
