@@ -238,8 +238,7 @@ header{
 .form-group{margin-bottom:11px}
 .form-label{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:4px;display:block;letter-spacing:.5px}
 .form-input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--text);background:var(--bg);outline:none}
-.form-group-relative{position:relative}
-.form-suggestions{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);max-height:180px;overflow-y:auto}
+.form-suggestions{display:none;margin-top:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);max-height:180px;overflow-y:auto}
 .form-suggestions.open{display:block}
 .form-suggestion-item{padding:9px 12px;font-size:13px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border)}
 .form-suggestion-item:last-child{border-bottom:none}
@@ -945,9 +944,9 @@ header{
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Přihlášení prodejny</div>
-    <div class="form-group form-group-relative">
+    <div class="form-group">
       <label class="form-label">Název prodejny *</label>
-      <input class="form-input" id="pinlogin-name" placeholder="Zadejte číslo pobočky nebo název (např. 246)" autocomplete="off" oninput="onPinLoginNameInput()" onfocus="onPinLoginNameInput()" onblur="setTimeout(closePinLoginSuggestions, 150)">
+      <input class="form-input" id="pinlogin-name" placeholder="Zadejte číslo pobočky nebo název (např. 246)" autocomplete="off" oninput="onPinLoginNameInput()" onfocus="onPinLoginNameInput()">
       <div class="form-suggestions" id="pinlogin-suggestions"></div>
     </div>
     <div class="form-group">
@@ -2217,7 +2216,7 @@ function onPinLoginNameInput(){
   if (!matches.length) { closePinLoginSuggestions(); return; }
 
   box.innerHTML = matches.map(s =>
-    `<div class="form-suggestion-item" onmousedown="event.preventDefault();selectPinLoginSuggestion('${s.name.replace(/'/g, "\\'")}')">${s.name}</div>`
+    `<div class="form-suggestion-item" onclick="selectPinLoginSuggestion('${s.name.replace(/'/g, "\\'")}')">${s.name}</div>`
   ).join('');
   box.classList.add('open');
 }
@@ -2232,6 +2231,20 @@ function closePinLoginSuggestions(){
   const box = document.getElementById('pinlogin-suggestions');
   if (box) { box.classList.remove('open'); box.innerHTML = ''; }
 }
+
+// Zavření našeptávače kliknutím/tapnutím mimo něj - řešeno přes 'click' na
+// celém dokumentu (funguje stejně pro myš i dotyk), NE přes onblur+timeout
+// na inputu. Ten totiž na mobilu kolidoval s tapnutím na položku nabídky:
+// syntetické mouse eventy z dotyku na mobilu přicházejí až PO onblur, takže
+// timeout stihl nabídku smazat dřív, než se tap na položku vůbec zpracoval
+// (na PC to fungovalo, protože tam mousedown/blur běží v jiném pořadí).
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('pinlogin-suggestions');
+  const input = document.getElementById('pinlogin-name');
+  if (!box || !box.classList.contains('open')) return;
+  if (e.target === input || box.contains(e.target)) return;
+  closePinLoginSuggestions();
+});
 
 function submitPinLogin(){
   const name = document.getElementById('pinlogin-name').value.trim();
