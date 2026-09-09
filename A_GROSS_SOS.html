@@ -238,6 +238,12 @@ header{
 .form-group{margin-bottom:11px}
 .form-label{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:4px;display:block;letter-spacing:.5px}
 .form-input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--text);background:var(--bg);outline:none}
+.form-group-relative{position:relative}
+.form-suggestions{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);max-height:180px;overflow-y:auto}
+.form-suggestions.open{display:block}
+.form-suggestion-item{padding:9px 12px;font-size:13px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border)}
+.form-suggestion-item:last-child{border-bottom:none}
+.form-suggestion-item:hover,.form-suggestion-item:active{background:var(--bg)}
 .form-input:focus{border-color:var(--dark)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .modal-btns{display:flex;gap:8px;margin-top:14px}
@@ -939,9 +945,10 @@ header{
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Přihlášení prodejny</div>
-    <div class="form-group">
+    <div class="form-group form-group-relative">
       <label class="form-label">Název prodejny *</label>
-      <input class="form-input" id="pinlogin-name" placeholder="Nezdenice 045">
+      <input class="form-input" id="pinlogin-name" placeholder="Zadejte číslo pobočky nebo název (např. 246)" autocomplete="off" oninput="onPinLoginNameInput()" onfocus="onPinLoginNameInput()" onblur="setTimeout(closePinLoginSuggestions, 150)">
+      <div class="form-suggestions" id="pinlogin-suggestions"></div>
     </div>
     <div class="form-group">
       <label class="form-label">PIN *</label>
@@ -2153,11 +2160,77 @@ function submitRegistration() {
 function openPinLoginModal(){
   document.getElementById('pinlogin-name').value = '';
   document.getElementById('pinlogin-pin').value = '';
+  closePinLoginSuggestions();
   document.getElementById('pinLoginModal').classList.add('open');
+  loadPinLoginStoreNames();
 }
 
 function closePinLoginModal(){
   document.getElementById('pinLoginModal').classList.remove('open');
+  closePinLoginSuggestions();
+}
+
+// ── NAŠEPTÁVAČ NÁZVU PRODEJNY (PIN login) ───────────────────────────────
+// Appka porovnává jméno zadané při přihlášení se jménem v DB ZNAK PO ZNAKU
+// (viz backend /api/registrations/verify) - u názvů jako "Uherský Ostroh –
+// Ostrožanka 246" (pomlčka en-dash, diakritika) je to na mobilní klávesnici
+// prakticky nenapsatelné přesně. Došeptávač bere seznam ze/api/stores/public
+// (veřejný, bez PII - jen name/chain) a při výběru vyplní přesný řetězec,
+// takže se nikdy nepřeklepe.
+let _pinLoginStores = null;
+
+async function loadPinLoginStoreNames(){
+  if (_pinLoginStores) return;
+  try {
+    const res = await fetch('https://agross-sos.onrender.com/api/stores/public');
+    const data = await res.json();
+    if (data.success && Array.isArray(data.stores)) {
+      _pinLoginStores = data.stores;
+    }
+  } catch(e) {
+    // Offline/chyba - napovidac proste nebude, rucni zadani porad funguje.
+  }
+}
+
+function stripDiacritics(s){
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function onPinLoginNameInput(){
+  const input = document.getElementById('pinlogin-name');
+  const box = document.getElementById('pinlogin-suggestions');
+  const q = stripDiacritics(input.value.trim().toLowerCase());
+  if (!_pinLoginStores || !_pinLoginStores.length) { closePinLoginSuggestions(); return; }
+
+  const net = getNetworkFromURL();
+  let pool = _pinLoginStores;
+  if (net) {
+    const inNetwork = pool.filter(s => (s.chain || '').toLowerCase() === net.name.toLowerCase());
+    if (inNetwork.length) pool = inNetwork; // fallback na vsechny, kdyby chain sedel nulakrat
+  }
+
+  const matches = (q
+    ? pool.filter(s => stripDiacritics(s.name.toLowerCase()).includes(q))
+    : pool
+  ).slice().sort((a, b) => a.name.localeCompare(b.name, 'cs')).slice(0, 8);
+
+  if (!matches.length) { closePinLoginSuggestions(); return; }
+
+  box.innerHTML = matches.map(s =>
+    `<div class="form-suggestion-item" onmousedown="event.preventDefault();selectPinLoginSuggestion('${s.name.replace(/'/g, "\\'")}')">${s.name}</div>`
+  ).join('');
+  box.classList.add('open');
+}
+
+function selectPinLoginSuggestion(name){
+  document.getElementById('pinlogin-name').value = name;
+  closePinLoginSuggestions();
+  document.getElementById('pinlogin-pin').focus();
+}
+
+function closePinLoginSuggestions(){
+  const box = document.getElementById('pinlogin-suggestions');
+  if (box) { box.classList.remove('open'); box.innerHTML = ''; }
 }
 
 function submitPinLogin(){
