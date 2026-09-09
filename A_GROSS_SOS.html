@@ -230,7 +230,7 @@ header{
 .o-mark{background:var(--bg);border:1px solid var(--border);color:var(--text)}
 
 /* ── MODALS ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:flex-end}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:550;align-items:flex-end}
 .modal-overlay.open{display:flex}
 .modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:90vh;overflow-y:auto}
 .modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
@@ -562,11 +562,16 @@ header{
     <select id="storeSelect" onchange="onStoreChange()">
       <option value="">— Vyberte prodejnu —</option>
     </select>
+    <button onclick="openPinLoginModal()" style="background:none;border:1px solid var(--border);color:var(--dark);border-radius:6px;padding:6px 10px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">🔑 Mám PIN</button>
   </div>
-  <div class="store-bar" id="storeBarNetwork" style="display:none">
+  <div class="store-bar" id="storeBarNetwork" style="display:none;flex-wrap:wrap">
     <div class="store-dot" id="storeDotNet"></div>
-    <span id="networkStoreLabel" style="flex:1;font-weight:600"></span>
-    <button onclick="openAddStore()" style="background:var(--dark);color:var(--cream);border:none;border-radius:6px;padding:6px 12px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">+ Přidat prodejnu</button>
+    <span id="networkStoreLabel" style="flex:1;min-width:0;font-weight:600;display:flex;flex-direction:column;line-height:1.35">
+      <span id="networkStoreLabelMain"></span>
+      <span id="networkStoreLabelSub" style="font-size:10px;font-weight:400;opacity:.65;display:none"></span>
+    </span>
+    <button onclick="openPinLoginModal()" style="background:none;border:1px solid var(--border);color:var(--dark);border-radius:6px;padding:6px 10px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">🔑 Už mám PIN</button>
+    <button onclick="openAddStore()" style="background:var(--dark);color:var(--cream);border:none;border-radius:6px;padding:6px 12px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">+ Přidat prodejnu</button>
   </div>
   <div class="search-row">
     <input class="search-input" type="text" placeholder="Hledat produkt, kód, EAN…" id="searchInput" oninput="filterProducts()">
@@ -929,6 +934,26 @@ header{
   </div>
 </div>
 
+<!-- ── PIN LOGIN MODAL (prodejny schválené mimo appku – admin/bulk import) ── -->
+<div class="modal-overlay" id="pinLoginModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Přihlášení prodejny</div>
+    <div class="form-group">
+      <label class="form-label">Název prodejny *</label>
+      <input class="form-input" id="pinlogin-name" placeholder="Nezdenice 045">
+    </div>
+    <div class="form-group">
+      <label class="form-label">PIN *</label>
+      <input class="form-input" id="pinlogin-pin" placeholder="PIN kód" inputmode="numeric">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-s" onclick="closePinLoginModal()">Zrušit</button>
+      <button class="btn-p" onclick="submitPinLogin()">Přihlásit se</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── ORDER CONFIRM MODAL ── -->
 <div class="modal-overlay" id="orderModal">
   <div class="modal-sheet">
@@ -1067,11 +1092,31 @@ function applyNetworkBranding() {
   if (barNormal && barNetwork) {
     barNormal.style.display = 'none';
     barNetwork.style.display = 'flex';
-    document.getElementById('networkStoreLabel').textContent = net.name;
+    updateNetworkStoreLabel(net);
   }
 
   // Předvyplnit a uzamknout pole Řetězec na aktuální síť
   window._lockedChain = net.name;
+}
+
+// Síťový store-bar zobrazuje konkrétní přihlášenou prodejnu (ag_store_name),
+// ne jen obecný název sítě - jinak by po přihlášení nebylo poznat, která
+// konkrétní prodejna je zrovna přihlášená. Název sítě zůstává jako menší
+// podtitulek kvůli brandingu (barvy/logo sítě zůstávají viditelné).
+function updateNetworkStoreLabel(net){
+  const mainEl = document.getElementById('networkStoreLabelMain');
+  const subEl = document.getElementById('networkStoreLabelSub');
+  if (!mainEl || !subEl) return;
+  const storeName = localStorage.getItem('ag_store_name');
+  if (isApproved() && storeName) {
+    mainEl.textContent = storeName;
+    subEl.textContent = net.name;
+    subEl.style.display = '';
+  } else {
+    mainEl.textContent = net.name;
+    subEl.textContent = '';
+    subEl.style.display = 'none';
+  }
 }
 
 // Zjednodušené UI pro sítě s NETWORKS[key].simplifiedUI = true
@@ -1187,7 +1232,7 @@ PRODUCTS.forEach(p=>{ if(p.ean) EAN_MAP[p.ean]=p; });
 // ── SERVEROVÉ NC CENY ────────────────────────────────────────────────
 // PRODUCTS už nc/ncCelofan neobsahuje natvrdo (byly by veřejně čitelné ze
 // zdroje appky bez přihlášení). Přihlášená prodejna (name+pin uložené po
-// úspěšném ověření PINu, viz enterPin()) si je jednou za relaci tiše
+// úspěšném ověření PINu, viz submitPinLogin()) si je jednou za relaci tiše
 // dotáhne ze serveru; poslední známá odpověď se kešuje pro offline
 // zobrazení. Appka potřebuje internet aspoň jednou, jinak (bez cache)
 // zůstane p.nc u všech produktů undefined - NC/marže se v UI jednoduše
@@ -1625,8 +1670,8 @@ function renderCart(){
     </button>
     ${!minOk?`<p style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px">Minimum: ${fmt(MIN_ORDER_MOC)} vč. DPH</p>`:''}
     `:`
-    <button class="order-btn" onclick="openRegistrationModal()">🔑 Přihlásit se jako prodejna</button>
-    ${localStorage.getItem('ag_store_pending')==='1'?`<button class="btn-s" style="width:100%;margin-top:8px" onclick="enterPin()">Mám PIN kód</button>`:''}
+    <button class="order-btn" onclick="openPinLoginModal()">🔑 Už mám PIN – přihlásit se</button>
+    <button class="btn-s" style="width:100%;margin-top:8px" onclick="openRegistrationModal()">Nová prodejna – požádat o přístup</button>
     `}`;
 }
 
@@ -2097,33 +2142,54 @@ function submitRegistration() {
   localStorage.setItem('ag_store_name_pending', name);
 }
 
-function enterPin(){
-  const pin = prompt('Zadejte PIN kód který jste obdrželi:');
-  if (pin && pin.length >= 4) {
-    const name = localStorage.getItem('ag_store_name_pending');
-    // Ověřit PIN přes backend
-    fetch('https://agross-sos.onrender.com/api/registrations/verify', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({pin, name})
-    })
-    .then(r => r.json())
-    .then(d => {
-      if (d.success) {
-        localStorage.setItem('ag_store_approved', '1');
-        localStorage.setItem('ag_store_pin', pin);
-        // name+pin se ukládají trvale (ne jen "_pending") - appka je na
-        // každém dalším spuštění potřebuje k tichému dotažení NC cen ze
-        // serveru (viz applyServerPrices), aby se nemusely držet v HTML.
-        localStorage.setItem('ag_store_name', name);
-        localStorage.removeItem('ag_store_pending');
-        showToast('✓ Přístup potvrzen! Vítejte v A-GROSS SOS.');
-        location.reload();
-      } else {
-        showToast('❌ Nesprávný PIN. Zkuste znovu nebo kontaktujte 608 889 487.');
-      }
-    });
+// ── PIN LOGIN (prodejny schválené mimo appku – admin/bulk import) ──────
+// Na rozdíl od submitRegistration() (žádost o NOVÝ přístup) tahle cesta
+// slouží prodejně, která už byla schválena (v adminu, hromadným importem
+// pro COOP Jednota Uherský Ostroh apod.) a jen se poprvé přihlašuje na
+// svém zařízení - jméno i PIN zadává ručně do formuláře, appka je
+// nepotřebuje mít předem nikde uložené (na rozdíl od enterPin()/
+// ag_store_name_pending, které fungovaly jen pro appku, jež žádost
+// odeslala sama - to prodejny schválené jinak neměly).
+function openPinLoginModal(){
+  document.getElementById('pinlogin-name').value = '';
+  document.getElementById('pinlogin-pin').value = '';
+  document.getElementById('pinLoginModal').classList.add('open');
+}
+
+function closePinLoginModal(){
+  document.getElementById('pinLoginModal').classList.remove('open');
+}
+
+function submitPinLogin(){
+  const name = document.getElementById('pinlogin-name').value.trim();
+  const pin = document.getElementById('pinlogin-pin').value.trim();
+  if (!name || !pin) {
+    showToast('Vyplňte název prodejny i PIN');
+    return;
   }
+  fetch('https://agross-sos.onrender.com/api/registrations/verify', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({pin, name})
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      localStorage.setItem('ag_store_approved', '1');
+      localStorage.setItem('ag_store_pin', pin);
+      localStorage.setItem('ag_store_name', name);
+      localStorage.removeItem('ag_store_pending');
+      localStorage.removeItem('ag_store_name_pending');
+      closePinLoginModal();
+      showToast('✓ Přístup potvrzen! Vítejte v A-GROSS SOS.');
+      location.reload();
+    } else {
+      showToast('❌ Nesprávný název prodejny nebo PIN. Zkuste to znovu nebo kontaktujte 608 889 487.');
+    }
+  })
+  .catch(()=>{
+    showToast('❌ Přihlášení se nezdařilo – zkontrolujte připojení k internetu.');
+  });
 }
 
 async function saveStore(){
@@ -2285,7 +2351,7 @@ function showToast(msg){
 // ── CLOSE MODALS ON OVERLAY ──────────────────────────────────────────
 document.querySelectorAll('.modal-overlay').forEach(m=>{
   m.addEventListener('click',e=>{
-    if(e.target===m){closeScanner();closeStoreModal();closeOrderModal();closeExchangeModal();closeRegistrationModal();}
+    if(e.target===m){closeScanner();closeStoreModal();closeOrderModal();closeExchangeModal();closeRegistrationModal();closePinLoginModal();}
   });
 });
 
