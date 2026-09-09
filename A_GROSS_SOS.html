@@ -2180,6 +2180,27 @@ function submitPinLogin(){
       localStorage.setItem('ag_store_name', name);
       localStorage.removeItem('ag_store_pending');
       localStorage.removeItem('ag_store_name_pending');
+
+      // PIN přihlášení samo o sobě jen odemkne ceny (ag_store_approved) -
+      // pro ODESLÁNÍ objednávky appka potřebuje i storeId (samostatný
+      // mechanismus, viz "+ Přidat prodejnu" → saveStore()). Bez tohohle
+      // by souhrn objednávky hlásil "Prodejna nevybrána". Podle jména
+      // dohledáme existující záznam (aby se při opakovaném PIN loginu
+      // nevytvářely duplicity), jinak založíme nový - stejně jako
+      // saveStore(), jen bez adresy/telefonu, které appka k odeslání
+      // objednávky nepotřebuje.
+      let store = stores.find(s => (s.name || '').trim().toLowerCase() === name.toLowerCase());
+      if (!store) {
+        store = { name, chain: window._lockedChain || '', id: Date.now().toString() };
+        stores.push(store);
+      }
+      storeId = store.id;
+      save();
+      populateStoreSelect();
+      document.getElementById('storeDot').className = 'store-dot ok';
+      const dotNet = document.getElementById('storeDotNet');
+      if (dotNet) dotNet.className = 'store-dot ok';
+
       closePinLoginModal();
       showToast('✓ Přístup potvrzen! Vítejte v A-GROSS SOS.');
       location.reload();
