@@ -1140,7 +1140,18 @@ def verify_registration():
         finally:
             conn.close()
         if row:
-            return jsonify({'success': True}), 200
+            # Appka si po přihlášení zakládá lokální záznam ve `stores` (kvůli
+            # storeId pro odeslání objednávky, viz submitPinLogin() v
+            # A_GROSS_SOS.html) - bez tohohle by ho založila jen minimální
+            # {name, chain, id: Date.now()}, s JINÝM id než skutečný
+            # server-side profil (např. "jednotaostroh-658") a prázdnými
+            # manager/phone/address/ico/dic/email poli. To vedlo k prázdnému
+            # formuláři "Upravit prodejnu" a riziku duplicitního řádku ve
+            # `stores` při uložení (stejné jméno, jiné id) - viz
+            # find_store_by_registration_name / resolve_authoritative_store.
+            store_row = find_store_by_registration_name(name)
+            store = _store_row_to_dict(store_row) if store_row else None
+            return jsonify({'success': True, 'store': store}), 200
         return jsonify({'success': False}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -1151,17 +1162,35 @@ def find_store_by_registration_name(name):
     Dohledá záznam ve `stores` podle jména z registrace (case-insensitive
     shoda) - viz get_packaging_for_registration a resolve_authoritative_store
     níž pro vysvětlení kompromisu (registrations síť/store vůbec needeviduje).
-    Vrací dict se sloupci id/name/chain, nebo None.
+    Vrací dict se všemi sloupci `stores` (SELECT *), nebo None.
     """
     conn = get_db()
     try:
         cur = conn.cursor()
-        cur.execute('SELECT id, name, chain FROM stores WHERE LOWER(name) = LOWER(%s) LIMIT 1', (name,))
+        cur.execute('SELECT * FROM stores WHERE LOWER(name) = LOWER(%s) LIMIT 1', (name,))
         row = cur.fetchone()
         cur.close()
     finally:
         conn.close()
     return row
+
+
+def _store_row_to_dict(row):
+    """Převede DB řádek `stores` (RealDictRow) na camelCase dict pro frontend - stejný tvar jako get_stores()."""
+    return {
+        'id': row['id'],
+        'name': row['name'],
+        'chain': row['chain'],
+        'manager': row['manager'],
+        'phone': row['phone'],
+        'address': row['address'],
+        'ico': row['ico'],
+        'dic': row['dic'],
+        'email': row['email'],
+        'hoursWeek': row['hours_week'],
+        'hoursWeekend': row['hours_weekend'],
+        'note': row['note'],
+    }
 
 
 def get_packaging_for_registration(name):
