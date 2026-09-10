@@ -1031,6 +1031,11 @@ const NETWORKS = {
   }
   ,jednotaostroh: {
     name: 'COOP Jednota Uherský Ostroh',
+    // Stejná síť, druhá platná hodnota stores.chain (oficiální název
+    // družstva, zavedený dodatečně u bulk importu 40 prodejen) - viz
+    // NETWORKS_PACKAGING na backendu (klíč jednotaostroh2) a
+    // storesForCurrentContext() níž, která musí umět poznat obě.
+    altNames: ['Jednota spotřební družstvo v Uherském Ostrohu'],
     shortName: 'JEDNOTA OSTROH',
     color: '#CC6633',
     colorLight: '#F8ECE6',
@@ -1046,6 +1051,30 @@ function getNetworkFromURL() {
   const params = new URLSearchParams(window.location.search);
   const sit = params.get('sit');
   return sit && NETWORKS[sit] ? { key: sit, ...NETWORKS[sit] } : null;
+}
+
+// Prodejny relevantní pro AKTUÁLNÍ kontext appky - v síťovém (uzamčeném)
+// režimu (window._lockedChain nastavené applyNetworkBranding()) vrátí jen
+// prodejny se shodným stores.chain, jinak (běžná appka bez ?sit=) vrátí
+// úplně všechny lokálně uložené prodejny beze změny (dnešní chování - tam
+// dává smysl spravovat víc prodejen napříč sítěmi z jednoho zařízení).
+// Bez tohohle filtru se na zařízení dřív použitém i pro jinou síť pletly
+// do seznamu i cizí prodejny. Používá se v renderStores(),
+// populateStoreSelect() i selectAndOrder(), ať appka na stránce Prodejny
+// chová konzistentně na jedno místo. `stores` (localStorage) zůstává
+// nefiltrované - filtruje se jen zobrazení.
+function storesForCurrentContext() {
+  // Nespoléhat jen na window._lockedChain - ten se nastavuje až v
+  // applyNetworkBranding(), která se v INIT sekvenci volá AŽ PO prvním
+  // populateStoreSelect() (viz spodek souboru). Odvodit síť rovnou z URL
+  // (stejný zdroj, který window._lockedChain plní), ať filtrování funguje
+  // spolehlivě hned od prvního vykreslení, ne až po druhém překreslení.
+  const net = getNetworkFromURL();
+  const lockedChain = net ? net.name : window._lockedChain;
+  if (!lockedChain) return stores;
+  const acceptedChains = [lockedChain, ...((net && Array.isArray(net.altNames)) ? net.altNames : [])]
+    .map(c => (c || '').trim().toLowerCase());
+  return stores.filter(s => acceptedChains.includes((s.chain || '').trim().toLowerCase()));
 }
 
 // Počet měsíců bez objednávky, po kterém artikl dostane červený SOS bod (výchozí 3)
@@ -1427,11 +1456,7 @@ function updateOrderBar(){
 function populateStoreSelect(){
   const sel=document.getElementById('storeSelect');
   sel.innerHTML='<option value="">— Vyberte prodejnu —</option>';
-  const net = getNetworkFromURL();
-  const filteredStores = net
-    ? stores.filter(s => (s.chain || '').toLowerCase().includes(net.shortName.toLowerCase()) || (s.chain || '').toLowerCase() === net.key.toLowerCase())
-    : stores;
-  filteredStores.forEach(s=>{
+  storesForCurrentContext().forEach(s=>{
     const o=document.createElement('option');
     o.value=s.id; o.textContent=(s.chain?s.chain+' – ':'')+s.name;
     if(s.id===storeId)o.selected=true;
@@ -2006,11 +2031,12 @@ function doShare(method){
 // ── STORES ───────────────────────────────────────────────────────────
 function renderStores(){
   const c=document.getElementById('storeList');
-  if(!stores.length){
+  const visibleStores = storesForCurrentContext();
+  if(!visibleStores.length){
     c.innerHTML='<div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-text">Zatím žádné prodejny</div></div>';
     return;
   }
-  c.innerHTML=stores.map(s=>`
+  c.innerHTML=visibleStores.map(s=>`
     <div class="store-card">
       <h3>${s.chain?`<span class="chain-tag">${s.chain}</span>`:'' }${s.name}</h3>
       ${s.manager?`<div class="s-field"><strong>Vedoucí:</strong><span>${s.manager}</span></div>`:''}
@@ -2031,6 +2057,10 @@ function renderStores(){
 }
 
 function selectAndOrder(id){
+  // Obrana proti výběru prodejny mimo aktuální síť (viz storesForCurrentContext) -
+  // za normálních okolností se sem id odjinud než z už filtrovaného seznamu
+  // nedostane, ale radši to ověřit, než tiše nastavit storeId cizí prodejny.
+  if (window._lockedChain && !storesForCurrentContext().some(s => s.id === id)) return;
   storeId=id;
   document.getElementById('storeSelect').value=id;
   document.getElementById('storeDot').className='store-dot ok';
