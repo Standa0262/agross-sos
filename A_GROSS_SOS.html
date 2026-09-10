@@ -1043,7 +1043,12 @@ const NETWORKS = {
     orderNote: 'Síť: COOP Jednota, spotřební družstvo v Uherském Ostrohu',
     packaging: 'celofan',
     simplifiedUI: true,
-    lezakMesicu: 6
+    lezakMesicu: 6,
+    // Obchodní podmínky odsouhlasené na úrovni vedení družstva při podpisu
+    // smlouvy - jednotlivé prodejny je appka nemá nechávat znovu potvrzovat
+    // (viz INIT sekce níž). Nezávisí na simplifiedUI (to je kvůli starším
+    // vedoucím) - jde o jiný, samostatný důvod, i když se teď týká stejné sítě.
+    vopPreagreed: true
   }
 };
 
@@ -2518,7 +2523,15 @@ if(!stores.length){
 
 applySimplifiedUI();
 
-if(localStorage.getItem('ag_vop_souhlas')==='1'){
+// Sítě s předem odsouhlasenou smlouvou (viz NETWORKS[key].vopPreagreed -
+// podmínky už podepsalo vedení družstva, jednotlivé prodejny je nemají
+// znovu potvrzovat) chovají appku, jako by VOP už dávno odsouhlasily -
+// ag_vop_souhlas se ale NEUKLÁDÁ do localStorage, appka jen ví, že se tahle
+// obrazovka pro danou síť vůbec nemá zobrazovat.
+const _vopPreagreedNet = getNetworkFromURL();
+const _vopPreagreed = !!(_vopPreagreedNet && _vopPreagreedNet.vopPreagreed);
+
+if(localStorage.getItem('ag_vop_souhlas')==='1' || _vopPreagreed){
   document.getElementById('vopScreen').classList.add('hidden');
   if(localStorage.getItem('ag_ob')){document.getElementById('onboarding').classList.add('hidden');}
 } else {
