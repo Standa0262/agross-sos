@@ -132,6 +132,11 @@ NETWORKS_PACKAGING = {
     'bala':          {'name': 'BALA',                          'shortName': 'BALA',           'packaging': None},
     'coophb':        {'name': 'COOP Havlíčkův Brod',           'shortName': 'COOP HB',        'packaging': 'celofan'},
     'jednotaostroh': {'name': 'COOP Jednota Uherský Ostroh',   'shortName': 'JEDNOTA OSTROH', 'packaging': 'celofan'},
+    # Oficiální název družstva (stores.chain u 40 bulk importovaných prodejen
+    # byl opraven z "COOP Jednota Uherský Ostroh" na tenhle přesný název) -
+    # starý klíč výše NEODSTRAŇOVAT, jde o stejnou síť/packaging, jen jiný
+    # textový chain match.
+    'jednotaostroh2': {'name': 'Jednota spotřební družstvo v Uherském Ostrohu', 'shortName': 'JEDNOTA OSTROH', 'packaging': 'celofan'},
 }
 
 
@@ -1336,11 +1341,11 @@ def update_store():
             cur = conn.cursor()
             cur.execute("""
                 UPDATE stores SET
-                  name=%s, manager=%s, phone=%s, address=%s,
-                  ico=%s, email=%s, hours_week=%s, hours_weekend=%s, note=%s
+                  name=%s, chain=%s, manager=%s, phone=%s, address=%s,
+                  ico=%s, dic=%s, email=%s, hours_week=%s, hours_weekend=%s, note=%s
                 WHERE id=%s
-            """, (data.get('name'), data.get('manager'), data.get('phone'),
-                  data.get('address'), data.get('ico'), data.get('email'),
+            """, (data.get('name'), data.get('chain'), data.get('manager'), data.get('phone'),
+                  data.get('address'), data.get('ico'), data.get('dic'), data.get('email'),
                   data.get('hoursWeek'), data.get('hoursWeekend'),
                   data.get('note'), store_id))
             conn.commit()
