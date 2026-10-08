@@ -36,6 +36,8 @@ from flask_cors import CORS
 import json
 import os
 import re
+import sys
+import traceback
 import hmac
 import time
 import smtplib
@@ -301,6 +303,47 @@ def record_failed_attempt(name):
     _name_failed_attempts[(name or '').strip().lower()].append(time.time())
 
 
+INTERNAL_ERROR_MESSAGE = 'Interní chyba serveru, zkuste to prosím později.'
+
+
+def internal_error(where):
+    """
+    Obecná odpověď 500 pro veřejné endpointy - interní text výjimky (str(e))
+    se klientovi neposílá. Do logu (Render) jde jen typ výjimky, kód chyby
+    Postgresu a místa v kódu (soubor/řádek/zdrojový řádek) - NE text výjimky
+    ani hodnoty proměnných, protože ty můžou obsahovat PIN nebo jiná data
+    z požadavku. Volat jen uvnitř bloku `except`.
+    """
+    exc = sys.exc_info()[1]
+    app.logger.error('Chyba v %s: %s%s\n%s', where, type(exc).__name__,
+                     f" (pgcode {exc.pgcode})" if getattr(exc, 'pgcode', None) else '',
+                     ''.join(traceback.format_tb(exc.__traceback__)) if exc else '')
+    return jsonify({'error': INTERNAL_ERROR_MESSAGE}), 500
+
+
+def parse_name_pin_body():
+    """
+    Načte JSON tělo s name+pin pro /verify, /catalog/prices a /orders/sync.
+    Vrací (data, name, pin), nebo None, když tělo není JSON objekt nebo
+    name/pin je jiný typ než text (číslo, bool, seznam, objekt).
+
+    Chybějící name/pin nebo null se bere jako prázdný text (= neplatné
+    přihlášení, ne 400): appka po smazání odmítnutého PINu posílá u
+    objednávky pin: null a na odpověď 401 "Neplatné přihlášení prodejny"
+    reaguje výzvou k novému přihlášení (handleStorePinRejected).
+    """
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None
+    name = data.get('name')
+    pin = data.get('pin')
+    name = '' if name is None else name
+    pin = '' if pin is None else pin
+    if not isinstance(name, str) or not isinstance(pin, str):
+        return None
+    return data, name.strip(), pin.strip()
+
+
 def _prune_rate_limits(now):
     global _rate_limit_last_prune
     if now - _rate_limit_last_prune < _RATE_LIMIT_PRUNE_EVERY_SECONDS:
@@ -476,7 +519,10 @@ def sync_order():
     }
     """
     try:
-        order = request.json
+        parsed = parse_name_pin_body()
+        if parsed is None:
+            return jsonify({'error': 'Neplatný požadavek.'}), 400
+        order, name, pin = parsed
 
         # STORE_APP_KEY (@require_store_key) je záměrně veřejný - je natvrdo
         # v klientském JS appky, takže sám o sobě neprokazuje, že objednávka
@@ -484,9 +530,6 @@ def sync_order():
         # stejně jako /api/registrations/verify a /api/catalog/prices - a se
         # STEJNÝM rate limitem (jinak by šlo tuhle trojici endpointů zkoušet
         # dohromady 3x rychleji než jeden).
-        name = (order.get('name') or '').strip()
-        pin = (order.get('pin') or '').strip()
-
         if not check_rate_limit(name):
             return jsonify({'error': 'Příliš mnoho pokusů, zkuste to znovu za pár minut.'}), 429
 
@@ -571,8 +614,8 @@ def sync_order():
             'orderId': order_id
         }), 201
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('orders/sync')
 
 @app.route('/api/orders', methods=['GET'])
 @require_admin_key
@@ -762,8 +805,8 @@ def get_stores_public():
             'stores': stores
         }), 200
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('stores/public')
 
 @app.route('/api/reports/monthly', methods=['GET'])
 @require_admin_key
@@ -942,8 +985,8 @@ def sync_catalog():
             'updated_at': datetime.now().isoformat()
         }), 200
         
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('catalogs/sync')
 
 @app.route('/api/notifications', methods=['POST'])
 @require_admin_key
@@ -980,8 +1023,8 @@ def get_active_notification():
         if row:
             return jsonify({'success': True, 'text': row['text']}), 200
         return jsonify({'success': True, 'text': None}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('notifications/active')
 
 @app.route('/api/notifications/clear', methods=['POST'])
 @require_admin_key
@@ -1165,15 +1208,16 @@ Po schválení odešlete PIN přes WhatsApp na: {data['phone']}
             print(f'Email notifikace selhal: {mail_err}')
 
         return jsonify({'success': True}), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('registrations')
 
 @app.route('/api/registrations/verify', methods=['POST'])
 def verify_registration():
     try:
-        data = request.json
-        pin = data.get('pin', '').strip()
-        name = data.get('name', '').strip()
+        parsed = parse_name_pin_body()
+        if parsed is None:
+            return jsonify({'success': False, 'error': 'Neplatný požadavek.'}), 400
+        _, name, pin = parsed
 
         if not check_rate_limit(name):
             return jsonify({'success': False, 'error': 'Příliš mnoho pokusů, zkuste to znovu za pár minut.'}), 429
@@ -1204,8 +1248,8 @@ def verify_registration():
             return jsonify({'success': True, 'store': store}), 200
         record_failed_attempt(name)
         return jsonify({'success': False}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('registrations/verify')
 
 
 def validate_new_pin(old_pin, new_pin):
@@ -1273,8 +1317,8 @@ def change_pin():
             record_failed_attempt(name)
             return jsonify({'success': False}), 401
         return jsonify({'success': True}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('registrations/change-pin')
 
 
 def find_store_by_registration_name(name):
@@ -1373,9 +1417,10 @@ def catalog_prices():
     Odpověď (chyba):  { "success": false }, 401
     """
     try:
-        data = request.json or {}
-        pin = (data.get('pin') or '').strip()
-        name = (data.get('name') or '').strip()
+        parsed = parse_name_pin_body()
+        if parsed is None:
+            return jsonify({'success': False, 'error': 'Neplatný požadavek.'}), 400
+        _, name, pin = parsed
 
         if not check_rate_limit(name):
             return jsonify({'success': False, 'error': 'Příliš mnoho pokusů, zkuste to znovu za pár minut.'}), 429
@@ -1403,8 +1448,8 @@ def catalog_prices():
         }
 
         return jsonify({'success': True, 'prices': prices}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('catalog/prices')
 
 
 @app.route('/api/registrations/list', methods=['GET'])
