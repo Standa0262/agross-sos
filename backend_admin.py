@@ -1210,7 +1210,8 @@ def verify_registration():
 
 def validate_new_pin(old_pin, new_pin):
     """Vrátí českou chybovou hlášku pro neplatný nový PIN, jinak None."""
-    if not re.fullmatch(r'\d{4,8}', new_pin):
+    # [0-9], ne \d - \d v Pythonu přijímá i celošířkové/arabské číslice.
+    if not re.fullmatch(r'[0-9]{4,8}', new_pin):
         return 'Nový PIN musí mít 4 až 8 číslic.'
     if new_pin == old_pin:
         return 'Nový PIN musí být jiný než současný.'
@@ -1233,10 +1234,13 @@ def change_pin():
     Odpověď (neplatný nový PIN): { "success": false, "error": "..." }, 400
     """
     try:
-        data = request.json or {}
-        name = str(data.get('name') or '').strip()
-        pin = str(data.get('pin') or '').strip()
-        new_pin = str(data.get('newPin') or '').strip()
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({'success': False, 'error': 'Neplatný požadavek.'}), 400
+        fields = (data.get('name'), data.get('pin'), data.get('newPin'))
+        if not all(isinstance(v, str) for v in fields):
+            return jsonify({'success': False, 'error': 'Neplatný požadavek.'}), 400
+        name, pin, new_pin = (v.strip() for v in fields)
 
         if not name or not pin:
             return jsonify({'success': False, 'error': 'Chybí název prodejny nebo současný PIN.'}), 400

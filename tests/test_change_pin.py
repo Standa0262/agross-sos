@@ -151,6 +151,46 @@ def test_neplatny_novy_pin_400_bez_dotazu_do_db_a_bez_spotreby_pokusu(client, db
     assert db.regs[50]['pin'] == '9711'
 
 
+@pytest.mark.parametrize('new_pin', [
+    '２４６８',          # celošířkové číslice
+    '٢٤٦٨',              # arabsko-indické číslice
+    '۲۴۶۸',              # perské (východoarabské) číslice
+    '24６8',             # mix ASCII a celošířkové
+])
+def test_ne_ascii_cislice_v_novem_pinu_400(client, db, new_pin):
+    res = change(client, '9711', new_pin)
+    assert res.status_code == 400
+    assert db.executed == []
+    assert db.regs[50]['pin'] == '9711'
+
+
+@pytest.mark.parametrize('field', ['name', 'pin', 'newPin'])
+@pytest.mark.parametrize('bad', [1234, 12.5, True, None, ['1234'], {'a': '1234'}])
+def test_netextove_vstupy_vraci_400_ne_500(client, db, field, bad):
+    body = {'name': NAME, 'pin': '9711', 'newPin': '2468'}
+    body[field] = bad
+    res = client.post('/api/registrations/change-pin', json=body)
+    assert res.status_code == 400
+    assert res.get_json()['success'] is False
+    assert db.executed == []
+    assert not ba._rate_limit_attempts
+    assert db.regs[50]['pin'] == '9711'
+
+
+@pytest.mark.parametrize('payload', [
+    {'json': ['9711']},
+    {'json': '9711'},
+    {'json': 42},
+    {'data': 'tohle není JSON', 'content_type': 'application/json'},
+    {'data': 'name=x', 'content_type': 'application/x-www-form-urlencoded'},
+    {},
+])
+def test_telo_pozadavku_neni_json_objekt_400(client, db, payload):
+    res = client.post('/api/registrations/change-pin', **payload)
+    assert res.status_code == 400
+    assert db.executed == []
+
+
 def test_osmimistny_pin_je_povoleny(client, db):
     assert change(client, '9711', '13572468').status_code == 200
 
