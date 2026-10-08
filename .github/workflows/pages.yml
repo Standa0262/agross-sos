@@ -1,0 +1,83 @@
+# Nasazení GitHub Pages – publikuje JEN webové soubory appky.
+#
+# Repo obsahuje i interní podklady (dokumentace, grafika, videa, štítky…),
+# které na veřejný web nepatří. Místo publikování celého repa ("Deploy from
+# a branch") se proto do _site zkopíruje jen pevný seznam souborů níže.
+# Cesty zůstávají stejné jako dřív, takže QR kódy na letácích
+# (…/agross-sos/A_GROSS_SOS.html?sit=…) fungují dál.
+#
+# Předpoklad: Settings → Pages → Source = "GitHub Actions".
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Jen jedno nasazení najednou; rozběhnuté nasazení se nepřerušuje.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/configure-pages@v6
+
+      - name: Sestavit _site (jen web)
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILES=(
+            A_GROSS_SOS.html
+            A_GROSS_SOS_VI.html
+            AGROSS_SOS_ADMIN.html
+            sw.js
+            admin_sw.js
+            manifest.json
+            admin_manifest.json
+            icon.svg
+          )
+          DIRS=(img vendor)
+
+          mkdir -p _site
+          for f in "${FILES[@]}"; do
+            test -f "$f" || { echo "::error::Chybí soubor $f"; exit 1; }
+            cp "$f" "_site/$f"
+          done
+          for d in "${DIRS[@]}"; do
+            test -d "$d" || { echo "::error::Chybí složka $d/"; exit 1; }
+            cp -R "$d" "_site/$d"
+          done
+
+          # Pojistka: do img/ a vendor/ se nesmí dostat nic jiného než
+          # obrázky a skripty (např. omylem nahraný ceník).
+          bad=$(find _site -type f ! -name '*.html' ! -name '*.js' ! -name '*.json' ! -name '*.svg' ! -name '*.jpg' ! -name '*.jpeg' ! -name '*.png' ! -name '*.webp' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Nepovolené typy souborů v _site:"; echo "$bad"; exit 1
+          fi
+
+          echo "Publikuje se $(find _site -type f | wc -l) souborů:"
+          (cd _site && find . -type f | sort)
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
