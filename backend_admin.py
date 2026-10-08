@@ -27,12 +27,15 @@ API Endpoints:
     POST /api/registrations/verify – Ověření jméno+PIN, rate limited [public]
     POST /api/catalog/prices – NC ceny katalogu pro přihlášenou prodejnu
         (jméno+PIN, stejné ověření a rate limit jako verify) [public]
+    POST /api/registrations/change-pin – Změna PINu prodejnou (jméno+PIN+nový
+        PIN, stejné ověření a rate limit jako verify) [public]
 """
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import os
+import re
 import hmac
 import time
 import smtplib
@@ -242,6 +245,20 @@ _rate_limit_attempts = defaultdict(list)  # (name, ip) -> [timestamp, ...]
 RATE_LIMIT_MAX_ATTEMPTS = 5
 RATE_LIMIT_WINDOW_SECONDS = 300  # 5 minut
 
+# Druhý limit podle SAMOTNÉHO jména (bez ohledu na IP) - limit podle
+# (name, IP) jde obejít střídáním IP / podvrženou hlavičkou X-Forwarded-For.
+# Počítají se jen NEÚSPĚŠNÉ pokusy (špatný PIN ve verify, catalog/prices,
+# orders/sync i change-pin, viz record_failed_attempt), takže běžný provoz
+# přihlášené prodejny (otevření appky, ceny, objednávky) limit nevyčerpá.
+_name_failed_attempts = defaultdict(list)  # name -> [timestamp, ...]
+NAME_FAIL_MAX_ATTEMPTS = 20
+NAME_FAIL_WINDOW_SECONDS = 3600  # 1 hodina
+
+# Čištění prázdných klíčů, aby slovníky v paměti nerostly donekonečna
+# (každé nové jméno/IP = nový klíč).
+_RATE_LIMIT_PRUNE_EVERY_SECONDS = 600
+_rate_limit_last_prune = 0.0
+
 
 def _client_ip():
     forwarded = request.headers.get('X-Forwarded-For', '')
@@ -256,15 +273,47 @@ def check_rate_limit(name):
     je v posledních RATE_LIMIT_WINDOW_SECONDS pod limitem RATE_LIMIT_MAX_ATTEMPTS
     pokusů (požadavek je povolen). Vrátí False, pokud byl limit překročen -
     volající by měl odpovědět 429 a pokus dál neověřovat.
+
+    Navíc vrátí False, pokud má jméno (bez ohledu na IP) v poslední hodině
+    NAME_FAIL_MAX_ATTEMPTS a víc neúspěšných pokusů (record_failed_attempt).
     """
-    key = ((name or '').strip().lower(), _client_ip())
     now = time.time()
+    _prune_rate_limits(now)
+    name_key = (name or '').strip().lower()
+
+    failures = _name_failed_attempts.get(name_key)
+    if failures:
+        failures[:] = [t for t in failures if now - t < NAME_FAIL_WINDOW_SECONDS]
+        if len(failures) >= NAME_FAIL_MAX_ATTEMPTS:
+            return False
+
+    key = (name_key, _client_ip())
     attempts = _rate_limit_attempts[key]
     attempts[:] = [t for t in attempts if now - t < RATE_LIMIT_WINDOW_SECONDS]
     if len(attempts) >= RATE_LIMIT_MAX_ATTEMPTS:
         return False
     attempts.append(now)
     return True
+
+
+def record_failed_attempt(name):
+    """Zaznamená neúspěšné ověření jméno+PIN pro limit podle samotného jména."""
+    _name_failed_attempts[(name or '').strip().lower()].append(time.time())
+
+
+def _prune_rate_limits(now):
+    global _rate_limit_last_prune
+    if now - _rate_limit_last_prune < _RATE_LIMIT_PRUNE_EVERY_SECONDS:
+        return
+    _rate_limit_last_prune = now
+    for store, window in ((_rate_limit_attempts, RATE_LIMIT_WINDOW_SECONDS),
+                          (_name_failed_attempts, NAME_FAIL_WINDOW_SECONDS)):
+        for key in list(store.keys()):
+            fresh = [t for t in store[key] if now - t < window]
+            if fresh:
+                store[key] = fresh
+            else:
+                del store[key]
 
 # ═════════════════════════════════════════════════════════════════════
 # DATABÁZE (PostgreSQL – Neon.tech)
@@ -453,6 +502,7 @@ def sync_order():
         finally:
             conn.close()
         if not reg_row:
+            record_failed_attempt(name)
             return jsonify({'error': 'Neplatné přihlášení prodejny'}), 401
 
         # Validace
@@ -1152,7 +1202,73 @@ def verify_registration():
             store_row = find_store_by_registration_name(name)
             store = _store_row_to_dict(store_row) if store_row else None
             return jsonify({'success': True, 'store': store}), 200
+        record_failed_attempt(name)
         return jsonify({'success': False}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def validate_new_pin(old_pin, new_pin):
+    """Vrátí českou chybovou hlášku pro neplatný nový PIN, jinak None."""
+    if not re.fullmatch(r'\d{4,8}', new_pin):
+        return 'Nový PIN musí mít 4 až 8 číslic.'
+    if new_pin == old_pin:
+        return 'Nový PIN musí být jiný než současný.'
+    if len(set(new_pin)) == 1 or new_pin in ('1234', '4321'):
+        return 'Nový PIN je příliš snadno uhodnutelný, zvolte jiný.'
+    return None
+
+
+@app.route('/api/registrations/change-pin', methods=['POST'])
+def change_pin():
+    """
+    Změna PINu samotnou prodejnou (admin panel má vlastní "Změnit PIN" přes
+    /api/registrations/approve - ten slouží jako reset zapomenutého PINu).
+    Ověření stejné jako /api/registrations/verify (jméno+PIN, sdílí i rate
+    limiting). PIN (starý ani nový) se nikdy neloguje ani neposílá e-mailem.
+
+    Vstup: { "name": "...", "pin": "1234", "newPin": "5678" }
+    Odpověď (úspěch):      { "success": true }, 200
+    Odpověď (špatný PIN):  { "success": false }, 401 - bez prozrazení, zda jméno existuje
+    Odpověď (neplatný nový PIN): { "success": false, "error": "..." }, 400
+    """
+    try:
+        data = request.json or {}
+        name = str(data.get('name') or '').strip()
+        pin = str(data.get('pin') or '').strip()
+        new_pin = str(data.get('newPin') or '').strip()
+
+        if not name or not pin:
+            return jsonify({'success': False, 'error': 'Chybí název prodejny nebo současný PIN.'}), 400
+        # Validace nového PINu před rate limitem - nic neprozrazuje a překlep
+        # v novém PINu tak prodejně neubírá pokusy.
+        error = validate_new_pin(pin, new_pin)
+        if error:
+            return jsonify({'success': False, 'error': error}), 400
+
+        if not check_rate_limit(name):
+            return jsonify({'success': False, 'error': 'Příliš mnoho pokusů, zkuste to znovu za pár minut.'}), 429
+
+        # Ověření starého PINu i zápis nového JEDNÍM příkazem - mezi ověřením
+        # a zápisem se nic nemůže změnit.
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE registrations SET pin = %s
+                WHERE name = %s AND pin = %s AND approved = TRUE
+                RETURNING id
+            """, (new_pin, name, pin))
+            row = cur.fetchone()
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+
+        if not row:
+            record_failed_attempt(name)
+            return jsonify({'success': False}), 401
+        return jsonify({'success': True}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1273,6 +1389,7 @@ def catalog_prices():
             conn.close()
 
         if not row:
+            record_failed_attempt(name)
             return jsonify({'success': False}), 401
 
         packaging = get_packaging_for_registration(name)
