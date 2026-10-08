@@ -10,3 +10,9 @@ firebase-key.json
 orders_db.json
 notifications.json
 test_order.json
+
+# Citlivá data (ceníky s NC naše, kontakty, smlouvy) do repa nepatří –
+# zůstávají jen lokálně na disku.
+*.xlsx
+*.xls
+SMLOUVY/
