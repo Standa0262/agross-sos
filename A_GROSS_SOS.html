@@ -248,6 +248,13 @@ header{
 .modal-btns{display:flex;gap:8px;margin-top:14px}
 .btn-p{flex:1;background:var(--dark);color:var(--cream);border:none;border-radius:8px;padding:12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .btn-s{flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:inherit;font-size:13px;cursor:pointer}
+/* Změna PINu - velká pole a tlačítka pro práci na mobilu */
+.chpin-input{font-size:20px;padding:14px;letter-spacing:4px;text-align:center}
+.chpin-btn{padding:16px;font-size:15px;font-weight:700}
+.chpin-btn:disabled{opacity:.5;cursor:default}
+.chpin-msg{display:none;border-radius:8px;padding:12px;font-size:14px;font-weight:600;line-height:1.4;margin-bottom:11px}
+.chpin-msg.err{display:block;background:#FDECEA;color:#B3261E}
+.chpin-msg.ok{display:block;background:var(--ok-light);color:var(--ok-dark)}
 
 /* ── EXCHANGE MODAL ── */
 .exchange-header{background:var(--sos-light);border:1px solid #F9C9C0;border-radius:10px;padding:12px;margin-bottom:14px}
@@ -613,6 +620,13 @@ header{
 <!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
 
+  <!-- Změna PINu prodejnou - jen pro přihlášené (viz updateApprovalUI) -->
+  <div class="settings-card" id="changePinCard" style="display:none">
+    <h3>&#128273; PIN prodejny</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Svůj PIN si můžete kdykoli změnit. Na ostatních zařízeních se pak přihlásíte novým PINem.</p>
+    <button class="order-btn" onclick="openChangePinModal()">&#128273; Změnit PIN</button>
+  </div>
+
   <div class="settings-card">
     <h3>&#128276; Oznámení</h3>
     <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Zobrazí se červený banner v horní části aplikace (uloží se lokálně). Zveřejnění oznámení všem prodejnám je nyní jen v admin panelu.</p>
@@ -944,6 +958,7 @@ header{
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Přihlášení prodejny</div>
+    <div class="chpin-msg" id="pinlogin-msg"></div>
     <div class="form-group">
       <label class="form-label">Název prodejny *</label>
       <input class="form-input" id="pinlogin-name" placeholder="Zadejte číslo pobočky nebo název (např. 246)" autocomplete="off" oninput="onPinLoginNameInput()" onfocus="onPinLoginNameInput()">
@@ -956,6 +971,33 @@ header{
     <div class="modal-btns">
       <button class="btn-s" onclick="closePinLoginModal()">Zrušit</button>
       <button class="btn-p" onclick="submitPinLogin()">Přihlásit se</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ZMĚNA PINU (prodejna sama, POST /api/registrations/change-pin) ── -->
+<div class="modal-overlay" id="changePinModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">&#128273; Změnit PIN</div>
+    <div id="chpin-fields">
+      <div class="form-group">
+        <label class="form-label">Současný PIN</label>
+        <input class="form-input chpin-input" id="chpin-old" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nový PIN (4 až 8 číslic)</label>
+        <input class="form-input chpin-input" id="chpin-new" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nový PIN znovu</label>
+        <input class="form-input chpin-input" id="chpin-new2" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+      </div>
+    </div>
+    <div class="chpin-msg" id="chpin-msg"></div>
+    <div class="modal-btns">
+      <button class="btn-s chpin-btn" id="chpin-cancel" onclick="closeChangePinModal()">Zrušit</button>
+      <button class="btn-p chpin-btn" id="chpin-submit" onclick="submitChangePin()">Změnit PIN</button>
     </div>
   </div>
 </div>
@@ -1307,6 +1349,12 @@ function refreshPriceDependentUI(){
 async function loadServerPrices(){
   const name = localStorage.getItem('ag_store_name');
   const pin = localStorage.getItem('ag_store_pin');
+  if(name && !pin && isApproved()){
+    // PIN byl smazán po odmítnutí serverem (handleStorePinRejected) a
+    // prodejna se zatím znovu nepřihlásila - připomeň to při každém otevření.
+    promptRelogin('Přihlaste se prosím znovu svým PINem.');
+    return;
+  }
   if(!name || !pin) return; // nepřihlášená appka nákupní ceny nezobrazuje
 
   // Cache aplikuj hned (offline-first) - appka nečeká na síť, jen se
@@ -1329,6 +1377,14 @@ async function loadServerPrices(){
       body: JSON.stringify({name, pin})
     });
     const data = await res.json();
+    if(res.status === 401 && data.success === false){
+      handleStorePinRejected(); // PIN byl změněn na jiném zařízení (nebo resetován v adminu)
+      return;
+    }
+    if(res.status === 429){
+      showToast('Příliš mnoho pokusů, zkuste to za pár minut.');
+      return;
+    }
     if(data.success && data.prices){
       applyPricesToProducts(data.prices);
       localStorage.setItem('ag_prices_cache', JSON.stringify(data.prices));
@@ -1378,6 +1434,8 @@ function updateApprovalUI(){
   const ordTab = document.getElementById('tab-orders');
   if(stTab)  stTab.style.display  = approved ? '' : 'none';
   if(ordTab) ordTab.style.display = approved ? '' : 'none';
+  const pinCard = document.getElementById('changePinCard');
+  if(pinCard) pinCard.style.display = approved ? '' : 'none';
 }
 
 function cartTotals(){
@@ -1819,6 +1877,14 @@ function syncOrderToBackend(order){
     method:'POST',
     headers:{'Content-Type':'application/json', ...storeAuthHeaders()},
     body:JSON.stringify(payload)
+  }).then(async res=>{
+    if(res.status === 401){
+      // Jen odmítnutý PIN, NE {"error":"Unauthorized"} (špatný STORE_APP_KEY).
+      const body = await res.json().catch(()=>null);
+      if(body && body.error === 'Neplatné přihlášení prodejny') handleStorePinRejected();
+    } else if(res.status === 429){
+      showToast('Příliš mnoho pokusů, zkuste to za pár minut.');
+    }
   }).catch(err=>console.error('Sync objednavky na backend selhal:',err));
 }
 
@@ -2006,6 +2072,10 @@ function openShareSheet(storeName){
 
 function closeShareSheet(){
   document.getElementById('shareSheet').classList.remove('open');
+  if(_reloginAfterShare){
+    _reloginAfterShare = false;
+    promptRelogin('PIN byl změněn, přihlaste se znovu.');
+  }
 }
 
 function doShare(method){
@@ -2194,6 +2264,7 @@ function submitRegistration() {
 function openPinLoginModal(){
   document.getElementById('pinlogin-name').value = '';
   document.getElementById('pinlogin-pin').value = '';
+  document.getElementById('pinlogin-msg').className = 'chpin-msg';
   closePinLoginSuggestions();
   document.getElementById('pinLoginModal').classList.add('open');
   loadPinLoginStoreNames();
@@ -2351,6 +2422,114 @@ function submitPinLogin(){
   .catch(()=>{
     showToast('❌ Přihlášení se nezdařilo – zkontrolujte připojení k internetu.');
   });
+}
+
+// ── ODMÍTNUTÝ PIN (změněn na jiném zařízení / resetován v adminu) ──────
+// Volá se JEN při 401 s odmítnutým jménem+PINem (catalog/prices:
+// success:false, orders/sync: "Neplatné přihlášení prodejny") - NE při
+// 401 "Unauthorized" (špatný STORE_APP_KEY), 429 ani výpadku sítě.
+// Maže se jen uložený PIN; objednávky, košík, prodejny i ag_store_approved
+// zůstávají, po novém přihlášení appka pokračuje, kde skončila.
+//
+// Když je zrovna otevřené sdílení objednávky (e-mail/WhatsApp), přihlášení
+// se odloží až na jeho zavření (closeShareSheet) - přihlašovací okno by ho
+// jinak překrylo a submitPinLogin() stránku znovu načte, takže by se
+// objednávka nemusela vůbec odeslat.
+let _reloginAfterShare = false;
+
+function handleStorePinRejected(){
+  localStorage.removeItem('ag_store_pin');
+  if(document.getElementById('shareSheet').classList.contains('open')){
+    _reloginAfterShare = true;
+    return;
+  }
+  promptRelogin('PIN byl změněn, přihlaste se znovu.');
+}
+
+function promptRelogin(msg){
+  openPinLoginModal();
+  document.getElementById('pinlogin-name').value = localStorage.getItem('ag_store_name') || '';
+  const box = document.getElementById('pinlogin-msg');
+  box.textContent = msg;
+  box.className = 'chpin-msg err';
+}
+
+// ── ZMĚNA PINU PRODEJNOU ─────────────────────────────────────────────
+// Pravidla (4-8 číslic, shoda obou nových PINů) kontroluje appka jen pro
+// rychlou odezvu - rozhoduje vždy server (/api/registrations/change-pin).
+function setChangePinMsg(text, kind){
+  const box = document.getElementById('chpin-msg');
+  box.textContent = text || '';
+  box.className = text ? 'chpin-msg ' + kind : 'chpin-msg';
+}
+
+function openChangePinModal(){
+  ['chpin-old','chpin-new','chpin-new2'].forEach(id => document.getElementById(id).value = '');
+  setChangePinMsg('');
+  document.getElementById('chpin-fields').style.display = '';
+  const submit = document.getElementById('chpin-submit');
+  submit.style.display = '';
+  submit.disabled = false;
+  submit.textContent = 'Změnit PIN';
+  document.getElementById('chpin-cancel').textContent = 'Zrušit';
+  document.getElementById('changePinModal').classList.add('open');
+}
+
+function closeChangePinModal(){
+  document.getElementById('changePinModal').classList.remove('open');
+  ['chpin-old','chpin-new','chpin-new2'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function submitChangePin(){
+  const name = localStorage.getItem('ag_store_name');
+  const pin = document.getElementById('chpin-old').value.trim();
+  const newPin = document.getElementById('chpin-new').value.trim();
+  const newPin2 = document.getElementById('chpin-new2').value.trim();
+
+  if(!name){ setChangePinMsg('Nejdřív se přihlaste názvem prodejny a PINem.', 'err'); return; }
+  if(!pin){ setChangePinMsg('Zadejte současný PIN.', 'err'); return; }
+  if(!/^[0-9]{4,8}$/.test(newPin)){ setChangePinMsg('Nový PIN musí mít 4 až 8 číslic.', 'err'); return; }
+  if(newPin !== newPin2){ setChangePinMsg('Nové PINy se neshodují. Zadejte je znovu.', 'err'); return; }
+  if(newPin === pin){ setChangePinMsg('Nový PIN musí být jiný než současný.', 'err'); return; }
+
+  const submit = document.getElementById('chpin-submit');
+  submit.disabled = true;
+  submit.textContent = 'Měním…';
+  setChangePinMsg('');
+
+  let res, data;
+  try {
+    res = await fetch('https://agross-sos.onrender.com/api/registrations/change-pin', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, pin, newPin})
+    });
+    data = await res.json().catch(() => ({}));
+  } catch(e){
+    setChangePinMsg('Nelze se spojit se serverem.', 'err');
+    submit.disabled = false;
+    submit.textContent = 'Změnit PIN';
+    return;
+  }
+  submit.disabled = false;
+  submit.textContent = 'Změnit PIN';
+
+  if(res.ok && data.success){
+    localStorage.setItem('ag_store_pin', newPin);
+    ['chpin-old','chpin-new','chpin-new2'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('chpin-fields').style.display = 'none';
+    submit.style.display = 'none';
+    document.getElementById('chpin-cancel').textContent = 'Hotovo';
+    setChangePinMsg('PIN byl změněn. Na jiných zařízeních se přihlaste novým PINem.', 'ok');
+  } else if(res.status === 429){
+    setChangePinMsg('Příliš mnoho pokusů, zkuste to za pár minut.', 'err');
+  } else if(res.status === 401){
+    setChangePinMsg('Současný PIN není správný.', 'err');
+  } else if(res.status === 400){
+    setChangePinMsg(data.error || 'Nový PIN není platný.', 'err');
+  } else {
+    setChangePinMsg('Server teď neodpovídá, zkuste to prosím za chvíli.', 'err');
+  }
 }
 
 async function saveStore(){
@@ -2512,7 +2691,7 @@ function showToast(msg){
 // ── CLOSE MODALS ON OVERLAY ──────────────────────────────────────────
 document.querySelectorAll('.modal-overlay').forEach(m=>{
   m.addEventListener('click',e=>{
-    if(e.target===m){closeScanner();closeStoreModal();closeOrderModal();closeExchangeModal();closeRegistrationModal();closePinLoginModal();}
+    if(e.target===m){closeScanner();closeStoreModal();closeOrderModal();closeExchangeModal();closeRegistrationModal();closePinLoginModal();closeChangePinModal();}
   });
 });
 

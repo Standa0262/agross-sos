@@ -1,7 +1,7 @@
 // Service Worker pro A-GROSS SOS
 // Umožňuje offline režim a caching
 
-const CACHE_VERSION = 'agross-v1';
+const CACHE_VERSION = 'agross-v2';
 const CACHE_FILES = [
   '/',
   '/A_GROSS_SOS.html',
