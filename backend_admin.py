@@ -730,8 +730,8 @@ def sync_store():
             'storeId': str(store.get('id'))
         }), 201
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('stores/sync')
 
 @app.route('/api/stores', methods=['GET'])
 @require_admin_key
@@ -1126,8 +1126,8 @@ def check_exclusivity():
 
         return jsonify({'allowed': True, 'warning': None, 'conflicts': [], 'message': None}), 200
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return internal_error('stores/check-exclusivity')
 
 @app.route('/api/stores/<store_id>', methods=['DELETE'])
 @require_admin_key

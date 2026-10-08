@@ -112,6 +112,8 @@ CRASH_CASES = [
     ('POST', '/api/registrations', {'name': NAME, 'ico': '1', 'phone': '1'}, {}),
     ('GET', '/api/stores/public', None, {}),
     ('GET', '/api/notifications/active', None, {}),
+    ('POST', '/api/stores/sync', {'id': '1', 'name': NAME}, AUTH),
+    ('POST', '/api/stores/check-exclusivity', {'lat': 49.5, 'lon': 17.2, 'city': 'x', 'population': 0}, AUTH),
 ]
 
 
