@@ -531,7 +531,7 @@ async function approveRegistration(id) {
       // Otevřít WhatsApp s PIN kódem pro majitele
       const msg = isVietnamese
         ? `Chào bạn! Žádost o přístup A-GROSS SOS byla schválena.%0APIN kód: ${pin}%0ANaskenujte QR kód a zadejte PIN.`
-        : `Dobrý den! Vaše žádost o přístup do A-GROSS SOS byla schválena.%0APIN kód: ${pin}%0ANaskenujte QR kód a zadejte PIN pro přihlášení.`;
+        : `Dobrý den! Vaše žádost o přístup do A-GROSS SOS byla schválena.%0APIN kód: ${pin}%0ANaskenujte QR kód a zadejte PIN pro přihlášení.%0APIN doporučujeme po prvním přihlášení změnit: ⚙ Nastavení → 🔑 Změnit PIN.`;
       window.open('https://wa.me/' + phone.replace(/[^0-9]/g,'') + '?text=' + msg, '_blank');
       showToast('✓ Schváleno! Odesílám PIN přes WhatsApp.');
       loadRegistrations();
