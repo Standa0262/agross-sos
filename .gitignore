@@ -4,6 +4,7 @@ __pycache__/
 firebase-key.json
 *.pptx
 *.pdf
+.env
 
 # Stará testovací data – produkce běží na backend_admin.py + Postgres,
 # tyto soubory se nesmí znovu začít plnit reálnými daty.
@@ -16,3 +17,8 @@ test_order.json
 *.xlsx
 *.xls
 SMLOUVY/
+
+# Lokální soubory, které nesmí do repa
+LETÁK/KATALOG_SOS_OZ.cdr
+stores_dump.json
+*_dump.json
